@@ -1,0 +1,204 @@
+/* =========================================================
+   TELA DE LOGIN
+   ========================================================= */
+
+.login-tela{
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  background: var(--bg-app);
+}
+
+/* ---- Painel de marca (lado esquerdo) ---- */
+.login-tela__marca{
+  position: relative;
+  overflow: hidden;
+  background: var(--bg-sidebar);
+  color: var(--branco);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--space-4);
+  padding: var(--space-10) var(--space-10);
+}
+
+.login-tela__decor{
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(60px);
+  opacity: 0.35;
+  pointer-events: none;
+}
+.login-tela__decor--1{
+  width: 320px; height: 320px;
+  background: var(--roxo-500);
+  top: -80px; right: -80px;
+}
+.login-tela__decor--2{
+  width: 260px; height: 260px;
+  background: var(--azul-500);
+  bottom: -60px; left: -60px;
+}
+
+.login-tela__logo{
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-6);
+  position: relative;
+  z-index: 1;
+}
+.login-tela__logo .sidebar__logo-icone{
+  width: 44px; height: 44px;
+  font-size: 1.4rem;
+}
+.login-tela__logo .sidebar__logo-texto{
+  font-size: var(--fs-xl);
+}
+
+.login-tela__frase{
+  position: relative;
+  z-index: 1;
+  font-size: var(--fs-2xl);
+  font-weight: 800;
+  line-height: 1.25;
+  max-width: 420px;
+  margin: 0;
+}
+
+.login-tela__subfrase{
+  position: relative;
+  z-index: 1;
+  font-size: var(--fs-base);
+  color: var(--cinza-300);
+  max-width: 380px;
+  margin: 0;
+}
+
+/* ---- Coluna do formulário (lado direito) ---- */
+.login-tela__form-coluna{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-6);
+}
+
+.login-card{
+  width: 100%;
+  max-width: 400px;
+  background: var(--bg-card);
+  border: 1px solid var(--cinza-200);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  padding: var(--space-8);
+}
+
+.login-card__titulo{
+  font-size: var(--fs-2xl);
+  font-weight: 800;
+  color: var(--cinza-900);
+}
+
+.login-card__subtitulo{
+  color: var(--cinza-500);
+  font-size: var(--fs-sm);
+  margin: var(--space-1) 0 var(--space-6);
+}
+
+.campo-grupo{
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: var(--space-4);
+}
+
+.campo-grupo label{
+  font-size: var(--fs-sm);
+  font-weight: 700;
+  color: var(--cinza-700);
+}
+
+.campo-grupo input[type="text"],
+.campo-grupo input[type="password"]{
+  padding: 11px 14px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--cinza-200);
+  background: var(--cinza-50);
+  color: var(--cinza-900);
+  transition: border-color var(--transicao-rapida), background var(--transicao-rapida);
+}
+
+.campo-grupo input::placeholder{ color: var(--cinza-400); }
+
+.campo-grupo input:focus{
+  outline: none;
+  border-color: var(--roxo-400);
+  background: var(--branco);
+}
+
+.campo-grupo input.campo-erro{
+  border-color: var(--vermelho-500);
+}
+
+.mensagem-erro{
+  color: var(--vermelho-500);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+}
+
+.login-card__opcoes{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-6);
+  font-size: var(--fs-xs);
+}
+
+.login-card__lembrar{
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--cinza-500);
+  font-weight: 600;
+}
+.login-card__lembrar input{ accent-color: var(--roxo-500); }
+
+.login-card__opcoes a{
+  color: var(--roxo-500);
+  font-weight: 700;
+}
+.login-card__opcoes a:hover{ text-decoration: underline; }
+
+.btn-full{
+  width: 100%;
+  padding: 12px;
+  font-size: var(--fs-base);
+}
+
+.login-card__rodape{
+  margin-top: var(--space-6);
+  text-align: center;
+  font-size: var(--fs-sm);
+  color: var(--cinza-500);
+}
+.login-card__rodape a{
+  color: var(--roxo-500);
+  font-weight: 700;
+}
+.login-card__rodape a:hover{ text-decoration: underline; }
+
+/* ---- Responsivo ---- */
+@media (max-width: 900px){
+  .login-tela{ grid-template-columns: 1fr; }
+  .login-tela__marca{
+    padding: var(--space-8) var(--space-6);
+    min-height: 260px;
+    justify-content: flex-end;
+  }
+  .login-tela__frase{ font-size: var(--fs-xl); }
+}
+
+@media (max-width: 480px){
+  .login-card{ padding: var(--space-6); box-shadow: none; border: none; }
+  .login-tela__form-coluna{ padding: var(--space-4); }
+}
