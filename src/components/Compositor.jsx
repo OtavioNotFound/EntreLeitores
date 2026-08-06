@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { useToast } from './Toast.jsx';
+import { Create as CreateIcon, RateReview as RateReviewIcon, FormatQuote as FormatQuoteIcon, Poll as PollIcon, MenuBook as BookIcon, LocalOffer as TagIcon } from '@mui/icons-material';
 
 const abas = [
-  { chave: 'publicar', label: '✎ Publicar', placeholder: 'O que você está lendo ou pensando?' },
-  { chave: 'resenha', label: '✎ Resenha', placeholder: 'Escreva sua resenha sobre o livro...' },
-  { chave: 'citacao', label: '〝 Citação', placeholder: 'Compartilhe uma citação marcante...' },
-  { chave: 'enquete', label: '📊 Enquete', placeholder: 'Faça uma pergunta para a comunidade...' },
+  { chave: 'publicar', label: (<><CreateIcon fontSize="small" /> Publicar</>), placeholder: 'O que você está lendo ou pensando?' },
+  { chave: 'resenha', label: (<><RateReviewIcon fontSize="small" /> Resenha</>), placeholder: 'Escreva sua resenha sobre o livro...' },
+  { chave: 'citacao', label: (<><FormatQuoteIcon fontSize="small" /> Citação</>), placeholder: 'Compartilhe uma citação marcante...' },
+  { chave: 'enquete', label: (<><PollIcon fontSize="small" /> Enquete</>), placeholder: 'Faça uma pergunta para a comunidade...' },
 ];
 
 export default function Compositor({ aoPublicar }) {
@@ -51,8 +52,8 @@ export default function Compositor({ aoPublicar }) {
       </div>
       <div className="compositor__rodape">
         <div className="compositor__extras">
-          <button className="compositor__extra-btn">📖 Adicionar livro</button>
-          <button className="compositor__extra-btn"># Tag</button>
+          <button className="compositor__extra-btn"><BookIcon /> Adicionar livro</button>
+          <button className="compositor__extra-btn"><TagIcon /> Tag</button>
         </div>
         <button className="btn-primario" onClick={publicar}>Publicar</button>
       </div>

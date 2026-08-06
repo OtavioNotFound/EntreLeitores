@@ -69,12 +69,12 @@ export const ranking = [
 ];
 
 export const livrosExplorar = [
-  { id: 'duna', capa: '📗', titulo: 'Duna', autor: 'Frank Herbert', nota: '★ 4.8' },
-  { id: '1984', capa: '📘', titulo: '1984', autor: 'George Orwell', nota: '★ 4.9' },
-  { id: 'sapiens', capa: '📙', titulo: 'Sapiens', autor: 'Yuval Noah Harari', nota: '★ 4.7' },
-  { id: 'nome-vento', capa: '📕', titulo: 'O Nome do Vento', autor: 'Patrick Rothfuss', nota: '★ 4.9' },
-  { id: 'hora-estrela', capa: '📓', titulo: 'A Hora da Estrela', autor: 'Clarice Lispector', nota: '★ 4.6' },
-  { id: 'algernon', capa: '📔', titulo: 'Flores para Algernon', autor: 'Daniel Keyes', nota: '★ 4.8' },
+  { id: 'duna', capaIcon: BookIcon, titulo: 'Duna', autor: 'Frank Herbert', nota: '★ 4.8' },
+  { id: '1984', capaIcon: BookIcon, titulo: '1984', autor: 'George Orwell', nota: '★ 4.9' },
+  { id: 'sapiens', capaIcon: BookIcon, titulo: 'Sapiens', autor: 'Yuval Noah Harari', nota: '★ 4.7' },
+  { id: 'nome-vento', capaIcon: BookIcon, titulo: 'O Nome do Vento', autor: 'Patrick Rothfuss', nota: '★ 4.9' },
+  { id: 'hora-estrela', capaIcon: BookIcon, titulo: 'A Hora da Estrela', autor: 'Clarice Lispector', nota: '★ 4.6' },
+  { id: 'algernon', capaIcon: BookIcon, titulo: 'Flores para Algernon', autor: 'Daniel Keyes', nota: '★ 4.8' },
 ];
 
 export const comunidades = [
@@ -84,12 +84,12 @@ export const comunidades = [
 ];
 
 export const biblioteca = [
-  { id: 'metamorfose', titulo: 'A Metamorfose', autor: 'Franz Kafka', capa: '📘', status: 'lendo', progresso: 68 },
-  { id: 'duna', titulo: 'Duna', autor: 'Frank Herbert', capa: '📗', status: 'lendo', progresso: 32 },
-  { id: 'alquimista', titulo: 'O Alquimista', autor: 'Paulo Coelho', capa: '📙', status: 'lidos', nota: '★ 5.0' },
-  { id: 'sapiens', titulo: 'Sapiens', autor: 'Yuval Noah Harari', capa: '📕', status: 'quero-ler' },
-  { id: 'hora-estrela', titulo: 'A Hora da Estrela', autor: 'Clarice Lispector', capa: '📓', status: 'favoritos', nota: '★ 4.9' },
-  { id: 'guerra-paz', titulo: 'Guerra e Paz', autor: 'Liev Tolstói', capa: '📔', status: 'abandonados' },
+  { id: 'metamorfose', titulo: 'A Metamorfose', autor: 'Franz Kafka', capaIcon: BookIcon, status: 'lendo', progresso: 68 },
+  { id: 'duna', titulo: 'Duna', autor: 'Frank Herbert', capaIcon: BookIcon, status: 'lendo', progresso: 32 },
+  { id: 'alquimista', titulo: 'O Alquimista', autor: 'Paulo Coelho', capaIcon: BookIcon, status: 'lidos', nota: '★ 5.0' },
+  { id: 'sapiens', titulo: 'Sapiens', autor: 'Yuval Noah Harari', capaIcon: BookIcon, status: 'quero-ler' },
+  { id: 'hora-estrela', titulo: 'A Hora da Estrela', autor: 'Clarice Lispector', capaIcon: BookIcon, status: 'favoritos', nota: '★ 4.9' },
+  { id: 'guerra-paz', titulo: 'Guerra e Paz', autor: 'Liev Tolstói', capaIcon: BookIcon, status: 'abandonados' },
 ];
 
 export const abasBiblioteca = [
@@ -122,8 +122,8 @@ export const conquistas = [
 ];
 
 export const eventos = [
-  { data: '📅 Sexta-feira, 19h', titulo: 'Encontro Clube Ficção Científica' },
-  { data: '📅 Sábado, 10h', titulo: 'Sarau de poesia — Clássicos BR' },
+  { data: 'Sexta-feira, 19h', titulo: 'Encontro Clube Ficção Científica', dataIcon: BookIcon },
+  { data: 'Sábado, 10h', titulo: 'Sarau de poesia — Clássicos BR', dataIcon: BookIcon },
 ];
 
 export const notificacoes = [
@@ -150,7 +150,7 @@ export const dashboardPerfil = [
   { legenda: 'Livros lidos', titulo: '24' },
   { legenda: 'Páginas', titulo: '6.482' },
   { legenda: 'Horas de leitura', titulo: '142h' },
-  { legenda: 'Sequência atual', titulo: '30 dias 🔥' },
+  { legenda: 'Sequência atual', titulo: '30 dias', tituloIcon: FireIcon }
 ];
 
 export const abasPerfil = [

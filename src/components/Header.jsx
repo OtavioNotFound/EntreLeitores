@@ -2,6 +2,7 @@ import { useRef, useState } from 'react';
 import { linksHeader, mensagens, notificacoes } from '../data/mockData.js';
 import { useClickOutside } from '../hooks/useClickOutside.js';
 import { useToast } from './Toast.jsx';
+import { Menu as MenuIcon, Search as SearchIcon, LightMode as LightIcon, DarkMode as DarkIcon, ChatBubble as ChatIcon, Notifications as NotificationsIcon, Person as PersonIcon, Settings as SettingsIcon, Logout as LogoutIcon } from '@mui/icons-material';
 
 export default function Header({ paginaAtual, irParaPagina, abrirSidebarMobile, temaEscuro, alternarTema, aoSair }) {
   const mostrarToast = useToast();
@@ -30,7 +31,7 @@ export default function Header({ paginaAtual, irParaPagina, abrirSidebarMobile, 
 
   return (
     <header className="header">
-      <button className="menu-mobile-toggle" aria-label="Abrir menu" onClick={abrirSidebarMobile}>☰</button>
+      <button className="menu-mobile-toggle" aria-label="Abrir menu" onClick={abrirSidebarMobile}><MenuIcon /></button>
 
       <nav className="header__nav">
         {linksHeader.map((link, i) => (
@@ -46,7 +47,7 @@ export default function Header({ paginaAtual, irParaPagina, abrirSidebarMobile, 
       </nav>
 
       <div className="header__busca">
-        <span className="header__busca-icone">🔎</span>
+        <span className="header__busca-icone"><SearchIcon fontSize="small" /></span>
         <input
           type="search"
           placeholder="Buscar livros, autores..."
@@ -58,11 +59,11 @@ export default function Header({ paginaAtual, irParaPagina, abrirSidebarMobile, 
 
       <div className="header__acoes">
         <button className="header__icone-btn" title="Alternar tema" onClick={alternarTema}>
-          {temaEscuro ? '☀️' : '🌙'}
+          {temaEscuro ? <LightIcon fontSize="small" /> : <DarkIcon fontSize="small" />}
         </button>
 
         <div style={{ position: 'relative' }} ref={refMensagens}>
-          <button className="header__icone-btn" onClick={() => alternarDropdown('mensagens')}>💬</button>
+          <button className="header__icone-btn" onClick={() => alternarDropdown('mensagens')}><ChatIcon fontSize="small" /></button>
           <div className={`dropdown${dropdownAberto === 'mensagens' ? ' aberto' : ''}`}>
             <div className="dropdown__titulo">Mensagens</div>
             {mensagens.map((m, i) => (
@@ -79,7 +80,7 @@ export default function Header({ paginaAtual, irParaPagina, abrirSidebarMobile, 
 
         <div style={{ position: 'relative' }} ref={refNotificacoes}>
           <button className="header__icone-btn" onClick={() => alternarDropdown('notificacoes')}>
-            🔔<span className="header__ponto" />
+            <NotificationsIcon fontSize="small" /><span className="header__ponto" />
           </button>
           <div className={`dropdown${dropdownAberto === 'notificacoes' ? ' aberto' : ''}`}>
             <div className="dropdown__titulo">Notificações</div>
@@ -110,13 +111,13 @@ export default function Header({ paginaAtual, irParaPagina, abrirSidebarMobile, 
             <span className="header__perfil-chevron">▾</span>
           </button>
           <div className={`dropdown${dropdownAberto === 'perfil' ? ' aberto' : ''}`}>
-            <div className="dropdown__item" onClick={() => { irParaPagina('perfil'); setDropdownAberto(null); }}>👤 Ver perfil</div>
-            <div className="dropdown__item" onClick={() => { irParaPagina('configuracoes'); setDropdownAberto(null); }}>⚙ Configurações</div>
+            <div className="dropdown__item" onClick={() => { irParaPagina('perfil'); setDropdownAberto(null); }}><PersonIcon fontSize="small" /> Ver perfil</div>
+            <div className="dropdown__item" onClick={() => { irParaPagina('configuracoes'); setDropdownAberto(null); }}><SettingsIcon fontSize="small" /> Configurações</div>
             <div
               className="dropdown__item"
               onClick={() => { setDropdownAberto(null); aoSair?.(); }}
             >
-              🚪 Sair
+              <LogoutIcon fontSize="small" /> Sair
             </div>
           </div>
         </div>

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useToast } from '../components/Toast.jsx';
+import { MenuBook as BookIcon } from '@mui/icons-material';
 
 export default function Login({ aoLogar }) {
   const mostrarToast = useToast();
@@ -41,7 +42,7 @@ export default function Login({ aoLogar }) {
         <div className="login-tela__decor login-tela__decor--2" />
 
         <div className="login-tela__logo">
-          <div className="sidebar__logo-icone">📖</div>
+          <div className="sidebar__logo-icone"><BookIcon /></div>
           <span className="sidebar__logo-texto">Entre Leitores</span>
         </div>
 

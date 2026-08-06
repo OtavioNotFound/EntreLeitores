@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import AnimatedNumber from '../components/AnimatedNumber.jsx';
 import { estatisticasPerfil, dashboardPerfil, abasPerfil, conquistas, graficoBarras } from '../data/mockData.js';
+import { LocalFireDepartment as FireIcon } from '@mui/icons-material';
 
 export default function Perfil() {
   const [painelAtivo, setPainelAtivo] = useState('dashboard');
@@ -24,7 +25,7 @@ export default function Perfil() {
         </div>
       </div>
 
-      <p className="perfil__bio">Leitora voraz de ficção e clássicos brasileiros. Sempre em busca da próxima história que vai mudar minha forma de ver o mundo. 📚✨</p>
+      <p className="perfil__bio">Leitora voraz de ficção e clássicos brasileiros. Sempre em busca da próxima história que vai mudar minha forma de ver o mundo. <FireIcon fontSize="small" /></p>
 
       <div className="perfil__stats">
         {estatisticasPerfil.map((s) => (
@@ -52,7 +53,7 @@ export default function Perfil() {
           {dashboardPerfil.map((d, i) => (
             <div className="cartao-mini" key={i}>
               <div className="cartao-mini__legenda">{d.legenda}</div>
-              <div className="cartao-mini__titulo">{d.titulo}</div>
+              <div className="cartao-mini__titulo">{d.titulo} {d.tituloIcon ? (() => { const C = d.tituloIcon; return <C fontSize="small" />; })() : null}</div>
             </div>
           ))}
         </div>

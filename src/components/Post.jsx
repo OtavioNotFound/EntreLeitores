@@ -1,5 +1,6 @@
 import { useConjuntoStorage } from '../hooks/useLocalStorage.js';
 import { useToast } from './Toast.jsx';
+import { Favorite as FavoriteIcon, FavoriteBorder as FavoriteBorderIcon, ChatBubble as ChatIcon, Share as ShareIcon, BookmarkBorder as BookmarkIcon } from '@mui/icons-material';
 
 const formatarNumero = (numero) => new Intl.NumberFormat('pt-BR').format(numero);
 
@@ -51,12 +52,12 @@ export default function Post({ post, aoAbrirLivro }) {
 
       <div className="post__acoes">
         <button className={`post__acao post__acao--curtir${curtido ? ' curtido' : ''}`} onClick={alternarCurtida}>
-          <span className="icone">🤍</span><span className="post__acao-contador">{formatarNumero(totalCurtidas)}</span>
+          <span className="icone">{curtido ? <FavoriteIcon /> : <FavoriteBorderIcon />}</span><span className="post__acao-contador">{formatarNumero(totalCurtidas)}</span>
         </button>
-        <button className="post__acao"><span className="icone">💬</span><span>{post.comentarios ?? 0}</span></button>
-        <button className="post__acao compartilhar" onClick={compartilhar}><span className="icone">↗</span>Compartilhar</button>
+        <button className="post__acao"><span className="icone"><ChatIcon /></span><span>{post.comentarios ?? 0}</span></button>
+        <button className="post__acao compartilhar" onClick={compartilhar}><span className="icone"><ShareIcon /></span>Compartilhar</button>
         <button className={`post__acao post__acao--salvar post__acao-salvar${salvo ? ' salvo' : ''}`} onClick={alternarSalvar}>
-          <span className="icone">🔖</span>
+          <span className="icone"><BookmarkIcon /></span>
         </button>
       </div>
     </article>

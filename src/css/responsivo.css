@@ -71,14 +71,61 @@
 }
 
 .menu-mobile-toggle{ display: none; }
+@media (max-width: 992px){
+  .header__acoes{ gap: var(--space-3); }
+  .header__busca{ max-width: 280px; }
+  .sidebar{ width: var(--largura-sidebar-collapsed); }
+}
+
 @media (max-width: 768px){
-  .menu-mobile-toggle{
-    display: flex; align-items: center; justify-content: center;
-    width: 38px; height: 38px;
-    border-radius: var(--radius-sm);
-    border: none; background: var(--cinza-100);
-    font-size: 1.1rem; color: var(--cinza-700);
+  .app{
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "header"
+      "main";
   }
+  .sidebar{
+    position: fixed;
+    left: -100%;
+    top: 0;
+    width: 240px !important;
+    height: 100vh;
+    transition: left var(--transicao-normal);
+    z-index: 40;
+  }
+  .sidebar.aberta{ left: 0; }
+  .sidebar.aberta .sidebar__logo-texto,
+  .sidebar.aberta .sidebar__label,
+  .sidebar.aberta .sidebar__contador,
+  .sidebar.aberta .sidebar__canais,
+  .sidebar.aberta .item-texto{ display: revert; }
+  .sidebar.aberta .sidebar__item{ justify-content: flex-start; }
+  .sidebar.aberta .sidebar__logo{ justify-content: flex-start; padding-inline: var(--space-2); }
+
+  .header{ padding: 0 var(--space-4); gap: var(--space-3); position: sticky; top: 0; z-index: 30; background: var(--bg-card); }
+  .header__busca{ display: none; }
+  .header__perfil-texto{ display: none; }
+
+  .conteudo-principal{ padding: var(--space-4); gap: var(--space-4); }
+  .trio-topo{ gap: var(--space-3); }
+  .widgets-coluna{ flex-direction: column; position: static; }
+  .dashboard-grid{ grid-template-columns: 1fr; }
+  .livro-detalhe{ grid-template-columns: 1fr; }
+  .livro-detalhe__capa{ width: 140px; }
+  .biblioteca__grid{ grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); }
+  .perfil__acoes{ margin-left: 0; }
+  .perfil__cabecalho{ flex-wrap: wrap; }
+
+  .header__acoes .header__icone-btn{ min-width: 38px; min-height: 38px; }
+  .header__acoes{ flex-wrap: wrap; justify-content: flex-end; }
+}
+
+.menu-mobile-toggle{
+  display: flex; align-items: center; justify-content: center;
+  width: 38px; height: 38px;
+  border-radius: var(--radius-sm);
+  border: none; background: var(--cinza-100);
+  font-size: 1.1rem; color: var(--cinza-700);
 }
 
 .sidebar-overlay{

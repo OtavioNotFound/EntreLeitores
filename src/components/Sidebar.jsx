@@ -1,4 +1,5 @@
 import { itensMenu, canais } from '../data/mockData.js';
+import { MenuBook as BookIcon } from '@mui/icons-material';
 
 export default function Sidebar({ paginaAtual, irParaPagina, recolhida, alternarRecolhida, aberta, fecharMobile }) {
   return (
@@ -7,7 +8,7 @@ export default function Sidebar({ paginaAtual, irParaPagina, recolhida, alternar
 
       <aside className={`sidebar${aberta ? ' aberta' : ''}`}>
         <div className="sidebar__logo">
-          <div className="sidebar__logo-icone">📖</div>
+          <div className="sidebar__logo-icone"><BookIcon /></div>
           <span className="sidebar__logo-texto">Entre Leitores</span>
         </div>
 

@@ -1,6 +1,7 @@
 import Post from '../components/Post.jsx';
 import { lojasLivroDetalhe } from '../data/mockData.js';
 import { useToast } from '../components/Toast.jsx';
+import { MenuBook as BookIcon, Group as GroupIcon } from '@mui/icons-material';
 
 const resenhaExemplo = {
   id: 'resenha-livro-1',
@@ -16,12 +17,12 @@ const resenhaExemplo = {
 
 export default function LivroDetalhe({ livro }) {
   const mostrarToast = useToast();
-  const dados = livro || { titulo: 'A Metamorfose', autor: 'Franz Kafka', capa: '📘' };
+  const dados = livro || { titulo: 'A Metamorfose', autor: 'Franz Kafka', capaIcon: BookIcon };
 
   return (
     <section className="pagina ativa" id="pagina-livro">
       <div className="livro-detalhe">
-        <div className="livro-detalhe__capa">{dados.capa || '📘'}</div>
+        <div className="livro-detalhe__capa">{dados.capaIcon ? (() => { const C = dados.capaIcon; return <C fontSize="large" />; })() : dados.capa || <BookIcon fontSize="large" />}</div>
         <div>
           <h1 className="livro-detalhe__titulo">{dados.titulo}</h1>
           <div className="livro-detalhe__autor">{dados.autor}</div>
@@ -35,7 +36,7 @@ export default function LivroDetalhe({ livro }) {
           <div className="livro-detalhe__acoes">
             <button className="btn-primario" onClick={() => mostrarToast('Livro adicionado à sua biblioteca!')}>+ Adicionar à biblioteca</button>
             <button className="btn-secundario">▶ Começar leitura</button>
-            <button className="btn-secundario">👥 Participar do Clube</button>
+            <button className="btn-secundario"><GroupIcon fontSize="small" /> Participar do Clube</button>
           </div>
         </div>
       </div>

@@ -4,7 +4,7 @@
 
 .header{
   grid-area: header;
-  background: var(--branco);
+  background: var(--bg-card);
   border-bottom: 1px solid var(--cinza-200);
   display: flex;
   align-items: center;
@@ -317,7 +317,7 @@
   z-index: 200;
 }
 .toast{
-  background: var(--cinza-900);
+  background: rgba(0,0,0,0.78);
   color: var(--branco);
   padding: var(--space-3) var(--space-5);
   border-radius: var(--radius-sm);
@@ -333,7 +333,7 @@
   top: calc(100% + 10px);
   right: 0;
   width: 320px;
-  background: var(--branco);
+  background: var(--bg-card);
   border-radius: var(--radius-md);
   border: 1px solid var(--cinza-200);
   box-shadow: var(--shadow-lg);

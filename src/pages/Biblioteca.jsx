@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { biblioteca, abasBiblioteca } from '../data/mockData.js';
 import { useToast } from '../components/Toast.jsx';
+import { Search as SearchIcon } from '@mui/icons-material';
 
 export default function Biblioteca({ aoAbrirLivro }) {
   const mostrarToast = useToast();
@@ -21,7 +22,7 @@ export default function Biblioteca({ aoAbrirLivro }) {
       </div>
 
       <div className="header__busca" style={{ maxWidth: 320, marginBottom: 'var(--space-4)' }}>
-        <span className="header__busca-icone">🔎</span>
+        <span className="header__busca-icone"><SearchIcon fontSize="small" /></span>
         <input type="search" placeholder="Buscar na biblioteca..." value={busca} onChange={(e) => setBusca(e.target.value)} />
       </div>
 
@@ -41,7 +42,7 @@ export default function Biblioteca({ aoAbrirLivro }) {
         {livrosFiltrados.map((livro) => (
           <div className="livro-card" key={livro.id} onClick={() => aoAbrirLivro(livro)}>
             <div className="livro-card__capa">
-              {livro.capa}
+              {livro.capaIcon ? (() => { const C = livro.capaIcon; return <C />; })() : livro.capa}
               {livro.progresso != null && (
                 <div className="livro-card__progresso"><span style={{ width: `${livro.progresso}%` }} /></div>
               )}

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import Post from '../components/Post.jsx';
 import Compositor from '../components/Compositor.jsx';
 import { postsIniciais, plataformas, ranking } from '../data/mockData.js';
+import { MenuBook as BookIcon, EmojiEvents as TrophyIcon, LocalFireDepartment as FireIcon, Forum as ForumIcon, Description as DescriptionIcon, AccessTime as AccessTimeIcon, AutoAwesome as AutoAwesomeIcon, EmojiPeople as EmojiPeopleIcon } from '@mui/icons-material';
 
 const filtros = ['Para você', 'Seguindo', 'Populares', 'Recentes'];
 
@@ -37,14 +38,14 @@ export default function Inicio({ aoAbrirLivro }) {
         <div className="trio-topo">
           <div className="cartao-boasvindas">
             <span className="cartao-boasvindas__eyebrow">BEM-VINDA DE VOLTA</span>
-            <h2 className="cartao-boasvindas__titulo">Ana Clara! 👋</h2>
+            <h2 className="cartao-boasvindas__titulo">Ana Clara! <EmojiPeopleIcon fontSize="small" /></h2>
             <p className="cartao-boasvindas__texto">Você tem 3 livros em andamento esta semana.</p>
             <button className="cartao-boasvindas__btn">Ver atividade</button>
           </div>
 
           <div className="cartao-mini">
             <div className="cartao-mini__topo">
-              <div className="cartao-mini__icone cartao-mini__icone--azul">📘</div>
+              <div className="cartao-mini__icone cartao-mini__icone--azul"><BookIcon /></div>
               <span className="cartao-mini__valor">Kafka</span>
             </div>
             <div>
@@ -57,7 +58,7 @@ export default function Inicio({ aoAbrirLivro }) {
 
           <div className="cartao-mini">
             <div className="cartao-mini__topo">
-              <div className="cartao-mini__icone cartao-mini__icone--amarelo">🏆</div>
+              <div className="cartao-mini__icone cartao-mini__icone--amarelo"><TrophyIcon /></div>
               <span className="cartao-mini__valor">24/30</span>
             </div>
             <div>
@@ -65,7 +66,7 @@ export default function Inicio({ aoAbrirLivro }) {
               <div className="cartao-mini__titulo">Meta anual</div>
             </div>
             <div className="progresso"><span className="progresso__barra progresso__barra--amarelo" style={{ width: '80%' }} /></div>
-            <div className="cartao-mini__rodape">6 livros para completar a meta! 🔥</div>
+            <div className="cartao-mini__rodape">6 livros para completar a meta! <FireIcon fontSize="small" /></div>
           </div>
         </div>
 
@@ -94,7 +95,7 @@ export default function Inicio({ aoAbrirLivro }) {
       <div className="widgets-coluna">
         <div className="widget">
           <div className="titulo-secao" style={{ marginBottom: 12 }}>
-            Plataformas disponíveis <span style={{ fontSize: '.9rem', cursor: 'pointer' }}>✨</span>
+            Plataformas disponíveis <AutoAwesomeIcon fontSize="small" style={{ cursor: 'pointer', marginLeft: 8 }} />
           </div>
           <div className="lista-plataformas">
             {plataformas.map((p, i) => (
@@ -113,7 +114,7 @@ export default function Inicio({ aoAbrirLivro }) {
         </div>
 
         <div className="widget-discussao">
-          <div className="widget-discussao__eyebrow">🔥 DISCUSSÃO EM DESTAQUE</div>
+          <div className="widget-discussao__eyebrow"><FireIcon /> DISCUSSÃO EM DESTAQUE</div>
           <div className="widget-discussao__titulo">Qual o melhor plot twist da ficção?</div>
           <div className="widget-discussao__meta">312 respostas · Clube Ficção</div>
         </div>
@@ -127,7 +128,7 @@ export default function Inicio({ aoAbrirLivro }) {
                 <div className="item-ranking__texto">
                   <div className="item-ranking__titulo">{r.titulo}</div>
                   <div className="item-ranking__autor">{r.autor}</div>
-                  <div className="item-ranking__meta">💬 {r.comentarios} comentários</div>
+                  <div className="item-ranking__meta"><ForumIcon fontSize="small" /> {r.comentarios} comentários</div>
                 </div>
               </div>
             ))}
@@ -137,9 +138,9 @@ export default function Inicio({ aoAbrirLivro }) {
         <div className="widget">
           <div className="titulo-secao">Sua semana</div>
           <div className="resumo-grid">
-            <div className="resumo-item"><div className="resumo-item__icone">📄</div><div className="resumo-item__valor">312</div><div className="resumo-item__label">Páginas</div></div>
-            <div className="resumo-item"><div className="resumo-item__icone">⏱</div><div className="resumo-item__valor">8,4</div><div className="resumo-item__label">Horas</div></div>
-            <div className="resumo-item"><div className="resumo-item__icone">💬</div><div className="resumo-item__valor">14</div><div className="resumo-item__label">Posts</div></div>
+            <div className="resumo-item"><div className="resumo-item__icone"><DescriptionIcon /></div><div className="resumo-item__valor">312</div><div className="resumo-item__label">Páginas</div></div>
+            <div className="resumo-item"><div className="resumo-item__icone"><AccessTimeIcon /></div><div className="resumo-item__valor">8,4</div><div className="resumo-item__label">Horas</div></div>
+            <div className="resumo-item"><div className="resumo-item__icone"><ForumIcon /></div><div className="resumo-item__valor">14</div><div className="resumo-item__label">Posts</div></div>
           </div>
         </div>
 
