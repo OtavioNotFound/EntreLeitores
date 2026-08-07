@@ -2,9 +2,10 @@ import { useEffect, useState } from 'react';
 import AnimatedNumber from '../components/AnimatedNumber.jsx';
 import EmptyState from '../components/EmptyState.jsx';
 import Post from '../components/Post.jsx';
+import AchievementsPanel from '../components/AchievementsPanel.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 import { supabase } from '../lib/supabase.js';
-import { blockUser, getCompatibility, getPostsByUser, getProfileStats, getShelf, reportContent, toggleFollow } from '../services/social.js';
+import { blockUser, getAchievementMetrics, getCompatibility, getPostsByUser, getProfileStats, getShelf, reportContent, toggleFollow } from '../services/social.js';
 import { useToast } from '../components/Toast.jsx';
 import { MenuBook as BookIcon, Forum as ForumIcon } from '@mui/icons-material';
 
@@ -22,7 +23,10 @@ export default function Perfil({ profileId, aoAbrirLivro }) {
   const [loading, setLoading] = useState(true);
   const [compatibilidade, setCompatibilidade] = useState(null);
   const [blocked, setBlocked] = useState(false);
+  const [achievementMetrics,setAchievementMetrics]=useState(null);
   const isOwn = profileId === user.id;
+
+  useEffect(()=>setPainelAtivo('posts'),[profileId]);
 
   useEffect(() => {
     setLoading(true);
@@ -34,7 +38,8 @@ export default function Perfil({ profileId, aoAbrirLivro }) {
       isOwn ? Promise.resolve({ data: null }) : supabase.from('follows').select('following_id').eq('follower_id', user.id).eq('following_id', profileId).maybeSingle(),
       isOwn ? Promise.resolve(null) : getCompatibility(user.id, profileId),
       isOwn ? Promise.resolve({ data: null }) : supabase.from('user_blocks').select('blocked_id').eq('blocker_id', user.id).eq('blocked_id', profileId).maybeSingle(),
-    ]).then(([profileResult, profileStats, profilePosts, profileShelf, followResult, compatibilityResult, blockResult]) => {
+      isOwn ? getAchievementMetrics(user.id) : Promise.resolve(null),
+    ]).then(([profileResult, profileStats, profilePosts, profileShelf, followResult, compatibilityResult, blockResult,achievementResult]) => {
       if (profileResult.error) throw profileResult.error;
       setProfile(profileResult.data);
       setForm({ display_name: profileResult.data.display_name, bio: profileResult.data.bio || '', city: profileResult.data.city || '', state_code: profileResult.data.state_code || '' });
@@ -43,6 +48,7 @@ export default function Perfil({ profileId, aoAbrirLivro }) {
       setShelf(profileShelf);
       setFollowing(Boolean(followResult.data));
       setCompatibilidade(compatibilityResult); setBlocked(Boolean(blockResult.data));
+      setAchievementMetrics(achievementResult);
     }).catch((error) => mostrarToast(error.message)).finally(() => setLoading(false));
   }, [profileId, user.id, isOwn]);
 
@@ -92,6 +98,7 @@ export default function Perfil({ profileId, aoAbrirLivro }) {
       <div className="perfil__abas">
         <button className={`filtro-pill perfil__aba${painelAtivo === 'posts' ? ' ativa' : ''}`} onClick={() => setPainelAtivo('posts')}>Publicações</button>
         <button className={`filtro-pill perfil__aba${painelAtivo === 'leituras' ? ' ativa' : ''}`} onClick={() => setPainelAtivo('leituras')}>Estante</button>
+        {isOwn&&<button className={`filtro-pill perfil__aba${painelAtivo === 'conquistas' ? ' ativa' : ''}`} onClick={() => setPainelAtivo('conquistas')}>Conquistas</button>}
       </div>
 
       <div className={`perfil__painel${painelAtivo === 'posts' ? ' ativo' : ''}`}>
@@ -100,6 +107,7 @@ export default function Perfil({ profileId, aoAbrirLivro }) {
       <div className={`perfil__painel${painelAtivo === 'leituras' ? ' ativo' : ''}`}>
         {shelf.length ? <div className="biblioteca__grid">{shelf.map((book) => <button className="livro-card" key={book.id} onClick={() => aoAbrirLivro(book)}><div className="livro-card__capa">{book.cover_url ? <img src={book.cover_url} alt="" /> : <BookIcon />}</div><div className="livro-card__corpo"><div className="livro-card__titulo">{book.title}</div><div className="livro-card__autor">{book.author}</div></div></button>)}</div> : <EmptyState icon={<BookIcon />} title="A estante está vazia" description={isOwn ? 'Adicione livros pelo Explorar para construir sua estante.' : 'Este leitor ainda não adicionou livros.'} />}
       </div>
+      {isOwn&&<div className={`perfil__painel${painelAtivo === 'conquistas' ? ' ativo' : ''}`}>{achievementMetrics&&<AchievementsPanel metrics={achievementMetrics}/>}</div>}
     </section>
   );
 }

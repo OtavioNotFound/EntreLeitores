@@ -4,6 +4,7 @@ import Header from './components/Header.jsx';
 import { ToastProvider } from './components/Toast.jsx';
 import { useLocalStorage } from './hooks/useLocalStorage.js';
 import { AuthProvider, useAuth } from './context/AuthContext.jsx';
+import PageErrorBoundary from './components/PageErrorBoundary.jsx';
 
 const Inicio = lazy(() => import('./pages/Inicio.jsx'));
 const Explorar = lazy(() => import('./pages/Explorar.jsx'));
@@ -13,6 +14,7 @@ const LivroDetalhe = lazy(() => import('./pages/LivroDetalhe.jsx'));
 const Notificacoes = lazy(() => import('./pages/Notificacoes.jsx'));
 const Perfil = lazy(() => import('./pages/Perfil.jsx'));
 const Configuracoes = lazy(() => import('./pages/Configuracoes.jsx'));
+const Conquistas = lazy(() => import('./pages/Conquistas.jsx'));
 const Login = lazy(() => import('./pages/Login.jsx'));
 
 function AppInterno() {
@@ -67,6 +69,7 @@ function AppInterno() {
     explorar: <Explorar aoAbrirLivro={abrirLivro} buscaInicial={buscaGlobal} />,
     comunidades: <Comunidades />,
     biblioteca: <Biblioteca aoAbrirLivro={abrirLivro} />,
+    conquistas: <Conquistas />,
     livro: <LivroDetalhe livro={livroSelecionado} aoAbrirLivro={abrirLivro} aoAbrirPerfil={abrirPerfil} />,
     notificacoes: <Notificacoes />,
     perfil: <Perfil profileId={perfilSelecionadoId || user.id} aoAbrirLivro={abrirLivro} />,
@@ -98,7 +101,7 @@ function AppInterno() {
       />
 
       <main className="conteudo-principal">
-        <Suspense fallback={<div className="skeleton-card" />}>{paginas[paginaAtual] ?? paginas.inicio}</Suspense>
+        <PageErrorBoundary key={paginaAtual}><Suspense fallback={<div className="pagina-carregando" aria-label="Carregando página"><span className="loading-spinner" /></div>}>{paginas[paginaAtual] ?? paginas.inicio}</Suspense></PageErrorBoundary>
       </main>
     </div>
   );

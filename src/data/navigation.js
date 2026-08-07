@@ -5,6 +5,7 @@ import {
   MenuBook as BookIcon,
   Notifications as NotificationsIcon,
   Person as PersonIcon,
+  EmojiEvents as TrophyIcon,
 } from '@mui/icons-material';
 
 export const itensMenu = [
@@ -12,6 +13,7 @@ export const itensMenu = [
   { pagina: 'explorar', icone: SearchIcon, label: 'Explorar' },
   { pagina: 'comunidades', icone: GroupIcon, label: 'Clubes' },
   { pagina: 'biblioteca', icone: BookIcon, label: 'Estante' },
+  { pagina: 'conquistas', icone: TrophyIcon, label: 'Conquistas' },
   { pagina: 'notificacoes', icone: NotificationsIcon, label: 'Notificações' },
   { pagina: 'perfil', icone: PersonIcon, label: 'Perfil' },
 ];

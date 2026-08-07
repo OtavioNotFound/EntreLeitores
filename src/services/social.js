@@ -1,5 +1,5 @@
 import { supabase } from '../lib/supabase.js';
-import { calculateCompatibility } from '../lib/readerIntelligence.js';
+import { calculateCompatibility, calculateReadingStreak } from '../lib/readerIntelligence.js';
 
 function ensure(error) {
   if (error) throw error;
@@ -531,4 +531,29 @@ export async function getProfileStats(userId) {
     { label: 'Seguindo', valor: following.count || 0 },
     { label: 'Posts', valor: posts.count || 0 },
   ];
+}
+
+export async function getAchievementMetrics(userId) {
+  const [shelf,posts,sessions,notes,clubs,returnedLoans,resumedPauses]=await Promise.all([
+    getShelf(userId),getPostsByUser(userId),getReadingSessions(userId,3650),
+    supabase.from('reading_notes').select('*',{count:'exact',head:true}).eq('user_id',userId),
+    supabase.from('club_members').select('*',{count:'exact',head:true}).eq('user_id',userId),
+    supabase.from('loan_requests').select('*',{count:'exact',head:true}).eq('borrower_id',userId).eq('status','returned'),
+    supabase.from('reading_pauses').select('*',{count:'exact',head:true}).eq('user_id',userId).not('resumed_at','is',null),
+  ]);
+  ensure(notes.error||clubs.error||returnedLoans.error||resumedPauses.error);
+  const finished=shelf.filter((book)=>['lidos','favoritos'].includes(book.status));
+  return {
+    finishedBooks:finished.length,
+    streak:calculateReadingStreak(sessions),
+    genres:new Set(finished.map((book)=>book.genre).filter(Boolean)).size,
+    reviews:posts.filter((post)=>post.type==='resenha').length,
+    posts:posts.length,
+    pages:sessions.reduce((sum,item)=>sum+(Number(item.pages_read)||0),0),
+    notes:notes.count||0,
+    rereads:shelf.reduce((sum,book)=>sum+(Number(book.reread_count)||0),0),
+    clubs:clubs.count||0,
+    returnedLoans:returnedLoans.count||0,
+    resumedPauses:resumedPauses.count||0,
+  };
 }
