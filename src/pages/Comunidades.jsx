@@ -6,6 +6,7 @@ import {
   ImageOutlined as ImageIcon,
 } from '@mui/icons-material';
 import CommunityChat from '../components/CommunityChat.jsx';
+import DiscussionKit from '../components/DiscussionKit.jsx';
 import EmptyState from '../components/EmptyState.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 import { createClub, getBooks, getClubReading, getClubs, setClubReading, toggleClubMembership } from '../services/social.js';
@@ -76,6 +77,7 @@ export default function Comunidades() {
           <span className="sala-clube__membros">{clubeAberto.member_count} {clubeAberto.member_count === 1 ? 'membro' : 'membros'}</span>
         </div>
         <LeituraAdaptativa clube={clubeAberto} userId={user.id} />
+        <DiscussionKit club={clubeAberto} />
         <CommunityChat club={clubeAberto} />
       </section>
     );

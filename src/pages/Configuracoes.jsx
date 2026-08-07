@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext.jsx';
 import { useToast } from '../components/Toast.jsx';
 import { exportUserData, importGoodreadsBooks } from '../services/social.js';
 import { parseGoodreadsCsv } from '../lib/goodreadsImport.js';
+import SafetyPreferences from '../components/SafetyPreferences.jsx';
 
 export default function Configuracoes({ alternarTema }) {
   const { user, deleteAccount } = useAuth();
@@ -48,6 +49,7 @@ export default function Configuracoes({ alternarTema }) {
         <div className="configuracao-linha"><span><strong>Migrar do Goodreads</strong><small>Importe o CSV exportado pelo Goodreads, preservando estante e avaliações</small></span><label className="btn-secundario importacao-arquivo">{importando ? `Importando ${importando}` : 'Escolher CSV'}<input type="file" accept=".csv,text/csv" disabled={Boolean(importando)} onChange={importarGoodreads}/></label></div>
       </div>
 
+      <SafetyPreferences />
       <section className="zona-perigo" aria-labelledby="zona-perigo-titulo">
         <div>
           <span className="zona-perigo__icone"><DeleteIcon /></span>

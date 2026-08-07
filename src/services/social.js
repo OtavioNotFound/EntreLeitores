@@ -367,14 +367,48 @@ export async function updateLoanStatus(requestId, status) {
   const { data, error } = await supabase.rpc('update_loan_status', { p_request_id:requestId, p_status:status }); ensure(error); return data;
 }
 
+export async function getBookSafety(userId, bookId) {
+  const [summary, preferences] = await Promise.all([
+    supabase.rpc('get_book_warning_summary', { target_book_id:bookId }),
+    supabase.from('user_content_preferences').select('*').eq('user_id',userId).maybeSingle(),
+  ]);
+  ensure(summary.error || preferences.error); return { warnings:summary.data || [], preferences:preferences.data || { categories:[], minimum_severity:2, blur_sensitive:true } };
+}
+
+export async function saveBookWarning(userId, bookId, warning) {
+  const { error } = await supabase.from('book_content_warnings').upsert({ user_id:userId, book_id:bookId, category:warning.category, severity:Number(warning.severity), details:warning.details.trim() || null }, { onConflict:'book_id,user_id,category' }); ensure(error);
+}
+
+export async function getContentPreferences(userId) {
+  const { data,error }=await supabase.from('user_content_preferences').select('*').eq('user_id',userId).maybeSingle();ensure(error);return data||{categories:[],minimum_severity:2,blur_sensitive:true};
+}
+
+export async function saveContentPreferences(userId, preferences) {
+  const {data,error}=await supabase.from('user_content_preferences').upsert({user_id:userId,categories:preferences.categories,minimum_severity:Number(preferences.minimum_severity),blur_sensitive:Boolean(preferences.blur_sensitive),updated_at:new Date().toISOString()}).select().single();ensure(error);return data;
+}
+
+export async function getSafeClubPrompts(clubId, bookId) {
+  const {data,error}=await supabase.rpc('get_safe_club_prompts',{target_club_id:clubId,target_book_id:bookId});ensure(error);return data||[];
+}
+
+export async function createClubPrompt(userId, clubId, bookId, question, spoilerProgress) {
+  const {error}=await supabase.from('club_prompts').insert({author_id:userId,club_id:clubId,book_id:bookId,question:question.trim(),spoiler_progress:Number(spoilerProgress)});ensure(error);
+}
+
+export async function toggleClubPromptVote(promptId) {
+  const {data,error}=await supabase.rpc('toggle_club_prompt_vote',{target_prompt_id:promptId});ensure(error);return data;
+}
+
 export async function exportUserData(userId) {
-  const tables = ['profiles','user_books','posts','comments','follows','saved_posts','reading_sessions','reading_notes','reading_cycles','reading_goals','emotional_checkins','lending_offers','loan_requests','user_blocks','reports'];
+  const tables = ['profiles','user_books','posts','comments','follows','saved_posts','reading_sessions','reading_notes','reading_cycles','reading_goals','emotional_checkins','lending_offers','loan_requests','book_content_warnings','user_content_preferences','club_prompts','user_blocks','reports'];
   const results = await Promise.all(tables.map(async (table) => {
     let query = supabase.from(table).select('*');
     if (table === 'profiles') query = query.eq('id', userId);
     else if (['user_books','reading_sessions','reading_notes','reading_cycles','reading_goals','emotional_checkins'].includes(table)) query = query.eq('user_id', userId);
     else if (table === 'lending_offers') query = query.eq('owner_id', userId);
     else if (table === 'loan_requests') query = query.eq('borrower_id', userId);
+    else if (table === 'book_content_warnings' || table === 'user_content_preferences') query = query.eq('user_id', userId);
+    else if (table === 'club_prompts') query = query.eq('author_id', userId);
     else if (table === 'posts' || table === 'comments') query = query.eq('author_id', userId);
     else if (table === 'follows') query = query.eq('follower_id', userId);
     else if (table === 'saved_posts') query = query.eq('user_id', userId);

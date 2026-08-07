@@ -163,4 +163,5 @@
 @media (max-width: 768px){
   .emprestimos form,.painel-emprestimos__colunas{grid-template-columns:1fr}
   .emprestimos header,.emprestimos__lista article{align-items:stretch;flex-direction:column}
+  .seguranca-leitura form,.pote-perguntas form{grid-template-columns:1fr}
 }

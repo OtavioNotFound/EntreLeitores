@@ -3,6 +3,7 @@ import Post from '../components/Post.jsx';
 import Compositor from '../components/Compositor.jsx';
 import ReadingNotebook from '../components/ReadingNotebook.jsx';
 import TrustedLending from '../components/TrustedLending.jsx';
+import BookSafety from '../components/BookSafety.jsx';
 import EmptyState from '../components/EmptyState.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 import { addToShelf, createPost, getEmotionMap, getPostsByBook, saveEmotion, startReread, updateBookOrganization, updateReading } from '../services/social.js';
@@ -80,6 +81,7 @@ export default function LivroDetalhe({ livro, aoAbrirLivro, aoAbrirPerfil }) {
         </div>
       </div>
       <section className="mapa-emocional widget"><div><h2>Mapa emocional coletivo</h2><p>Veja como a experiência muda ao longo do livro, sem revelar acontecimentos.</p></div><div className="mapa-emocional__linha">{emocoes.length ? emocoes.map((item, index) => <span key={`${item.progress}-${index}`} title={`${item.emotion} em ${item.progress}%`} style={{ left: `${item.progress}%` }}>{({curioso:'🤔',feliz:'😊',tenso:'😰',triste:'😢',surpreso:'😮',inspirado:'✨'})[item.emotion]}</span>) : <small>Seja a primeira pessoa a registrar uma emoção.</small>}</div><div className="mapa-emocional__form"><select value={emocao} onChange={(e) => setEmocao(e.target.value)}><option value="curioso">🤔 Curioso</option><option value="feliz">😊 Feliz</option><option value="tenso">😰 Tenso</option><option value="triste">😢 Triste</option><option value="surpreso">😮 Surpreso</option><option value="inspirado">✨ Inspirado</option></select><span>em {leitura.progress}%</span><button className="btn-secundario" onClick={registrarEmocao}>Registrar</button></div></section>
+      <BookSafety bookId={livro.id}/>
       <TrustedLending book={livro} isOwned={Boolean(livro.status) && (!livro.format || livro.format === 'fisico')}/>
       <ReadingNotebook bookId={livro.id} currentProgress={Number(leitura.progress)||0}/>
       <div className="titulo-secao" style={{ marginTop: 'var(--space-6)' }}>Conversas sobre este livro</div>
