@@ -1,19 +1,19 @@
-import { useEffect, useState } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import Sidebar from './components/Sidebar.jsx';
 import Header from './components/Header.jsx';
 import { ToastProvider } from './components/Toast.jsx';
 import { useLocalStorage } from './hooks/useLocalStorage.js';
 import { AuthProvider, useAuth } from './context/AuthContext.jsx';
 
-import Inicio from './pages/Inicio.jsx';
-import Explorar from './pages/Explorar.jsx';
-import Comunidades from './pages/Comunidades.jsx';
-import Biblioteca from './pages/Biblioteca.jsx';
-import LivroDetalhe from './pages/LivroDetalhe.jsx';
-import Notificacoes from './pages/Notificacoes.jsx';
-import Perfil from './pages/Perfil.jsx';
-import Configuracoes from './pages/Configuracoes.jsx';
-import Login from './pages/Login.jsx';
+const Inicio = lazy(() => import('./pages/Inicio.jsx'));
+const Explorar = lazy(() => import('./pages/Explorar.jsx'));
+const Comunidades = lazy(() => import('./pages/Comunidades.jsx'));
+const Biblioteca = lazy(() => import('./pages/Biblioteca.jsx'));
+const LivroDetalhe = lazy(() => import('./pages/LivroDetalhe.jsx'));
+const Notificacoes = lazy(() => import('./pages/Notificacoes.jsx'));
+const Perfil = lazy(() => import('./pages/Perfil.jsx'));
+const Configuracoes = lazy(() => import('./pages/Configuracoes.jsx'));
+const Login = lazy(() => import('./pages/Login.jsx'));
 
 function AppInterno() {
   const { user, profile, loading, signOut } = useAuth();
@@ -21,7 +21,7 @@ function AppInterno() {
   const [sidebarRecolhida, setSidebarRecolhida] = useLocalStorage('sidebarRecolhida', false);
   const [temaEscuro, setTemaEscuro] = useLocalStorage('tema', 'claro');
   const [sidebarMobileAberta, setSidebarMobileAberta] = useState(false);
-  const [livroSelecionado, setLivroSelecionado] = useState(null);
+  const [livroSelecionado, setLivroSelecionado] = useLocalStorage('livroSelecionado', null);
   const [perfilSelecionadoId, setPerfilSelecionadoId] = useState(null);
   const [buscaGlobal, setBuscaGlobal] = useState('');
 
@@ -31,13 +31,18 @@ function AppInterno() {
   useEffect(() => {
     document.body.classList.toggle('tema-escuro', escuro);
   }, [escuro]);
+  useEffect(() => {
+    const syncHash = () => { const page = window.location.hash.replace('#/', '').split('/')[0]; if (page) setPaginaAtual(page); };
+    syncHash(); window.addEventListener('hashchange', syncHash); return () => window.removeEventListener('hashchange', syncHash);
+  }, [setPaginaAtual]);
 
   if (loading) return <div className="app-loading"><span className="loading-spinner" />Conectando ao Entre Leitores...</div>;
-  if (!user) return <Login />;
+  if (!user) return <Suspense fallback={<div className="app-loading"><span className="loading-spinner" /></div>}><Login /></Suspense>;
 
   function irParaPagina(nomePagina) {
     if (nomePagina === 'perfil') setPerfilSelecionadoId(user.id);
     setPaginaAtual(nomePagina);
+    window.location.hash = `/${nomePagina}`;
     window.scrollTo({ top: 0, behavior: 'smooth' });
     if (window.innerWidth <= 768) setSidebarMobileAberta(false);
   }
@@ -62,7 +67,7 @@ function AppInterno() {
     explorar: <Explorar aoAbrirLivro={abrirLivro} buscaInicial={buscaGlobal} />,
     comunidades: <Comunidades />,
     biblioteca: <Biblioteca aoAbrirLivro={abrirLivro} />,
-    livro: <LivroDetalhe livro={livroSelecionado} />,
+    livro: <LivroDetalhe livro={livroSelecionado} aoAbrirLivro={abrirLivro} aoAbrirPerfil={abrirPerfil} />,
     notificacoes: <Notificacoes />,
     perfil: <Perfil profileId={perfilSelecionadoId || user.id} aoAbrirLivro={abrirLivro} />,
     configuracoes: <Configuracoes alternarTema={alternarTema} />,
@@ -93,7 +98,7 @@ function AppInterno() {
       />
 
       <main className="conteudo-principal">
-        {paginas[paginaAtual] ?? paginas.inicio}
+        <Suspense fallback={<div className="skeleton-card" />}>{paginas[paginaAtual] ?? paginas.inicio}</Suspense>
       </main>
     </div>
   );

@@ -136,6 +136,25 @@
 .livro-detalhe__meta-label{ font-size: var(--fs-xs); color: var(--cinza-500); }
 
 .livro-detalhe__acoes{ display: flex; gap: var(--space-3); flex-wrap: wrap; }
+.leitura-form{ max-width: 520px; margin-top: var(--space-3); padding: var(--space-4); display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-3); background: var(--bg-card); border: 1px solid var(--cinza-200); border-radius: var(--radius-md); }
+.leitura-form label{ display: grid; gap: var(--space-1); color: var(--cinza-700); font-size: var(--fs-sm); font-weight: 600; }
+.leitura-form select{ min-height: 40px; border: 1px solid var(--cinza-200); border-radius: var(--radius-sm); background: var(--cinza-50); color: var(--cinza-900); padding: 0 var(--space-2); }
+.leitura-form .btn-primario{ align-self: end; }
+.mapa-emocional{ max-width: 760px; display: grid; gap: var(--space-4); }
+.mapa-emocional h2,.descoberta-intencao h2,.descoberta-local h2{ font-size: var(--fs-md); }
+.mapa-emocional p,.descoberta-intencao p,.descoberta-local p{ margin-top: 4px; color: var(--cinza-500); font-size: var(--fs-sm); }
+.mapa-emocional__linha{ position: relative; min-height: 50px; margin: 0 12px; border-bottom: 5px solid var(--lilas-100); }
+.mapa-emocional__linha span{ position: absolute; bottom: -15px; transform: translateX(-50%); font-size: 1.35rem; }
+.mapa-emocional__form{ display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; }
+.mapa-emocional select,.descoberta-local input{ border: 1px solid var(--cinza-200); border-radius: var(--radius-sm); background: var(--cinza-50); color: var(--cinza-900); padding: 9px; }
+.descoberta-intencao,.descoberta-local{ display: grid; gap: var(--space-3); margin-bottom: var(--space-4); }
+.descoberta-intencao__opcoes{ display: flex; gap: var(--space-2); flex-wrap: wrap; }
+.recomendacoes-rapidas,.clubes-locais{ display: grid; grid-template-columns: repeat(auto-fit,minmax(150px,1fr)); gap: var(--space-2); }
+.recomendacoes-rapidas button,.clubes-locais span{ display: grid; gap: 3px; padding: var(--space-3); border: 1px solid var(--cinza-200); border-radius: var(--radius-sm); background: var(--bg-card); color: var(--cinza-900); text-align: left; }
+.recomendacoes-rapidas span,.clubes-locais small{ color: var(--cinza-500); font-size: var(--fs-xs); }
+.descoberta-local{ grid-template-columns: 1fr minmax(180px,280px) auto; align-items: end; }
+.clubes-locais{ grid-column: 1/-1; }
+.carregar-mais{ display: flex; margin: var(--space-5) auto; }
 
 .lojas-grid{
   display: grid;

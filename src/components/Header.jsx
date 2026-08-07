@@ -49,7 +49,7 @@ export default function Header({ irParaPagina, abrirSidebarMobile, temaEscuro, a
       <button className="menu-mobile-toggle" aria-label="Abrir menu" onClick={abrirSidebarMobile}><MenuIcon /></button>
       <div className="header__busca">
         <span className="header__busca-icone"><SearchIcon fontSize="small" /></span>
-        <input type="search" placeholder="Buscar pessoas, livros ou clubes..." value={busca} onChange={(e) => setBusca(e.target.value)} onKeyDown={aoBuscar} />
+        <input aria-label="Buscar livros" type="search" placeholder="Buscar livros por título ou autor..." value={busca} onChange={(e) => setBusca(e.target.value)} onKeyDown={aoBuscar} />
       </div>
       <div className="header__acoes">
         <button className="header__icone-btn" aria-label="Alternar tema" title="Alternar tema" onClick={alternarTema}>

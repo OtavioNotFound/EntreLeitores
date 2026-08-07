@@ -143,3 +143,16 @@
   z-index: 19;
 }
 .sidebar-overlay.ativo{ display: block; }
+
+@media (min-width: 769px){
+  .menu-mobile-toggle{ display: none; }
+}
+
+@media (max-width: 768px){
+  .leitura-form{ grid-template-columns: 1fr; }
+  .descoberta-local{ grid-template-columns: 1fr; }.clubes-locais{ grid-column:1; }.leitura-adaptativa{ align-items:flex-start; flex-direction:column; }
+}
+
+@media (prefers-reduced-motion: reduce){
+  *, *::before, *::after{ scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+}

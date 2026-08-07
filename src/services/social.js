@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase.js';
+import { calculateCompatibility } from '../lib/readerIntelligence.js';
 
 function ensure(error) {
   if (error) throw error;
@@ -31,8 +32,20 @@ function normalizePost(row, likedIds, savedIds) {
     curtido: likedIds.has(row.id),
     salvo: savedIds.has(row.id),
     createdAt: row.created_at,
+    spoilerProgress: row.spoiler_progress,
+    spoilerChapter: row.spoiler_chapter,
+    opcoesEnquete: (row.poll_options || [])
+      .sort((a, b) => a.position - b.position)
+      .map((option) => ({
+        id: option.id,
+        texto: option.label,
+        votos: option.poll_votes?.length || 0,
+        votada: option.poll_votes?.some((vote) => vote.user_id === row.viewer_id) || false,
+      })),
   };
 }
+
+const POST_SELECT = 'id,author_id,book_id,type,content,created_at,spoiler_progress,spoiler_chapter,author:profiles!posts_author_id_fkey(id,display_name,username,avatar_url),book:books(id,title,author,cover_url),post_likes(count),comments(count),poll_options(id,label,position,poll_votes(user_id))';
 
 export async function getFeed(userId, filter = 'para-voce') {
   let authorIds = null;
@@ -45,7 +58,7 @@ export async function getFeed(userId, filter = 'para-voce') {
 
   let query = supabase
     .from('posts')
-    .select('id,author_id,book_id,type,content,created_at,author:profiles!posts_author_id_fkey(id,display_name,username,avatar_url),book:books(id,title,author,cover_url),post_likes(count),comments(count)')
+    .select(POST_SELECT)
     .order('created_at', { ascending: false })
     .limit(30);
   if (authorIds) query = query.in('author_id', authorIds);
@@ -60,13 +73,16 @@ export async function getFeed(userId, filter = 'para-voce') {
     supabase.from('saved_posts').select('post_id').eq('user_id', userId).in('post_id', ids),
   ]);
   ensure(likesError || savesError);
-  return data.map((row) => normalizePost(row, new Set(likes.map((x) => x.post_id)), new Set(saves.map((x) => x.post_id))));
+  const bookIds = [...new Set(data.map((row) => row.book_id).filter(Boolean))];
+  const { data: progressRows } = bookIds.length ? await supabase.from('user_books').select('book_id,progress').eq('user_id', userId).in('book_id', bookIds) : { data: [] };
+  const progressByBook = new Map((progressRows || []).map((item) => [item.book_id, item.progress]));
+  return data.map((row) => ({ ...normalizePost({ ...row, viewer_id: userId }, new Set(likes.map((x) => x.post_id)), new Set(saves.map((x) => x.post_id))), spoilerLocked: row.spoiler_progress != null && (progressByBook.get(row.book_id) || 0) < row.spoiler_progress }));
 }
 
 export async function getPostsByUser(userId) {
   const { data, error } = await supabase
     .from('posts')
-    .select('id,author_id,book_id,type,content,created_at,author:profiles!posts_author_id_fkey(id,display_name,username,avatar_url),book:books(id,title,author,cover_url),post_likes(count),comments(count)')
+    .select(POST_SELECT)
     .eq('author_id', userId)
     .order('created_at', { ascending: false });
   ensure(error);
@@ -76,7 +92,7 @@ export async function getPostsByUser(userId) {
 export async function getPostsByBook(bookId, userId) {
   const { data, error } = await supabase
     .from('posts')
-    .select('id,author_id,book_id,type,content,created_at,author:profiles!posts_author_id_fkey(id,display_name,username,avatar_url),book:books(id,title,author,cover_url),post_likes(count),comments(count)')
+    .select(POST_SELECT)
     .eq('book_id', bookId)
     .order('created_at', { ascending: false });
   ensure(error);
@@ -86,13 +102,27 @@ export async function getPostsByBook(bookId, userId) {
     supabase.from('post_likes').select('post_id').eq('user_id', userId).in('post_id', ids),
     supabase.from('saved_posts').select('post_id').eq('user_id', userId).in('post_id', ids),
   ]);
-  return data.map((row) => normalizePost(row, new Set((likes || []).map((x) => x.post_id)), new Set((saves || []).map((x) => x.post_id))));
+  const { data: reading } = await supabase.from('user_books').select('progress').eq('user_id', userId).eq('book_id', bookId).maybeSingle();
+  return data.map((row) => ({ ...normalizePost({ ...row, viewer_id: userId }, new Set((likes || []).map((x) => x.post_id)), new Set((saves || []).map((x) => x.post_id))), spoilerLocked: row.spoiler_progress != null && (reading?.progress || 0) < row.spoiler_progress }));
 }
 
-export async function createPost(userId, { content, type = 'publicacao', bookId = null, clubId = null }) {
-  const { data, error } = await supabase.from('posts').insert({ author_id: userId, content, type, book_id: bookId, club_id: clubId }).select('id').single();
+export async function createPost(userId, { content, type = 'publicacao', bookId = null, clubId = null, pollOptions = [], spoilerProgress = null, spoilerChapter = null }) {
+  const { data, error } = await supabase.from('posts').insert({ author_id: userId, content, type, book_id: bookId, club_id: clubId, spoiler_progress: spoilerProgress, spoiler_chapter: spoilerChapter }).select('id').single();
   ensure(error);
+  if (type === 'enquete') {
+    const options = pollOptions.map((label, position) => ({ post_id: data.id, label: label.trim(), position })).filter((option) => option.label);
+    const { error: optionsError } = await supabase.from('poll_options').insert(options);
+    if (optionsError) {
+      await supabase.from('posts').delete().eq('id', data.id).eq('author_id', userId);
+      throw optionsError;
+    }
+  }
   return data;
+}
+
+export async function votePoll(optionId) {
+  const { error } = await supabase.rpc('cast_poll_vote', { target_option_id: optionId });
+  ensure(error);
 }
 
 export async function toggleLike(userId, postId, liked) {
@@ -199,9 +229,9 @@ export async function getClubs(userId) {
   return data.map((club) => ({ ...club, member_count: club.club_members?.[0]?.count || 0, joined: joined.has(club.id) }));
 }
 
-export async function createClub(userId, name, description, coverUrl = null) {
+export async function createClub(userId, name, description, coverUrl = null, city = null, meetingPlace = null) {
   const slug = `${name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')}-${Math.random().toString(36).slice(2, 6)}`;
-  const { data, error } = await supabase.from('clubs').insert({ owner_id: userId, name, description, cover_url: coverUrl, slug }).select().single();
+  const { data, error } = await supabase.from('clubs').insert({ owner_id: userId, name, description, cover_url: coverUrl, city, meeting_place: meetingPlace, slug }).select().single();
   ensure(error);
   return data;
 }
@@ -220,8 +250,8 @@ export async function getMyClubs(userId) {
   return data.map((item) => item.club).filter(Boolean);
 }
 
-export async function getBooks(search = '') {
-  let query = supabase.from('books').select('*').order('created_at', { ascending: false }).limit(40);
+export async function getBooks(search = '', page = 0, pageSize = 24) {
+  let query = supabase.from('books').select('*').order('created_at', { ascending: false }).range(page * pageSize, page * pageSize + pageSize - 1);
   if (search.trim()) query = query.or(`title.ilike.%${search.trim()}%,author.ilike.%${search.trim()}%`);
   const { data, error } = await query;
   ensure(error);
@@ -243,6 +273,70 @@ export async function getShelf(userId) {
 export async function addToShelf(userId, bookId, status = 'quero-ler') {
   const { error } = await supabase.from('user_books').upsert({ user_id: userId, book_id: bookId, status }, { onConflict: 'user_id,book_id' });
   ensure(error);
+}
+
+export async function updateReading(userId, bookId, { status, progress, rating }) {
+  const values = { user_id: userId, book_id: bookId, status, progress, rating: rating || null };
+  if (status === 'lendo') values.started_at = new Date().toISOString().slice(0, 10);
+  if (status === 'lidos') {
+    values.progress = 100;
+    values.finished_at = new Date().toISOString().slice(0, 10);
+  }
+  const { error } = await supabase.from('user_books').upsert(values, { onConflict: 'user_id,book_id' });
+  ensure(error);
+}
+
+export async function getEmotionMap(bookId) {
+  const { data, error } = await supabase.from('emotional_checkins').select('emotion,progress').eq('book_id', bookId).order('progress');
+  ensure(error);
+  return data;
+}
+
+export async function saveEmotion(userId, bookId, progress, emotion, note = null) {
+  const { error } = await supabase.from('emotional_checkins').upsert({ user_id: userId, book_id: bookId, progress, emotion, note }, { onConflict: 'user_id,book_id,progress' });
+  ensure(error);
+}
+
+export async function getCompatibility(currentUserId, otherUserId) {
+  const [{ data: mine, error: mineError }, { data: theirs, error: theirError }] = await Promise.all([
+    supabase.from('user_books').select('book_id,rating,book:books(genre)').eq('user_id', currentUserId),
+    supabase.from('user_books').select('book_id,rating,book:books(genre)').eq('user_id', otherUserId),
+  ]);
+  ensure(mineError || theirError);
+  return calculateCompatibility(mine, theirs);
+}
+
+export async function blockUser(userId, targetId, blocked) {
+  const result = blocked ? await supabase.from('user_blocks').delete().eq('blocker_id', userId).eq('blocked_id', targetId) : await supabase.from('user_blocks').insert({ blocker_id: userId, blocked_id: targetId });
+  ensure(result.error); return !blocked;
+}
+
+export async function reportContent(userId, targetType, targetId, reason = 'outro') {
+  const { error } = await supabase.from('reports').insert({ reporter_id: userId, target_type: targetType, target_id: targetId, reason });
+  ensure(error);
+}
+
+export async function getLocalClubs(city) {
+  let query = supabase.from('clubs').select('id,name,description,city,meeting_place,cover_url').eq('is_private', false).limit(12);
+  if (city?.trim()) query = query.ilike('city', `%${city.trim()}%`);
+  const { data, error } = await query; ensure(error); return data;
+}
+
+export async function recommendByIntent(intent) {
+  const mappings = { relaxar: ['Romance','Humor'], estudar: ['História','Ciência'], emocionar: ['Drama','Romance'], debater: ['Filosofia','Política'], rapido: ['Contos','Poesia'], descobrir: [] };
+  let query = supabase.from('books').select('*').limit(12);
+  const genres = mappings[intent] || [];
+  if (genres.length) query = query.in('genre', genres);
+  const { data, error } = await query.order('created_at', { ascending: false }); ensure(error); return data;
+}
+
+export async function getClubReading(clubId) {
+  const { data, error } = await supabase.from('club_readings').select('*,book:books(*)').eq('club_id', clubId).eq('active', true).maybeSingle(); ensure(error); return data;
+}
+
+export async function setClubReading(userId, clubId, bookId, targetEndAt) {
+  await supabase.from('club_readings').update({ active: false }).eq('club_id', clubId).eq('active', true);
+  const { data, error } = await supabase.from('club_readings').insert({ club_id: clubId, book_id: bookId, target_end_at: targetEndAt || null, created_by: userId }).select('*,book:books(*)').single(); ensure(error); return data;
 }
 
 export async function getNotifications(userId) {

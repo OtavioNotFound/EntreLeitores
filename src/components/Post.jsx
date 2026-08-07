@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext.jsx';
-import { createComment, deleteComment, deletePost, getComments, toggleLike, toggleSave } from '../services/social.js';
+import { createComment, deleteComment, deletePost, getComments, reportContent, toggleLike, toggleSave, votePoll } from '../services/social.js';
 import { useToast } from './Toast.jsx';
 import { Favorite as FavoriteIcon, FavoriteBorder as FavoriteBorderIcon, ChatBubble as ChatIcon, Bookmark as BookmarkIcon, BookmarkBorder as BookmarkBorderIcon, Send as SendIcon, MenuBook as BookIcon, DeleteOutlined as DeleteIcon } from '@mui/icons-material';
 
@@ -17,6 +17,19 @@ export default function Post({ post, aoAbrirLivro, aoAbrirPerfil }) {
   const [comentariosAbertos, setComentariosAbertos] = useState(false);
   const [novoComentario, setNovoComentario] = useState('');
   const [removido, setRemovido] = useState(false);
+  const [opcoesEnquete, setOpcoesEnquete] = useState(post.opcoesEnquete || []);
+  const [spoilerRevelado, setSpoilerRevelado] = useState(false);
+
+  async function votar(optionId) {
+    try {
+      await votePoll(optionId);
+      setOpcoesEnquete((atuais) => atuais.map((opcao) => ({
+        ...opcao,
+        votos: opcao.votos + (opcao.id === optionId && !opcao.votada ? 1 : 0) - (opcao.id !== optionId && opcao.votada ? 1 : 0),
+        votada: opcao.id === optionId,
+      })));
+    } catch (error) { mostrarToast(error.message); }
+  }
 
   async function alternarCurtida() {
     try {
@@ -74,6 +87,11 @@ export default function Post({ post, aoAbrirLivro, aoAbrirPerfil }) {
     } catch (error) { mostrarToast(error.message); }
   }
 
+  async function denunciar() {
+    try { await reportContent(user.id, 'post', post.id, post.spoilerProgress ? 'spoiler' : 'outro'); mostrarToast('Denúncia enviada para análise.'); }
+    catch (error) { mostrarToast(error.message); }
+  }
+
   const inicial = post.autor?.charAt(0)?.toUpperCase() || 'L';
 
   if (removido) return null;
@@ -89,7 +107,17 @@ export default function Post({ post, aoAbrirLivro, aoAbrirPerfil }) {
         {post.tag && <span className={`post__tag ${post.tag.classe}`}>{post.tag.texto}</span>}
         {post.autorId === user.id && <button className="btn-icone-perigo" aria-label="Apagar publicação" title="Apagar publicação" onClick={apagarPublicacao}><DeleteIcon fontSize="small" /></button>}
       </div>
-      <p className="post__texto">{post.texto}</p>
+      {post.spoilerLocked && !spoilerRevelado ? <div className="post__spoiler-bloqueado"><strong>Conteúdo protegido contra spoilers</strong><span>Esta conversa menciona eventos até {post.spoilerProgress}%{post.spoilerChapter ? ` · ${post.spoilerChapter}` : ''}.</span><button className="btn-secundario" onClick={() => setSpoilerRevelado(true)}>Revelar mesmo assim</button></div> : <p className="post__texto">{post.texto}</p>}
+      {opcoesEnquete.length > 0 && <div className="post__enquete" aria-label="Opções da enquete">
+        {opcoesEnquete.map((opcao) => {
+          const total = opcoesEnquete.reduce((soma, item) => soma + item.votos, 0);
+          const percentual = total ? Math.round((opcao.votos / total) * 100) : 0;
+          return <button key={opcao.id} className={`post__enquete-opcao${opcao.votada ? ' ativa' : ''}`} onClick={() => votar(opcao.id)}>
+            <span className="post__enquete-barra" style={{ width: `${percentual}%` }} />
+            <span>{opcao.texto}</span><strong>{percentual}%</strong>
+          </button>;
+        })}
+      </div>}
       {post.livro && (
         <button className="post__livro post__livro--button" onClick={() => aoAbrirLivro?.(post.livro)}>
           <span className="post__livro-capa">{post.livro.capa ? <img src={post.livro.capa} alt="" /> : <BookIcon />}</span>
@@ -105,6 +133,7 @@ export default function Post({ post, aoAbrirLivro, aoAbrirPerfil }) {
         <button aria-label={salvo ? 'Remover dos salvos' : 'Salvar'} className={`post__acao post__acao-salvar${salvo ? ' salvo' : ''}`} onClick={alternarSalvar}>
           <span className="icone">{salvo ? <BookmarkIcon /> : <BookmarkBorderIcon />}</span>
         </button>
+        {post.autorId !== user.id && <button className="post__acao" onClick={denunciar}>Denunciar</button>}
       </div>
       {comentariosAbertos && (
         <div className="comentarios">

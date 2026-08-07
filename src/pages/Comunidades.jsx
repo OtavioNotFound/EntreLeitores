@@ -8,13 +8,23 @@ import {
 import CommunityChat from '../components/CommunityChat.jsx';
 import EmptyState from '../components/EmptyState.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
-import { createClub, getClubs, toggleClubMembership } from '../services/social.js';
+import { createClub, getBooks, getClubReading, getClubs, setClubReading, toggleClubMembership } from '../services/social.js';
 import { useToast } from '../components/Toast.jsx';
+import { calculateDailyPace } from '../lib/readerIntelligence.js';
 
 function CapaClube({ clube }) {
   const [falhou, setFalhou] = useState(false);
   if (!clube.cover_url || falhou) return <GroupsIcon />;
   return <img src={clube.cover_url} alt={`Capa do clube ${clube.name}`} onError={() => setFalhou(true)} />;
+}
+
+function LeituraAdaptativa({ clube, userId }) {
+  const mostrarToast = useToast();
+  const [reading, setReading] = useState(null); const [books, setBooks] = useState([]); const [bookId, setBookId] = useState(''); const [date, setDate] = useState('');
+  useEffect(() => { getClubReading(clube.id).then(setReading).catch(() => {}); if (clube.owner_id === userId) getBooks().then(setBooks).catch(() => {}); }, [clube.id, clube.owner_id, userId]);
+  async function definir(e) { e.preventDefault(); try { setReading(await setClubReading(userId, clube.id, bookId, date)); mostrarToast('Leitura coletiva definida.'); } catch (error) { mostrarToast(error.message); } }
+  const pace = reading ? calculateDailyPace(reading.book?.page_count, reading.target_end_at) : null;
+  return <section className="leitura-adaptativa widget"><div><strong>Ritmo adaptativo do clube</strong>{reading ? <p><b>{reading.book?.title}</b>{pace ? ` · cerca de ${pace.pagesPerDay} páginas por dia até ${new Date(reading.target_end_at).toLocaleDateString('pt-BR')}` : ' · avance no seu próprio ritmo'}</p> : <p>Nenhuma leitura coletiva ativa.</p>}</div>{clube.owner_id === userId && <form onSubmit={definir}><select required value={bookId} onChange={(e) => setBookId(e.target.value)}><option value="">Escolha o livro</option>{books.map((book) => <option key={book.id} value={book.id}>{book.title}</option>)}</select><input type="date" value={date} onChange={(e) => setDate(e.target.value)} /><button className="btn-secundario">Definir leitura</button></form>}</section>;
 }
 
 export default function Comunidades() {
@@ -24,7 +34,7 @@ export default function Comunidades() {
   const [clubeAberto, setClubeAberto] = useState(null);
   const [formAberto, setFormAberto] = useState(false);
   const [capaInvalida, setCapaInvalida] = useState(false);
-  const [form, setForm] = useState({ name: '', description: '', coverUrl: '' });
+  const [form, setForm] = useState({ name: '', description: '', coverUrl: '', city: '', meetingPlace: '' });
   const [loading, setLoading] = useState(true);
 
   const carregar = useCallback(() => {
@@ -36,10 +46,10 @@ export default function Comunidades() {
   async function criar(evento) {
     evento.preventDefault();
     try {
-      const clube = await createClub(user.id, form.name.trim(), form.description.trim() || null, form.coverUrl.trim() || null);
+      const clube = await createClub(user.id, form.name.trim(), form.description.trim() || null, form.coverUrl.trim() || null, form.city.trim() || null, form.meetingPlace.trim() || null);
       const novoClube = { ...clube, joined: true, member_count: 1 };
       setClubes((atuais) => [novoClube, ...atuais]);
-      setForm({ name: '', description: '', coverUrl: '' });
+      setForm({ name: '', description: '', coverUrl: '', city: '', meetingPlace: '' });
       setCapaInvalida(false);
       setFormAberto(false);
       setClubeAberto(novoClube);
@@ -65,6 +75,7 @@ export default function Comunidades() {
           <button className="btn-voltar" onClick={() => setClubeAberto(null)}><BackIcon /> Voltar aos clubes</button>
           <span className="sala-clube__membros">{clubeAberto.member_count} {clubeAberto.member_count === 1 ? 'membro' : 'membros'}</span>
         </div>
+        <LeituraAdaptativa clube={clubeAberto} userId={user.id} />
         <CommunityChat club={clubeAberto} />
       </section>
     );
@@ -82,6 +93,7 @@ export default function Comunidades() {
           <label>Nome do clube<input required minLength={3} maxLength={80} value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /></label>
           <label>Descrição<textarea rows={3} maxLength={500} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} /></label>
           <label>URL da imagem de capa <span>Use uma imagem pública em JPG, PNG ou WebP.</span><input type="url" placeholder="https://exemplo.com/capa.jpg" value={form.coverUrl} onChange={(e) => { setForm({ ...form, coverUrl: e.target.value }); setCapaInvalida(false); }} /></label>
+          <label>Cidade<input maxLength={100} value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} /></label><label>Local dos encontros<input maxLength={180} value={form.meetingPlace} onChange={(e) => setForm({ ...form, meetingPlace: e.target.value })} /></label>
         </div>
         <div className="clube-form__preview">
           {form.coverUrl && !capaInvalida ? <img src={form.coverUrl} alt="Pré-visualização da capa" onError={() => setCapaInvalida(true)} /> : <><ImageIcon /><span>{capaInvalida ? 'Não foi possível carregar essa imagem' : 'Prévia da capa'}</span></>}

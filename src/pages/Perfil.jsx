@@ -4,7 +4,7 @@ import EmptyState from '../components/EmptyState.jsx';
 import Post from '../components/Post.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 import { supabase } from '../lib/supabase.js';
-import { getPostsByUser, getProfileStats, getShelf, toggleFollow } from '../services/social.js';
+import { blockUser, getCompatibility, getPostsByUser, getProfileStats, getShelf, reportContent, toggleFollow } from '../services/social.js';
 import { useToast } from '../components/Toast.jsx';
 import { MenuBook as BookIcon, Forum as ForumIcon } from '@mui/icons-material';
 
@@ -17,9 +17,11 @@ export default function Perfil({ profileId, aoAbrirLivro }) {
   const [shelf, setShelf] = useState([]);
   const [painelAtivo, setPainelAtivo] = useState('posts');
   const [editing, setEditing] = useState(false);
-  const [form, setForm] = useState({ display_name: '', bio: '' });
+  const [form, setForm] = useState({ display_name: '', bio: '', city: '', state_code: '' });
   const [following, setFollowing] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [compatibilidade, setCompatibilidade] = useState(null);
+  const [blocked, setBlocked] = useState(false);
   const isOwn = profileId === user.id;
 
   useEffect(() => {
@@ -30,20 +32,23 @@ export default function Perfil({ profileId, aoAbrirLivro }) {
       getPostsByUser(profileId),
       getShelf(profileId),
       isOwn ? Promise.resolve({ data: null }) : supabase.from('follows').select('following_id').eq('follower_id', user.id).eq('following_id', profileId).maybeSingle(),
-    ]).then(([profileResult, profileStats, profilePosts, profileShelf, followResult]) => {
+      isOwn ? Promise.resolve(null) : getCompatibility(user.id, profileId),
+      isOwn ? Promise.resolve({ data: null }) : supabase.from('user_blocks').select('blocked_id').eq('blocker_id', user.id).eq('blocked_id', profileId).maybeSingle(),
+    ]).then(([profileResult, profileStats, profilePosts, profileShelf, followResult, compatibilityResult, blockResult]) => {
       if (profileResult.error) throw profileResult.error;
       setProfile(profileResult.data);
-      setForm({ display_name: profileResult.data.display_name, bio: profileResult.data.bio || '' });
+      setForm({ display_name: profileResult.data.display_name, bio: profileResult.data.bio || '', city: profileResult.data.city || '', state_code: profileResult.data.state_code || '' });
       setStats(profileStats);
       setPosts(profilePosts);
       setShelf(profileShelf);
       setFollowing(Boolean(followResult.data));
+      setCompatibilidade(compatibilityResult); setBlocked(Boolean(blockResult.data));
     }).catch((error) => mostrarToast(error.message)).finally(() => setLoading(false));
   }, [profileId, user.id, isOwn]);
 
   async function salvarPerfil(evento) {
     evento.preventDefault();
-    const { data, error } = await supabase.from('profiles').update({ display_name: form.display_name.trim(), bio: form.bio.trim() || null }).eq('id', user.id).select().single();
+    const { data, error } = await supabase.from('profiles').update({ display_name: form.display_name.trim(), bio: form.bio.trim() || null, city: form.city.trim() || null, state_code: form.state_code.trim().toUpperCase() || null }).eq('id', user.id).select().single();
     if (error) return mostrarToast(error.message);
     setProfile(data);
     setEditing(false);
@@ -56,6 +61,9 @@ export default function Perfil({ profileId, aoAbrirLivro }) {
     catch (error) { mostrarToast(error.message); }
   }
 
+  async function alternarBloqueio() { try { setBlocked(await blockUser(user.id, profileId, blocked)); mostrarToast(blocked ? 'Leitor desbloqueado.' : 'Leitor bloqueado.'); } catch (error) { mostrarToast(error.message); } }
+  async function denunciarPerfil() { try { await reportContent(user.id, 'profile', profileId, 'outro'); mostrarToast('Denúncia enviada.'); } catch (error) { mostrarToast(error.message); } }
+
   if (loading) return <section className="pagina ativa"><div className="skeleton-card skeleton-card--alto" /></section>;
   if (!profile) return <section className="pagina ativa"><EmptyState title="Perfil não encontrado" /></section>;
   const inicial = profile.display_name.charAt(0).toUpperCase();
@@ -67,7 +75,7 @@ export default function Perfil({ profileId, aoAbrirLivro }) {
           {profile.avatar_url ? <img className="avatar lg" src={profile.avatar_url} alt={profile.display_name} /> : <span className="avatar lg avatar--placeholder">{inicial}</span>}
           <div className="perfil__info"><div className="perfil__nome">{profile.display_name}</div><div className="perfil__user">@{profile.username}</div></div>
           <div className="perfil__acoes">
-            {isOwn ? <button className="btn-secundario" onClick={() => setEditing(!editing)}>{editing ? 'Cancelar' : 'Editar perfil'}</button> : <button className={`btn-seguir${following ? ' seguindo' : ''}`} onClick={alternarFollow}>{following ? 'Seguindo' : 'Seguir'}</button>}
+            {isOwn ? <button className="btn-secundario" onClick={() => setEditing(!editing)}>{editing ? 'Cancelar' : 'Editar perfil'}</button> : <><button className={`btn-seguir${following ? ' seguindo' : ''}`} onClick={alternarFollow}>{following ? 'Seguindo' : 'Seguir'}</button><button className="btn-secundario" onClick={alternarBloqueio}>{blocked ? 'Desbloquear' : 'Bloquear'}</button><button className="btn-texto-perigo" onClick={denunciarPerfil}>Denunciar</button></>}
           </div>
         </div>
       </div>
@@ -75,10 +83,12 @@ export default function Perfil({ profileId, aoAbrirLivro }) {
       {editing ? <form className="perfil-edicao widget" onSubmit={salvarPerfil}>
         <label>Nome<input value={form.display_name} onChange={(e) => setForm({ ...form, display_name: e.target.value })} maxLength={60} /></label>
         <label>Bio<textarea value={form.bio} onChange={(e) => setForm({ ...form, bio: e.target.value })} maxLength={280} rows={3} /></label>
+        <label>Cidade<input value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} maxLength={100} /></label><label>UF<input value={form.state_code} onChange={(e) => setForm({ ...form, state_code: e.target.value })} maxLength={2} /></label>
         <button className="btn-primario" disabled={!form.display_name.trim()}>Salvar</button>
       </form> : <p className={`perfil__bio${profile.bio ? '' : ' perfil__bio--vazia'}`}>{profile.bio || (isOwn ? 'Conte um pouco sobre você e suas leituras.' : 'Este leitor ainda não escreveu uma bio.')}</p>}
 
       <div className="perfil__stats">{stats.map((stat) => <div key={stat.label}><div className="perfil__stat-valor"><AnimatedNumber valor={stat.valor} /></div><div className="perfil__stat-label">{stat.label}</div></div>)}</div>
+      {!isOwn && compatibilidade && <section className="compatibilidade widget"><div className="compatibilidade__score">{compatibilidade.score}%</div><div><h2>Compatibilidade literária</h2><p>{compatibilidade.commonBooks} livros em comum{compatibilidade.sharedGenres.length ? ` · afinidade em ${compatibilidade.sharedGenres.join(', ')}` : ' · explorem um livro novo juntos'}.</p><small>A pontuação considera concordância de notas e gêneros compartilhados.</small></div></section>}
       <div className="perfil__abas">
         <button className={`filtro-pill perfil__aba${painelAtivo === 'posts' ? ' ativa' : ''}`} onClick={() => setPainelAtivo('posts')}>Publicações</button>
         <button className={`filtro-pill perfil__aba${painelAtivo === 'leituras' ? ' ativa' : ''}`} onClick={() => setPainelAtivo('leituras')}>Estante</button>

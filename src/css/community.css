@@ -34,6 +34,8 @@
 .clube-card__acoes{ display: flex; align-items: center; gap: var(--space-3); }
 .clube-card__acoes .btn-primario{ display: inline-flex; align-items: center; gap: 6px; }
 .btn-texto-perigo{ border: 0; background: transparent; color: var(--vermelho-500); font-size: var(--fs-xs); font-weight: 800; padding: 7px; }
+.leitura-adaptativa{ max-width: 860px; margin-bottom: var(--space-3); display: flex; justify-content: space-between; align-items: center; gap: var(--space-3); }
+.leitura-adaptativa p{ margin-top: 4px; color: var(--cinza-500); font-size: var(--fs-sm); }.leitura-adaptativa form{ display:flex; gap:var(--space-2); flex-wrap:wrap; }.leitura-adaptativa select,.leitura-adaptativa input{ border:1px solid var(--cinza-200); border-radius:var(--radius-sm); padding:8px; background:var(--cinza-50); color:var(--cinza-900); }
 
 .chat-comunidade{
   max-width: 860px;

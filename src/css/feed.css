@@ -273,3 +273,16 @@
 }
 .btn-icone-perigo:hover{ color: var(--vermelho-500); background: rgba(239,68,68,.12); }
 .comentario__topo .btn-icone-perigo{ width: 24px; height: 24px; margin-left: auto; }
+
+.compositor__opcoes{ display: grid; gap: var(--space-2); padding: 0 var(--space-4) var(--space-3); }
+.compositor__opcoes input{ border: 1px solid var(--cinza-200); border-radius: var(--radius-sm); background: var(--cinza-50); color: var(--cinza-900); padding: 10px 12px; }
+.compositor__opcoes .btn-texto{ justify-self: start; }
+.post__enquete{ display: grid; gap: var(--space-2); margin: var(--space-3) 0; }
+.post__enquete-opcao{ position: relative; isolation: isolate; overflow: hidden; display: flex; justify-content: space-between; gap: var(--space-3); width: 100%; padding: 10px 12px; border: 1px solid var(--cinza-200); border-radius: var(--radius-sm); background: var(--bg-card); color: var(--cinza-900); text-align: left; }
+.post__enquete-opcao.ativa{ border-color: var(--roxo-500); }
+.post__enquete-barra{ position: absolute; z-index: -1; inset: 0 auto 0 0; background: var(--lilas-100); transition: width var(--transicao-normal); }
+.compositor__spoiler{ display: flex; align-items: end; gap: var(--space-2); padding: 0 var(--space-4) var(--space-3); flex-wrap: wrap; }
+.compositor__spoiler label{ display: grid; gap: 3px; color: var(--cinza-500); font-size: var(--fs-xs); }
+.compositor__spoiler input{ max-width: 180px; border: 1px solid var(--cinza-200); border-radius: var(--radius-sm); background: var(--cinza-50); color: var(--cinza-900); padding: 9px; }
+.post__spoiler-bloqueado{ display: grid; justify-items: start; gap: 6px; margin: var(--space-3) 0; padding: var(--space-4); border: 1px dashed var(--roxo-400); border-radius: var(--radius-md); background: var(--lilas-50); }
+.post__spoiler-bloqueado span{ color: var(--cinza-500); font-size: var(--fs-sm); }

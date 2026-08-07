@@ -54,6 +54,9 @@
 .perfil__painel{ display: none; }
 .perfil__painel.ativo{ display: block; animation: fade-in var(--transicao-normal); }
 .perfil__feed{ max-width: 760px; }
+.compatibilidade{ max-width: 680px; display: flex; align-items: center; gap: var(--space-4); margin-bottom: var(--space-5); }
+.compatibilidade__score{ width: 76px; height: 76px; flex: 0 0 auto; display: grid; place-items: center; border-radius: 50%; background: var(--lilas-100); color: var(--roxo-500); font-size: var(--fs-xl); font-weight: 900; }
+.compatibilidade h2{ font-size: var(--fs-md); }.compatibilidade p{ margin: 4px 0; color: var(--cinza-700); }.compatibilidade small{ color: var(--cinza-500); }
 
 .dashboard-grid{
   display: grid;
