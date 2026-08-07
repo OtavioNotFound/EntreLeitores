@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext.jsx';
-import { createComment, getComments, toggleLike, toggleSave } from '../services/social.js';
+import { createComment, deleteComment, deletePost, getComments, toggleLike, toggleSave } from '../services/social.js';
 import { useToast } from './Toast.jsx';
-import { Favorite as FavoriteIcon, FavoriteBorder as FavoriteBorderIcon, ChatBubble as ChatIcon, Bookmark as BookmarkIcon, BookmarkBorder as BookmarkBorderIcon, Send as SendIcon, MenuBook as BookIcon } from '@mui/icons-material';
+import { Favorite as FavoriteIcon, FavoriteBorder as FavoriteBorderIcon, ChatBubble as ChatIcon, Bookmark as BookmarkIcon, BookmarkBorder as BookmarkBorderIcon, Send as SendIcon, MenuBook as BookIcon, DeleteOutlined as DeleteIcon } from '@mui/icons-material';
 
 const formatarNumero = (numero) => new Intl.NumberFormat('pt-BR').format(numero);
 
@@ -16,6 +16,7 @@ export default function Post({ post, aoAbrirLivro, aoAbrirPerfil }) {
   const [comentarios, setComentarios] = useState([]);
   const [comentariosAbertos, setComentariosAbertos] = useState(false);
   const [novoComentario, setNovoComentario] = useState('');
+  const [removido, setRemovido] = useState(false);
 
   async function alternarCurtida() {
     try {
@@ -54,7 +55,28 @@ export default function Post({ post, aoAbrirLivro, aoAbrirPerfil }) {
     } catch (error) { mostrarToast(error.message); }
   }
 
+  async function apagarPublicacao() {
+    if (!window.confirm('Apagar esta publicação e todos os comentários dela?')) return;
+    try {
+      await deletePost(user.id, post.id);
+      setRemovido(true);
+      mostrarToast('Publicação apagada.');
+    } catch (error) { mostrarToast(error.message); }
+  }
+
+  async function apagarComentario(comentarioId) {
+    if (!window.confirm('Apagar este comentário?')) return;
+    try {
+      await deleteComment(user.id, comentarioId);
+      setComentarios((atuais) => atuais.filter((comentario) => comentario.id !== comentarioId));
+      setTotalComentarios((total) => Math.max(0, total - 1));
+      mostrarToast('Comentário apagado.');
+    } catch (error) { mostrarToast(error.message); }
+  }
+
   const inicial = post.autor?.charAt(0)?.toUpperCase() || 'L';
+
+  if (removido) return null;
 
   return (
     <article className="post">
@@ -65,6 +87,7 @@ export default function Post({ post, aoAbrirLivro, aoAbrirPerfil }) {
           <span className="post__autor-meta">{post.usuario} <span>·</span> {post.tempo}</span>
         </button>
         {post.tag && <span className={`post__tag ${post.tag.classe}`}>{post.tag.texto}</span>}
+        {post.autorId === user.id && <button className="btn-icone-perigo" aria-label="Apagar publicação" title="Apagar publicação" onClick={apagarPublicacao}><DeleteIcon fontSize="small" /></button>}
       </div>
       <p className="post__texto">{post.texto}</p>
       {post.livro && (
@@ -88,7 +111,7 @@ export default function Post({ post, aoAbrirLivro, aoAbrirPerfil }) {
           {comentarios.length ? comentarios.map((comentario) => (
             <div className="comentario" key={comentario.id}>
               <span className="avatar sm avatar--placeholder">{comentario.author?.display_name?.charAt(0) || 'L'}</span>
-              <span><strong>{comentario.author?.display_name || 'Leitor'}</strong><p>{comentario.content}</p></span>
+              <span className="comentario__conteudo"><span className="comentario__topo"><strong>{comentario.author?.display_name || 'Leitor'}</strong>{comentario.author_id === user.id && <button className="btn-icone-perigo" aria-label="Apagar comentário" title="Apagar comentário" onClick={() => apagarComentario(comentario.id)}><DeleteIcon fontSize="small" /></button>}</span><p>{comentario.content}</p></span>
             </div>
           )) : <p className="estado-vazio__texto">Seja a primeira pessoa a comentar.</p>}
           <form className="comentario-form" onSubmit={comentar}>

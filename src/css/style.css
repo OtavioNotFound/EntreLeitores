@@ -85,20 +85,32 @@
 
 /* Tema escuro (alterna via body.tema-escuro) */
 body.tema-escuro{
-  --bg-app: #14101f;
-  --bg-card: #1f1832;
-  --bg-widget: #1f1832;
-  --cinza-50: #14101f;
-  --cinza-100: #1f1832;
-  --cinza-200: #2a2140;
-  --cinza-300: #3a3153;
-  --cinza-400: #7a7295;
-  --cinza-500: #9a92b5;
-  --cinza-700: #d3cce8;
-  --cinza-900: #f3f0fa;
-  --lilas-100: #2a2140;
-  --lilas-50: #201936;
+  color-scheme: dark;
+  --bg-app: #100d18;
+  --bg-card: #1b1627;
+  --bg-widget: #1b1627;
+  --cinza-50: #151120;
+  --cinza-100: #211a30;
+  --cinza-200: #332945;
+  --cinza-300: #493d60;
+  --cinza-400: #978da9;
+  --cinza-500: #b2a9c2;
+  --cinza-700: #ddd6e7;
+  --cinza-900: #faf8fc;
+  --roxo-500: #9a6bff;
+  --roxo-400: #b18cff;
+  --lilas-100: #302348;
+  --lilas-50: #251b37;
+  --azul-100: #1d3150;
+  --amarelo-100: #443319;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,.28);
+  --shadow-md: 0 8px 22px rgba(0,0,0,.34);
+  --shadow-lg: 0 18px 44px rgba(0,0,0,.42);
 }
+
+body.tema-escuro input,
+body.tema-escuro textarea,
+body.tema-escuro select{ color-scheme: dark; }
 
 *, *::before, *::after{ box-sizing: border-box; }
 

@@ -68,6 +68,14 @@ export function AuthProvider({ children }) {
     if (error) throw error;
   }
 
+  async function deleteAccount() {
+    const { error } = await supabase.rpc('delete_own_account');
+    if (error) throw error;
+    await supabase.auth.signOut({ scope: 'local' }).catch(() => {});
+    setSession(null);
+    setProfile(null);
+  }
+
   const value = useMemo(() => ({
     session,
     user: session?.user ?? null,
@@ -76,6 +84,7 @@ export function AuthProvider({ children }) {
     signIn,
     signUp,
     signOut,
+    deleteAccount,
     refreshProfile: () => loadProfile(session?.user?.id),
   }), [session, profile, loading]);
 

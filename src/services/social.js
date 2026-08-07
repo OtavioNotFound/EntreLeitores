@@ -112,7 +112,7 @@ export async function toggleSave(userId, postId, saved) {
 }
 
 export async function getComments(postId) {
-  const { data, error } = await supabase.from('comments').select('id,content,created_at,author:profiles!comments_author_id_fkey(display_name,username,avatar_url)').eq('post_id', postId).order('created_at');
+  const { data, error } = await supabase.from('comments').select('id,author_id,content,created_at,author:profiles!comments_author_id_fkey(display_name,username,avatar_url)').eq('post_id', postId).order('created_at');
   ensure(error);
   return data;
 }
@@ -121,6 +121,53 @@ export async function createComment(userId, postId, content) {
   const { data, error } = await supabase.from('comments').insert({ author_id: userId, post_id: postId, content }).select('id').single();
   ensure(error);
   return data;
+}
+
+export async function deleteComment(userId, commentId) {
+  const { error } = await supabase.from('comments').delete().eq('id', commentId).eq('author_id', userId);
+  ensure(error);
+}
+
+export async function deletePost(userId, postId) {
+  const { error } = await supabase.from('posts').delete().eq('id', postId).eq('author_id', userId);
+  ensure(error);
+}
+
+export async function getCommunityMessages() {
+  const { data, error } = await supabase
+    .from('community_messages')
+    .select('id,author_id,content,created_at,author:profiles!community_messages_author_id_fkey(display_name,username,avatar_url)')
+    .order('created_at', { ascending: false })
+    .limit(100);
+  ensure(error);
+  return data.reverse().map((mensagem) => ({ ...mensagem, tempo: formatRelativeTime(mensagem.created_at) }));
+}
+
+export async function sendCommunityMessage(userId, content) {
+  const { data, error } = await supabase
+    .from('community_messages')
+    .insert({ author_id: userId, content })
+    .select('id')
+    .single();
+  ensure(error);
+  return data;
+}
+
+export async function deleteCommunityMessage(userId, messageId) {
+  const { error } = await supabase
+    .from('community_messages')
+    .delete()
+    .eq('id', messageId)
+    .eq('author_id', userId);
+  ensure(error);
+}
+
+export function subscribeCommunityMessages(onChange) {
+  const channel = supabase
+    .channel('community-chat')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'community_messages' }, onChange)
+    .subscribe();
+  return () => { supabase.removeChannel(channel); };
 }
 
 export async function getProfileSuggestions(userId) {

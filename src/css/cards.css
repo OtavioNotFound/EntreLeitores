@@ -49,7 +49,7 @@
   color: var(--cinza-900);
   transition: border var(--transicao-rapida), background var(--transicao-rapida);
 }
-.header__busca input:focus{ border-color: var(--roxo-400); background: var(--branco); outline: none; }
+.header__busca input:focus{ border-color: var(--roxo-400); background: var(--bg-card); outline: none; }
 .header__busca-icone{
   position: absolute;
   left: 14px; top: 50%; transform: translateY(-50%);
@@ -106,7 +106,7 @@
   flex-shrink: 0;
 }
 .avatar.sm{ width: 28px; height: 28px; }
-.avatar.lg{ width: 96px; height: 96px; border: 4px solid var(--branco); }
+.avatar.lg{ width: 96px; height: 96px; border: 4px solid var(--bg-card); }
 
 .header__perfil-texto{ text-align: left; line-height: 1.15; }
 .header__perfil-nome{ font-size: var(--fs-sm); font-weight: 700; color: var(--cinza-900); }

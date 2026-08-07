@@ -9,6 +9,7 @@ import './css/feed.css';
 import './css/livros.css';
 import './css/perfil.css';
 import './css/login.css';
+import './css/community.css';
 import './css/responsivo.css';
 
 ReactDOM.createRoot(document.getElementById('root')).render(

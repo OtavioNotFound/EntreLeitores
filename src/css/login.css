@@ -135,7 +135,7 @@
 .campo-grupo input:focus{
   outline: none;
   border-color: var(--roxo-400);
-  background: var(--branco);
+  background: var(--bg-card);
 }
 
 .campo-grupo input.campo-erro{
