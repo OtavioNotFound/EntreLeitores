@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { CheckCircle as CheckIcon, DeleteForeverOutlined as DeleteIcon } from '@mui/icons-material';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useToast } from '../components/Toast.jsx';
+import { exportUserData } from '../services/social.js';
 
 export default function Configuracoes({ alternarTema }) {
   const { user, deleteAccount } = useAuth();
@@ -9,6 +10,13 @@ export default function Configuracoes({ alternarTema }) {
   const [confirmando, setConfirmando] = useState(false);
   const [confirmacao, setConfirmacao] = useState('');
   const [apagando, setApagando] = useState(false);
+  const [exportando, setExportando] = useState(false);
+
+  async function exportar() {
+    setExportando(true);
+    try { const data = await exportUserData(user.id); const blob = new Blob([JSON.stringify(data, null, 2)], { type:'application/json' }); const url = URL.createObjectURL(blob); const link = document.createElement('a'); link.href=url; link.download=`entre-leitores-${new Date().toISOString().slice(0,10)}.json`; link.click(); URL.revokeObjectURL(url); mostrarToast('Seus dados foram exportados.'); }
+    catch (error) { mostrarToast(error.message); } finally { setExportando(false); }
+  }
 
   async function apagarConta() {
     if (confirmacao !== 'EXCLUIR' || apagando) return;
@@ -28,6 +36,7 @@ export default function Configuracoes({ alternarTema }) {
         <div className="configuracao-linha"><span><strong>Aparência</strong><small>Alternar entre tema claro e escuro</small></span><button className="btn-secundario" onClick={alternarTema}>Alternar tema</button></div>
         <div className="configuracao-linha"><span><strong>E-mail da conta</strong><small>{user.email}</small></span></div>
         <div className="configuracao-linha"><span><strong>Sincronização</strong><small>Seus dados são armazenados no Supabase</small></span><span className="status-ok"><CheckIcon fontSize="small" /> Ativa</span></div>
+        <div className="configuracao-linha"><span><strong>Seus dados pertencem a você</strong><small>Baixe perfil, estante, sessões, posts e interações em JSON</small></span><button className="btn-secundario" disabled={exportando} onClick={exportar}>{exportando ? 'Preparando...' : 'Exportar dados'}</button></div>
       </div>
 
       <section className="zona-perigo" aria-labelledby="zona-perigo-titulo">

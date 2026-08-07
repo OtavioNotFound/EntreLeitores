@@ -265,9 +265,9 @@ export async function createBook(userId, book) {
 }
 
 export async function getShelf(userId) {
-  const { data, error } = await supabase.from('user_books').select('status,progress,rating,updated_at,book:books(*)').eq('user_id', userId).order('updated_at', { ascending: false });
+  const { data, error } = await supabase.from('user_books').select('status,progress,rating,format,source,reread_count,tags,updated_at,book:books(*)').eq('user_id', userId).order('updated_at', { ascending: false });
   ensure(error);
-  return data.map((item) => ({ ...item.book, status: item.status, progress: item.progress, rating: item.rating }));
+  return data.map((item) => ({ ...item.book, status: item.status, progress: item.progress, rating: item.rating, format: item.format, source: item.source, reread_count: item.reread_count, tags: item.tags || [] }));
 }
 
 export async function addToShelf(userId, bookId, status = 'quero-ler') {
@@ -284,6 +284,38 @@ export async function updateReading(userId, bookId, { status, progress, rating }
   }
   const { error } = await supabase.from('user_books').upsert(values, { onConflict: 'user_id,book_id' });
   ensure(error);
+}
+
+export async function updateBookOrganization(userId, bookId, { format, source, tags }) {
+  const { error } = await supabase.from('user_books').update({ format: format || null, source: source || null, tags }).eq('user_id', userId).eq('book_id', bookId);
+  ensure(error);
+}
+
+export async function createReadingSession(userId, session) {
+  const { data, error } = await supabase.from('reading_sessions').insert({ user_id: userId, book_id: session.bookId, pages_read: session.pages || null, minutes_read: session.minutes || null, format: session.format, note: session.note || null, occurred_on: session.date }).select().single();
+  ensure(error); return data;
+}
+
+export async function getReadingSessions(userId, days = 30) {
+  const since = new Date(); since.setDate(since.getDate() - days);
+  const { data, error } = await supabase.from('reading_sessions').select('id,book_id,pages_read,minutes_read,format,note,occurred_on,book:books(title)').eq('user_id', userId).gte('occurred_on', since.toISOString().slice(0,10)).order('occurred_on', { ascending: false });
+  ensure(error); return data;
+}
+
+export async function exportUserData(userId) {
+  const tables = ['profiles','user_books','posts','comments','follows','saved_posts','reading_sessions','emotional_checkins','user_blocks','reports'];
+  const results = await Promise.all(tables.map(async (table) => {
+    let query = supabase.from(table).select('*');
+    if (table === 'profiles') query = query.eq('id', userId);
+    else if (table === 'user_books' || table === 'reading_sessions' || table === 'emotional_checkins') query = query.eq('user_id', userId);
+    else if (table === 'posts' || table === 'comments') query = query.eq('author_id', userId);
+    else if (table === 'follows') query = query.eq('follower_id', userId);
+    else if (table === 'saved_posts') query = query.eq('user_id', userId);
+    else if (table === 'user_blocks') query = query.eq('blocker_id', userId);
+    else if (table === 'reports') query = query.eq('reporter_id', userId);
+    const { data, error } = await query; ensure(error); return [table, data];
+  }));
+  return { exported_at: new Date().toISOString(), version: 1, data: Object.fromEntries(results) };
 }
 
 export async function getEmotionMap(bookId) {

@@ -3,7 +3,7 @@ import Post from '../components/Post.jsx';
 import Compositor from '../components/Compositor.jsx';
 import EmptyState from '../components/EmptyState.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
-import { addToShelf, createPost, getEmotionMap, getPostsByBook, saveEmotion, updateReading } from '../services/social.js';
+import { addToShelf, createPost, getEmotionMap, getPostsByBook, saveEmotion, updateBookOrganization, updateReading } from '../services/social.js';
 import { useToast } from '../components/Toast.jsx';
 import { MenuBook as BookIcon, Forum as ForumIcon } from '@mui/icons-material';
 
@@ -13,7 +13,7 @@ export default function LivroDetalhe({ livro, aoAbrirLivro, aoAbrirPerfil }) {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [editandoLeitura, setEditandoLeitura] = useState(false);
-  const [leitura, setLeitura] = useState({ status: livro?.status || 'lendo', progress: livro?.progress || 0, rating: livro?.rating || '' });
+  const [leitura, setLeitura] = useState({ status: livro?.status || 'lendo', progress: livro?.progress || 0, rating: livro?.rating || '', format: livro?.format || '', source: livro?.source || '', tags: (livro?.tags || []).join(', ') });
   const [emocoes, setEmocoes] = useState([]);
   const [emocao, setEmocao] = useState('curioso');
   const title = livro?.title || livro?.titulo;
@@ -22,7 +22,7 @@ export default function LivroDetalhe({ livro, aoAbrirLivro, aoAbrirPerfil }) {
 
   useEffect(() => {
     if (!livro?.id) { setLoading(false); return; }
-    setLeitura({ status: livro.status || 'lendo', progress: livro.progress || 0, rating: livro.rating || '' });
+    setLeitura({ status: livro.status || 'lendo', progress: livro.progress || 0, rating: livro.rating || '', format: livro.format || '', source: livro.source || '', tags: (livro.tags || []).join(', ') });
     setEditandoLeitura(false);
     Promise.all([getPostsByBook(livro.id, user.id), getEmotionMap(livro.id)]).then(([bookPosts, emotionMap]) => { setPosts(bookPosts); setEmocoes(emotionMap); }).catch((error) => mostrarToast(error.message)).finally(() => setLoading(false));
   }, [livro?.id, user.id]);
@@ -36,6 +36,7 @@ export default function LivroDetalhe({ livro, aoAbrirLivro, aoAbrirPerfil }) {
     evento.preventDefault();
     try {
       await updateReading(user.id, livro.id, leitura);
+      await updateBookOrganization(user.id, livro.id, { format: leitura.format, source: leitura.source, tags: leitura.tags.split(',').map((tag) => tag.trim().toLowerCase()).filter(Boolean).slice(0, 12) });
       setEditandoLeitura(false);
       mostrarToast('Leitura atualizada.');
     } catch (error) { mostrarToast(error.message); }
@@ -69,6 +70,7 @@ export default function LivroDetalhe({ livro, aoAbrirLivro, aoAbrirPerfil }) {
             <label>Status<select value={leitura.status} onChange={(e) => setLeitura({ ...leitura, status: e.target.value })}><option value="quero-ler">Quero ler</option><option value="lendo">Lendo</option><option value="lidos">Lido</option><option value="favoritos">Favorito</option><option value="abandonados">Abandonado</option></select></label>
             <label>Progresso: {leitura.progress}%<input type="range" min="0" max="100" value={leitura.progress} onChange={(e) => setLeitura({ ...leitura, progress: Number(e.target.value) })} /></label>
             <label>Nota<select value={leitura.rating} onChange={(e) => setLeitura({ ...leitura, rating: Number(e.target.value) })}><option value="">Sem nota</option>{[1,2,3,4,5].map((nota) => <option key={nota} value={nota}>{nota} estrela{nota > 1 ? 's' : ''}</option>)}</select></label>
+            <label>Formato<select value={leitura.format} onChange={(e) => setLeitura({ ...leitura, format:e.target.value })}><option value="">Não informado</option><option value="fisico">Físico</option><option value="ebook">E-book</option><option value="audiobook">Audiobook</option><option value="outro">Outro</option></select></label><label>Origem<select value={leitura.source} onChange={(e) => setLeitura({ ...leitura, source:e.target.value })}><option value="">Não informada</option><option value="proprio">Meu acervo</option><option value="biblioteca">Biblioteca</option><option value="emprestado">Emprestado</option><option value="assinatura">Assinatura</option><option value="outro">Outra</option></select></label><label>Etiquetas<input value={leitura.tags} onChange={(e) => setLeitura({ ...leitura, tags:e.target.value })} placeholder="fantasia, favorito, faculdade" /></label>
             <button className="btn-primario">Salvar leitura</button>
           </form>}
         </div>

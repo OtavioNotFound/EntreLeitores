@@ -14,3 +14,21 @@ export function calculateDailyPace(pageCount, targetDate, now = new Date()) {
   const days = Math.max(1, Math.ceil((new Date(targetDate) - now) / 86400000));
   return { days, pagesPerDay: Math.ceil((pageCount || 100) / days) };
 }
+
+export function calculateReadingStreak(sessions, today = new Date()) {
+  const days = new Set(sessions.map((session) => session.occurred_on));
+  let cursor = new Date(today); cursor.setHours(12, 0, 0, 0);
+  const todayKey = cursor.toISOString().slice(0, 10);
+  if (!days.has(todayKey)) cursor.setDate(cursor.getDate() - 1);
+  let streak = 0;
+  while (days.has(cursor.toISOString().slice(0, 10))) { streak += 1; cursor.setDate(cursor.getDate() - 1); }
+  return streak;
+}
+
+export function summarizeSessions(sessions) {
+  return sessions.reduce((summary, session) => ({
+    pages: summary.pages + (session.pages_read || 0),
+    minutes: summary.minutes + (session.minutes_read || 0),
+    days: summary.days.add(session.occurred_on),
+  }), { pages: 0, minutes: 0, days: new Set() });
+}
