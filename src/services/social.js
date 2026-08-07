@@ -133,20 +133,21 @@ export async function deletePost(userId, postId) {
   ensure(error);
 }
 
-export async function getCommunityMessages() {
+export async function getCommunityMessages(clubId) {
   const { data, error } = await supabase
     .from('community_messages')
-    .select('id,author_id,content,created_at,author:profiles!community_messages_author_id_fkey(display_name,username,avatar_url)')
+    .select('id,club_id,author_id,content,created_at,author:profiles!community_messages_author_id_fkey(display_name,username,avatar_url)')
+    .eq('club_id', clubId)
     .order('created_at', { ascending: false })
     .limit(100);
   ensure(error);
   return data.reverse().map((mensagem) => ({ ...mensagem, tempo: formatRelativeTime(mensagem.created_at) }));
 }
 
-export async function sendCommunityMessage(userId, content) {
+export async function sendCommunityMessage(userId, clubId, content) {
   const { data, error } = await supabase
     .from('community_messages')
-    .insert({ author_id: userId, content })
+    .insert({ author_id: userId, club_id: clubId, content })
     .select('id')
     .single();
   ensure(error);
@@ -162,10 +163,10 @@ export async function deleteCommunityMessage(userId, messageId) {
   ensure(error);
 }
 
-export function subscribeCommunityMessages(onChange) {
+export function subscribeCommunityMessages(clubId, onChange) {
   const channel = supabase
-    .channel('community-chat')
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'community_messages' }, onChange)
+    .channel(`club-chat-${clubId}`)
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'community_messages', filter: `club_id=eq.${clubId}` }, onChange)
     .subscribe();
   return () => { supabase.removeChannel(channel); };
 }
@@ -198,9 +199,9 @@ export async function getClubs(userId) {
   return data.map((club) => ({ ...club, member_count: club.club_members?.[0]?.count || 0, joined: joined.has(club.id) }));
 }
 
-export async function createClub(userId, name, description) {
+export async function createClub(userId, name, description, coverUrl = null) {
   const slug = `${name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')}-${Math.random().toString(36).slice(2, 6)}`;
-  const { data, error } = await supabase.from('clubs').insert({ owner_id: userId, name, description, slug }).select().single();
+  const { data, error } = await supabase.from('clubs').insert({ owner_id: userId, name, description, cover_url: coverUrl, slug }).select().single();
   ensure(error);
   return data;
 }

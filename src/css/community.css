@@ -20,6 +20,21 @@
 .comunidade-abas button:hover{ color: var(--cinza-900); }
 .comunidade-abas button.ativo{ color: var(--roxo-500); border-color: var(--roxo-500); }
 
+.pagina-cabecalho--sala{ max-width: 860px; margin-bottom: var(--space-3); }
+.btn-voltar{ display: inline-flex; align-items: center; gap: 6px; border: 0; background: transparent; color: var(--roxo-500); font-weight: 800; padding: 6px 0; }
+.sala-clube__membros{ color: var(--cinza-500); font-size: var(--fs-xs); font-weight: 700; }
+
+.clube-form--com-capa{ max-width: 760px; grid-template-columns: 1fr 210px; align-items: start; }
+.clube-form__campos{ display: grid; gap: var(--space-3); }
+.clube-form__campos label span{ color: var(--cinza-400); font-weight: 500; }
+.clube-form__preview{ width: 100%; aspect-ratio: 16 / 10; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 7px; overflow: hidden; border: 1px dashed var(--cinza-300); border-radius: var(--radius-md); color: var(--cinza-400); background: var(--cinza-50); font-size: var(--fs-xs); text-align: center; }
+.clube-form__preview img{ width: 100%; height: 100%; object-fit: cover; }
+.clube-form__preview svg{ font-size: 2rem; }
+.clube-form--com-capa > .btn-primario{ grid-column: 1 / -1; justify-self: start; }
+.clube-card__acoes{ display: flex; align-items: center; gap: var(--space-3); }
+.clube-card__acoes .btn-primario{ display: inline-flex; align-items: center; gap: 6px; }
+.btn-texto-perigo{ border: 0; background: transparent; color: var(--vermelho-500); font-size: var(--fs-xs); font-weight: 800; padding: 7px; }
+
 .chat-comunidade{
   max-width: 860px;
   height: min(680px, calc(100vh - 210px));
@@ -139,6 +154,9 @@
 .zona-perigo__confirmacao > div{ display: flex; gap: var(--space-2); }
 
 @media (max-width: 640px){
+  .clube-form--com-capa{ grid-template-columns: 1fr; }
+  .clube-form__preview{ max-width: 280px; }
+  .clube-form--com-capa > .btn-primario{ grid-column: 1; }
   .chat-comunidade{ height: calc(100vh - 190px); min-height: 430px; border-radius: var(--radius-md); }
   .chat-comunidade__mensagens{ padding: var(--space-3); }
   .mensagem-chat{ max-width: 92%; }

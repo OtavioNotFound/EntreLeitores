@@ -13,7 +13,7 @@ import {
   subscribeCommunityMessages,
 } from '../services/social.js';
 
-export default function CommunityChat() {
+export default function CommunityChat({ club }) {
   const { user, profile } = useAuth();
   const mostrarToast = useToast();
   const [mensagens, setMensagens] = useState([]);
@@ -25,17 +25,17 @@ export default function CommunityChat() {
   const carregar = useCallback(async ({ silencioso = false } = {}) => {
     if (!silencioso) setCarregando(true);
     try {
-      setMensagens(await getCommunityMessages());
+      setMensagens(await getCommunityMessages(club.id));
     } catch (error) {
       mostrarToast(error.message);
     } finally {
       if (!silencioso) setCarregando(false);
     }
-  }, [mostrarToast]);
+  }, [club.id, mostrarToast]);
 
   useEffect(() => {
     carregar();
-    const cancelar = subscribeCommunityMessages(() => carregar({ silencioso: true }));
+    const cancelar = subscribeCommunityMessages(club.id, () => carregar({ silencioso: true }));
     return cancelar;
   }, [carregar]);
 
@@ -50,7 +50,7 @@ export default function CommunityChat() {
 
     setEnviando(true);
     try {
-      await sendCommunityMessage(user.id, content);
+      await sendCommunityMessage(user.id, club.id, content);
       setTexto('');
       await carregar({ silencioso: true });
     } catch (error) {
@@ -74,12 +74,12 @@ export default function CommunityChat() {
   const nomeAtual = profile?.display_name || user.email?.split('@')[0] || 'Leitor';
 
   return (
-    <section className="chat-comunidade" aria-label="Conversa da comunidade">
+    <section className="chat-comunidade" aria-label={`Conversa do clube ${club.name}`}>
       <header className="chat-comunidade__topo">
         <span className="chat-comunidade__icone"><ForumIcon /></span>
         <span>
-          <strong>Conversa geral</strong>
-          <small><i /> Ao vivo para todos os leitores</small>
+          <strong>{club.name}</strong>
+          <small><i /> Conversa ao vivo entre membros</small>
         </span>
       </header>
 
