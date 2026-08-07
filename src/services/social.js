@@ -302,12 +302,79 @@ export async function getReadingSessions(userId, days = 30) {
   ensure(error); return data;
 }
 
+export async function getActiveReadingGoal(userId) {
+  const { data, error } = await supabase.from('reading_goals').select('*').eq('user_id',userId).eq('active',true).order('created_at',{ascending:false}).limit(1).maybeSingle(); ensure(error); return data;
+}
+
+export async function saveReadingGoal(userId, metric, target) {
+  await supabase.from('reading_goals').update({active:false}).eq('user_id',userId).eq('active',true);
+  const startsOn=new Date(); const endsOn=new Date(); endsOn.setDate(endsOn.getDate()+6);
+  const { data,error }=await supabase.from('reading_goals').insert({user_id:userId,metric,target,period:'weekly',starts_on:startsOn.toISOString().slice(0,10),ends_on:endsOn.toISOString().slice(0,10)}).select().single(); ensure(error); return data;
+}
+
+export async function getReadingNotes(userId, bookId, search = '') {
+  let query=supabase.from('reading_notes').select('*').eq('user_id',userId).eq('book_id',bookId).order('progress',{ascending:true,nullsFirst:false}).order('created_at',{ascending:false});
+  if(search.trim()) query=query.ilike('content',`%${search.trim()}%`);
+  const {data,error}=await query; ensure(error); return data;
+}
+
+export async function saveReadingNote(userId, bookId, note) {
+  const {data,error}=await supabase.from('reading_notes').insert({user_id:userId,book_id:bookId,kind:note.kind,content:note.content,progress:note.progress ?? null,page_number:note.pageNumber||null,chapter:note.chapter||null}).select().single(); ensure(error); return data;
+}
+
+export async function deleteReadingNote(userId, noteId) {
+  const {error}=await supabase.from('reading_notes').delete().eq('id',noteId).eq('user_id',userId); ensure(error);
+}
+
+export async function getReadingMemories(userId) {
+  const {data,error}=await supabase.from('reading_notes').select('id,kind,content,progress,created_at,book:books(id,title,author,cover_url)').eq('user_id',userId).order('created_at',{ascending:false}).limit(12); ensure(error); return data;
+}
+
+export async function startReread(bookId, format = null) {
+  const {data,error}=await supabase.rpc('start_reread',{target_book_id:bookId,target_format:format||null}); ensure(error); return data;
+}
+
+export async function getBookLendingOffers(bookId) {
+  const { data, error } = await supabase.from('lending_offers')
+    .select('id,owner_id,book_id,city,notes,audience,active,owner:profiles!lending_offers_owner_id_fkey(id,display_name,username,avatar_url),loan_requests(id,borrower_id,status)')
+    .eq('book_id', bookId).eq('active', true).order('created_at', { ascending: false });
+  ensure(error); return data || [];
+}
+
+export async function saveLendingOffer(userId, bookId, { city, notes, audience }) {
+  const { data, error } = await supabase.from('lending_offers').upsert({ owner_id:userId, book_id:bookId, city:city.trim(), notes:notes.trim() || null, audience, active:true, updated_at:new Date().toISOString() }, { onConflict:'owner_id,book_id' }).select().single();
+  ensure(error); return data;
+}
+
+export async function requestBookLoan(userId, offerId, message = '') {
+  const { data, error } = await supabase.from('loan_requests').upsert({ offer_id:offerId, borrower_id:userId, status:'pending', message:message.trim() || null, requested_at:new Date().toISOString(), responded_at:null, returned_at:null }, { onConflict:'offer_id,borrower_id' }).select().single();
+  ensure(error); return data;
+}
+
+export async function getLoanDashboard(userId) {
+  const [incoming, outgoing] = await Promise.all([
+    supabase.from('loan_requests').select('id,status,message,due_at,requested_at,borrower:profiles!loan_requests_borrower_id_fkey(id,display_name,username,avatar_url),offer:lending_offers!inner(id,owner_id,book:books(id,title,author,cover_url))').eq('offer.owner_id', userId).order('requested_at', { ascending:false }),
+    supabase.from('loan_requests').select('id,status,message,due_at,requested_at,offer:lending_offers(id,city,owner:profiles!lending_offers_owner_id_fkey(id,display_name,username),book:books(id,title,author,cover_url))').eq('borrower_id', userId).order('requested_at', { ascending:false }),
+  ]);
+  ensure(incoming.error || outgoing.error); return { incoming:incoming.data || [], outgoing:outgoing.data || [] };
+}
+
+export async function respondLoanRequest(requestId, accept, dueAt = null) {
+  const { data, error } = await supabase.rpc('respond_loan_request', { p_request_id:requestId, p_accept:accept, p_due_at:dueAt || null }); ensure(error); return data;
+}
+
+export async function updateLoanStatus(requestId, status) {
+  const { data, error } = await supabase.rpc('update_loan_status', { p_request_id:requestId, p_status:status }); ensure(error); return data;
+}
+
 export async function exportUserData(userId) {
-  const tables = ['profiles','user_books','posts','comments','follows','saved_posts','reading_sessions','emotional_checkins','user_blocks','reports'];
+  const tables = ['profiles','user_books','posts','comments','follows','saved_posts','reading_sessions','reading_notes','reading_cycles','reading_goals','emotional_checkins','lending_offers','loan_requests','user_blocks','reports'];
   const results = await Promise.all(tables.map(async (table) => {
     let query = supabase.from(table).select('*');
     if (table === 'profiles') query = query.eq('id', userId);
-    else if (table === 'user_books' || table === 'reading_sessions' || table === 'emotional_checkins') query = query.eq('user_id', userId);
+    else if (['user_books','reading_sessions','reading_notes','reading_cycles','reading_goals','emotional_checkins'].includes(table)) query = query.eq('user_id', userId);
+    else if (table === 'lending_offers') query = query.eq('owner_id', userId);
+    else if (table === 'loan_requests') query = query.eq('borrower_id', userId);
     else if (table === 'posts' || table === 'comments') query = query.eq('author_id', userId);
     else if (table === 'follows') query = query.eq('follower_id', userId);
     else if (table === 'saved_posts') query = query.eq('user_id', userId);
@@ -316,6 +383,25 @@ export async function exportUserData(userId) {
     const { data, error } = await query; ensure(error); return [table, data];
   }));
   return { exported_at: new Date().toISOString(), version: 1, data: Object.fromEntries(results) };
+}
+
+export async function importGoodreadsBooks(userId, books, onProgress) {
+  let imported = 0; let reused = 0; const errors = [];
+  for (let index = 0; index < books.length; index += 1) {
+    const item = books[index];
+    try {
+      let query = supabase.from('books').select('id').limit(1);
+      query = item.isbn ? query.eq('isbn', item.isbn) : query.eq('title', item.title).eq('author', item.author);
+      const { data: existing, error: findError } = await query.maybeSingle(); ensure(findError);
+      let bookId = existing?.id;
+      if (!bookId) { const created = await createBook(userId, { title:item.title, author:item.author, isbn:item.isbn }); bookId = created.id; imported += 1; }
+      else reused += 1;
+      const finishedAt = item.finishedAt ? item.finishedAt.replaceAll('/', '-') : null;
+      const { error } = await supabase.from('user_books').upsert({ user_id:userId, book_id:bookId, status:item.status, rating:item.rating, progress:item.status === 'lidos' ? 100 : 0, finished_at:finishedAt }, { onConflict:'user_id,book_id' }); ensure(error);
+    } catch (error) { errors.push({ title:item.title, message:error.message }); }
+    onProgress?.(index + 1, books.length);
+  }
+  return { imported, reused, errors };
 }
 
 export async function getEmotionMap(bookId) {

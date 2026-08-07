@@ -32,3 +32,20 @@ export function summarizeSessions(sessions) {
     days: summary.days.add(session.occurred_on),
   }), { pages: 0, minutes: 0, days: new Set() });
 }
+
+export function buildWeeklyActivity(sessions, today = new Date()) {
+  return Array.from({ length: 7 }, (_, offset) => {
+    const date = new Date(today); date.setHours(12,0,0,0); date.setDate(date.getDate() - (6 - offset));
+    const key = date.toISOString().slice(0,10);
+    const daily = sessions.filter((session) => session.occurred_on === key);
+    return { date:key, label:new Intl.DateTimeFormat('pt-BR',{weekday:'short'}).format(date).replace('.',''), pages:daily.reduce((sum,item)=>sum+(item.pages_read||0),0), minutes:daily.reduce((sum,item)=>sum+(item.minutes_read||0),0) };
+  });
+}
+
+export function calculateGentleGoal(goal, sessions, today = new Date()) {
+  const relevant = sessions.filter((session) => session.occurred_on >= goal.starts_on && session.occurred_on <= goal.ends_on);
+  const progress = goal.metric === 'pages' ? relevant.reduce((sum,item)=>sum+(item.pages_read||0),0) : goal.metric === 'minutes' ? relevant.reduce((sum,item)=>sum+(item.minutes_read||0),0) : new Set(relevant.map((item)=>item.occurred_on)).size;
+  const remaining = Math.max(0, goal.target - progress);
+  const daysLeft = Math.max(1, Math.ceil((new Date(`${goal.ends_on}T12:00:00`) - today) / 86400000) + 1);
+  return { progress, remaining, percent:Math.min(100,Math.round((progress/goal.target)*100)), dailySuggestion:Math.ceil(remaining/daysLeft), daysLeft };
+}

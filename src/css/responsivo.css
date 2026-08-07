@@ -152,8 +152,15 @@
   .leitura-form{ grid-template-columns: 1fr; }
   .descoberta-local{ grid-template-columns: 1fr; }.clubes-locais{ grid-column:1; }.leitura-adaptativa{ align-items:flex-start; flex-direction:column; }
   .diario-leitura{align-items:flex-start;flex-direction:column}.diario-leitura__stats{gap:var(--space-4)}.sessao-form{grid-template-columns:1fr}.sessao-form__nota{grid-column:1}.colecao-inteligente{align-items:flex-start;flex-direction:column}
+  .painel-leitura{grid-template-columns:1fr}
+  .caderno-leitura form{grid-template-columns:1fr}.caderno-leitura textarea{grid-column:1}.caderno-leitura header{flex-direction:column}
 }
 
 @media (prefers-reduced-motion: reduce){
   *, *::before, *::after{ scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+}
+
+@media (max-width: 768px){
+  .emprestimos form,.painel-emprestimos__colunas{grid-template-columns:1fr}
+  .emprestimos header,.emprestimos__lista article{align-items:stretch;flex-direction:column}
 }
