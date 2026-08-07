@@ -19,6 +19,7 @@ export const itensMenu = [
 export const abasBiblioteca = [
   { categoria: 'todos', label: 'Todos' },
   { categoria: 'lendo', label: 'Lendo' },
+  { categoria: 'pausados', label: 'Pausados' },
   { categoria: 'quero-ler', label: 'Quero ler' },
   { categoria: 'lidos', label: 'Lidos' },
   { categoria: 'favoritos', label: 'Favoritos' },

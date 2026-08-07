@@ -9,6 +9,10 @@ function texto(item) {
   if (item.type === 'follow') return `${nome} começou a seguir você.`;
   if (item.type === 'like') return `${nome} curtiu sua publicação.`;
   if (item.type === 'comment') return `${nome} comentou na sua publicação.`;
+  if (item.type === 'loan_request') return `${nome} pediu um livro seu emprestado.`;
+  if (item.type === 'loan_accepted') return `${nome} aceitou seu pedido de empréstimo.`;
+  if (item.type === 'loan_declined') return `${nome} respondeu ao seu pedido de empréstimo.`;
+  if (item.type === 'prompt_vote') return `${nome} apoiou sua pergunta no clube.`;
   if (item.type === 'event') return 'Há uma atualização em um evento.';
   return 'Há uma atualização em um dos seus clubes.';
 }

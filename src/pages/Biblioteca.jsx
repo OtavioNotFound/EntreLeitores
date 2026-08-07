@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import EmptyState from '../components/EmptyState.jsx';
 import { LoanDashboard } from '../components/TrustedLending.jsx';
+import NextReadPicker from '../components/NextReadPicker.jsx';
 import { useToast } from '../components/Toast.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 import { abasBiblioteca } from '../data/navigation.js';
@@ -64,11 +65,12 @@ export default function Biblioteca({ aoAbrirLivro }) {
 
   return (
     <section className="pagina ativa" id="pagina-biblioteca">
-      <LoanDashboard />
       <div className="pagina-cabecalho">
         <div><h1 className="pagina-cabecalho__titulo">Minha estante</h1><p className="pagina-cabecalho__sub">{livros.length} {livros.length === 1 ? 'livro organizado' : 'livros organizados'} por você.</p></div>
         <button className="btn-primario" onClick={() => setFormAberto(!formAberto)}>{formAberto ? 'Cancelar' : '+ Adicionar livro'}</button>
       </div>
+      <NextReadPicker books={livros} onOpen={aoAbrirLivro}/>
+      <LoanDashboard />
 
       <section className="diario-leitura widget"><div className="diario-leitura__stats"><span><strong>{sequencia}</strong><small>dias de sequência</small></span><span><strong>{resumo.pages}</strong><small>páginas em 30 dias</small></span><span><strong>{resumo.minutes}</strong><small>minutos em 30 dias</small></span><span><strong>{resumo.days.size}</strong><small>dias ativos</small></span></div><button className="btn-primario" onClick={() => setSessaoAberta(!sessaoAberta)}>{sessaoAberta ? 'Cancelar' : '+ Registrar leitura'}</button></section>
       <section className="painel-leitura"><div className="widget atividade-semanal"><div><strong>Seus últimos 7 dias</strong><small>Páginas ou minutos registrados</small></div><div className="atividade-semanal__grafico">{semana.map((day)=><span key={day.date}><i style={{height:`${Math.max(4,((day.minutes||day.pages)/maiorDia)*100)}%`}} title={`${day.pages} páginas · ${day.minutes} min`}/><small>{day.label}</small></span>)}</div></div><div className="widget timer-leitura"><strong>Leitura focada</strong><select disabled={Boolean(timerStart)} value={timerBookId} onChange={(e)=>setTimerBookId(e.target.value)}><option value="">Escolha o livro</option>{livros.filter((book)=>book.status==='lendo').map((book)=><option key={book.id} value={book.id}>{book.title}</option>)}</select><div className="timer-leitura__relogio">{String(Math.floor(timerSeconds/60)).padStart(2,'0')}:{String(timerSeconds%60).padStart(2,'0')}</div>{timerStart?<button className="btn-primario" onClick={pararTimer}>Parar e registrar</button>:<button className="btn-secundario" onClick={iniciarTimer}>Iniciar cronômetro</button>}<small>{Object.entries(porFormato).map(([key,value])=>`${key}: ${value}`).join(' · ') || 'Suas sessões aparecerão aqui.'}</small></div></section>

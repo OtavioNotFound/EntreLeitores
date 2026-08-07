@@ -251,8 +251,10 @@ export async function getMyClubs(userId) {
 }
 
 export async function getBooks(search = '', page = 0, pageSize = 24) {
+  if (search.trim()) {
+    const {data,error}=await supabase.rpc('search_books_fuzzy',{search_term:search.trim(),requested_offset:page*pageSize,requested_limit:pageSize});ensure(error);return data||[];
+  }
   let query = supabase.from('books').select('*').order('created_at', { ascending: false }).range(page * pageSize, page * pageSize + pageSize - 1);
-  if (search.trim()) query = query.or(`title.ilike.%${search.trim()}%,author.ilike.%${search.trim()}%`);
   const { data, error } = await query;
   ensure(error);
   return data;
@@ -334,6 +336,18 @@ export async function startReread(bookId, format = null) {
   const {data,error}=await supabase.rpc('start_reread',{target_book_id:bookId,target_format:format||null}); ensure(error); return data;
 }
 
+export async function getActiveReadingPause(userId, bookId) {
+  const {data,error}=await supabase.from('reading_pauses').select('*').eq('user_id',userId).eq('book_id',bookId).is('resumed_at',null).maybeSingle();ensure(error);return data;
+}
+
+export async function pauseReading(bookId, pause) {
+  const {data,error}=await supabase.rpc('pause_reading',{target_book_id:bookId,p_kind:pause.kind,p_reason:pause.reason,p_note:pause.note||null,p_resume_on:pause.resumeOn||null});ensure(error);return data;
+}
+
+export async function resumeReading(bookId) {
+  const {error}=await supabase.rpc('resume_reading',{target_book_id:bookId});ensure(error);
+}
+
 export async function getBookLendingOffers(bookId) {
   const { data, error } = await supabase.from('lending_offers')
     .select('id,owner_id,book_id,city,notes,audience,active,owner:profiles!lending_offers_owner_id_fkey(id,display_name,username,avatar_url),loan_requests(id,borrower_id,status)')
@@ -400,11 +414,11 @@ export async function toggleClubPromptVote(promptId) {
 }
 
 export async function exportUserData(userId) {
-  const tables = ['profiles','user_books','posts','comments','follows','saved_posts','reading_sessions','reading_notes','reading_cycles','reading_goals','emotional_checkins','lending_offers','loan_requests','book_content_warnings','user_content_preferences','club_prompts','user_blocks','reports'];
+  const tables = ['profiles','user_books','posts','comments','follows','saved_posts','reading_sessions','reading_notes','reading_cycles','reading_goals','reading_pauses','emotional_checkins','lending_offers','loan_requests','book_content_warnings','user_content_preferences','club_prompts','user_blocks','reports'];
   const results = await Promise.all(tables.map(async (table) => {
     let query = supabase.from(table).select('*');
     if (table === 'profiles') query = query.eq('id', userId);
-    else if (['user_books','reading_sessions','reading_notes','reading_cycles','reading_goals','emotional_checkins'].includes(table)) query = query.eq('user_id', userId);
+    else if (['user_books','reading_sessions','reading_notes','reading_cycles','reading_goals','reading_pauses','emotional_checkins'].includes(table)) query = query.eq('user_id', userId);
     else if (table === 'lending_offers') query = query.eq('owner_id', userId);
     else if (table === 'loan_requests') query = query.eq('borrower_id', userId);
     else if (table === 'book_content_warnings' || table === 'user_content_preferences') query = query.eq('user_id', userId);
@@ -492,7 +506,7 @@ export async function setClubReading(userId, clubId, bookId, targetEndAt) {
 }
 
 export async function getNotifications(userId) {
-  const { data, error } = await supabase.from('notifications').select('id,type,read_at,created_at,actor:profiles!notifications_actor_id_fkey(display_name,username,avatar_url)').eq('recipient_id', userId).order('created_at', { ascending: false }).limit(30);
+  const { data, error } = await supabase.from('notifications').select('id,type,read_at,created_at,loan_request_id,prompt_id,actor:profiles!notifications_actor_id_fkey(display_name,username,avatar_url)').eq('recipient_id', userId).order('created_at', { ascending: false }).limit(30);
   ensure(error);
   return data;
 }

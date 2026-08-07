@@ -164,4 +164,6 @@
   .emprestimos form,.painel-emprestimos__colunas{grid-template-columns:1fr}
   .emprestimos header,.emprestimos__lista article{align-items:stretch;flex-direction:column}
   .seguranca-leitura form,.pote-perguntas form{grid-template-columns:1fr}
+  .pausa-leitura{flex-direction:column}.pausa-leitura form{grid-template-columns:1fr;width:100%}.pausa-leitura textarea{grid-column:1}
+  .proxima-leitura__filtros,.proxima-leitura__resultado{grid-template-columns:1fr}
 }

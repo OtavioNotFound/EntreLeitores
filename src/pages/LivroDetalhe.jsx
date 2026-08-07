@@ -4,6 +4,7 @@ import Compositor from '../components/Compositor.jsx';
 import ReadingNotebook from '../components/ReadingNotebook.jsx';
 import TrustedLending from '../components/TrustedLending.jsx';
 import BookSafety from '../components/BookSafety.jsx';
+import ReadingPause from '../components/ReadingPause.jsx';
 import EmptyState from '../components/EmptyState.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 import { addToShelf, createPost, getEmotionMap, getPostsByBook, saveEmotion, startReread, updateBookOrganization, updateReading } from '../services/social.js';
@@ -72,7 +73,7 @@ export default function LivroDetalhe({ livro, aoAbrirLivro, aoAbrirPerfil }) {
           {(livro.status==='lidos'||livro.progress===100)&&<button className="btn-texto" onClick={reler}>↻ Iniciar releitura preservando histórico</button>}
           <button className="btn-texto" onClick={() => setEditandoLeitura(!editandoLeitura)}>{editandoLeitura ? 'Cancelar atualização' : 'Atualizar progresso e nota'}</button>
           {editandoLeitura && <form className="leitura-form" onSubmit={salvarLeitura}>
-            <label>Status<select value={leitura.status} onChange={(e) => setLeitura({ ...leitura, status: e.target.value })}><option value="quero-ler">Quero ler</option><option value="lendo">Lendo</option><option value="lidos">Lido</option><option value="favoritos">Favorito</option><option value="abandonados">Abandonado</option></select></label>
+            <label>Status<select value={leitura.status} onChange={(e) => setLeitura({ ...leitura, status: e.target.value })}><option value="quero-ler">Quero ler</option><option value="lendo">Lendo</option><option value="pausados">Pausado</option><option value="lidos">Lido</option><option value="favoritos">Favorito</option><option value="abandonados">Abandonado</option></select></label>
             <label>Progresso: {leitura.progress}%<input type="range" min="0" max="100" value={leitura.progress} onChange={(e) => setLeitura({ ...leitura, progress: Number(e.target.value) })} /></label>
             <label>Nota<select value={leitura.rating} onChange={(e) => setLeitura({ ...leitura, rating: Number(e.target.value) })}><option value="">Sem nota</option>{[1,2,3,4,5].map((nota) => <option key={nota} value={nota}>{nota} estrela{nota > 1 ? 's' : ''}</option>)}</select></label>
             <label>Formato<select value={leitura.format} onChange={(e) => setLeitura({ ...leitura, format:e.target.value })}><option value="">Não informado</option><option value="fisico">Físico</option><option value="ebook">E-book</option><option value="audiobook">Audiobook</option><option value="outro">Outro</option></select></label><label>Origem<select value={leitura.source} onChange={(e) => setLeitura({ ...leitura, source:e.target.value })}><option value="">Não informada</option><option value="proprio">Meu acervo</option><option value="biblioteca">Biblioteca</option><option value="emprestado">Emprestado</option><option value="assinatura">Assinatura</option><option value="outro">Outra</option></select></label><label>Etiquetas<input value={leitura.tags} onChange={(e) => setLeitura({ ...leitura, tags:e.target.value })} placeholder="fantasia, favorito, faculdade" /></label>
@@ -82,6 +83,7 @@ export default function LivroDetalhe({ livro, aoAbrirLivro, aoAbrirPerfil }) {
       </div>
       <section className="mapa-emocional widget"><div><h2>Mapa emocional coletivo</h2><p>Veja como a experiência muda ao longo do livro, sem revelar acontecimentos.</p></div><div className="mapa-emocional__linha">{emocoes.length ? emocoes.map((item, index) => <span key={`${item.progress}-${index}`} title={`${item.emotion} em ${item.progress}%`} style={{ left: `${item.progress}%` }}>{({curioso:'🤔',feliz:'😊',tenso:'😰',triste:'😢',surpreso:'😮',inspirado:'✨'})[item.emotion]}</span>) : <small>Seja a primeira pessoa a registrar uma emoção.</small>}</div><div className="mapa-emocional__form"><select value={emocao} onChange={(e) => setEmocao(e.target.value)}><option value="curioso">🤔 Curioso</option><option value="feliz">😊 Feliz</option><option value="tenso">😰 Tenso</option><option value="triste">😢 Triste</option><option value="surpreso">😮 Surpreso</option><option value="inspirado">✨ Inspirado</option></select><span>em {leitura.progress}%</span><button className="btn-secundario" onClick={registrarEmocao}>Registrar</button></div></section>
       <BookSafety bookId={livro.id}/>
+      <ReadingPause book={livro}/>
       <TrustedLending book={livro} isOwned={Boolean(livro.status) && (!livro.format || livro.format === 'fisico')}/>
       <ReadingNotebook bookId={livro.id} currentProgress={Number(leitura.progress)||0}/>
       <div className="titulo-secao" style={{ marginTop: 'var(--space-6)' }}>Conversas sobre este livro</div>

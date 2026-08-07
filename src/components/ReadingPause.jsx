@@ -1,0 +1,15 @@
+import { useEffect, useState } from 'react';
+import { useAuth } from '../context/AuthContext.jsx';
+import { useToast } from './Toast.jsx';
+import { getActiveReadingPause, pauseReading, resumeReading } from '../services/social.js';
+
+const reasons={ritmo:'O ritmo não encaixou',momento:'Não é o momento certo',conteudo:'O conteúdo me fez mal',dificuldade:'Preciso de mais contexto',outro:'Outro motivo'};
+
+export default function ReadingPause({book}){
+  const {user}=useAuth();const toast=useToast();const [active,setActive]=useState(null);const [open,setOpen]=useState(false);const [busy,setBusy]=useState(false);const [form,setForm]=useState({kind:'pause',reason:'momento',note:'',resumeOn:''});
+  const owned=Boolean(book.status);useEffect(()=>{if(owned)getActiveReadingPause(user.id,book.id).then(setActive).catch(()=>{});},[book.id,user.id,owned]);
+  if(!owned)return null;
+  async function save(event){event.preventDefault();setBusy(true);try{setActive(await pauseReading(book.id,form));setOpen(false);toast(form.kind==='pause'?'Leitura pausada. Seu progresso ficou guardado.':'Leitura encerrada sem apagar o caminho percorrido.');}catch(error){toast(error.message)}finally{setBusy(false)}}
+  async function resume(){setBusy(true);try{await resumeReading(book.id);setActive(null);toast('Leitura retomada do ponto onde você parou.');}catch(error){toast(error.message)}finally{setBusy(false)}}
+  return <section className="pausa-leitura widget">{active?<><div><span className="pausa-leitura__estado">{active.kind==='pause'?'Em pausa':'Leitura encerrada'}</span><strong>{reasons[active.reason]}</strong><small>Seu progresso de {active.progress}% continua salvo.{active.resume_on?` Lembrete pessoal: ${new Date(`${active.resume_on}T12:00`).toLocaleDateString('pt-BR')}.`:''}</small>{active.note&&<p>{active.note}</p>}</div><button className="btn-primario" disabled={busy} onClick={resume}>Retomar leitura</button></>:<><div><strong>Está tudo bem parar</strong><small>Pausar não quebra sequência nem apaga páginas, notas ou memórias.</small></div><button className="btn-secundario" onClick={()=>setOpen(!open)}>{open?'Cancelar':'Pausar ou encerrar'}</button></>}{open&&!active&&<form onSubmit={save}><select value={form.kind} onChange={(e)=>setForm({...form,kind:e.target.value})}><option value="pause">Pausar por enquanto</option><option value="dnf">Encerrar esta leitura</option></select><select value={form.reason} onChange={(e)=>setForm({...form,reason:e.target.value})}>{Object.entries(reasons).map(([key,label])=><option key={key} value={key}>{label}</option>)}</select>{form.kind==='pause'&&<label>Talvez retomar em<input type="date" min={new Date().toISOString().slice(0,10)} value={form.resumeOn} onChange={(e)=>setForm({...form,resumeOn:e.target.value})}/></label>}<textarea maxLength="500" value={form.note} onChange={(e)=>setForm({...form,note:e.target.value})} placeholder="Uma nota privada para seu eu do futuro (opcional)"/><button className="btn-primario" disabled={busy}>Guardar decisão</button></form>}</section>;
+}
