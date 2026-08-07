@@ -146,7 +146,17 @@
   margin-bottom: var(--space-3);
 }
 
-.post__autor-info{ flex: 1; min-width: 0; }
+.post__autor-info{
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  text-align: left;
+  color: inherit;
+}
+.compositor__rodape--direita{ justify-content: flex-end; }
+.post__autor-info:hover .post__autor-nome{ color: var(--roxo-500); }
 .post__autor-nome{ font-size: var(--fs-sm); font-weight: 700; color: var(--cinza-900); }
 .post__autor-meta{ font-size: var(--fs-xs); color: var(--cinza-500); }
 .post__autor-meta span{ margin: 0 2px; }
@@ -179,6 +189,9 @@
   padding: var(--space-3);
   margin-bottom: var(--space-3);
 }
+.post__livro--button{ width: 100%; border: 0; color: inherit; text-align: left; }
+.post__livro-capa{ display: flex; align-items: center; justify-content: center; color: var(--branco); overflow: hidden; }
+.post__livro-capa img{ width: 100%; height: 100%; object-fit: cover; }
 
 .post__livro-capa{
   width: 44px; height: 62px;
@@ -234,3 +247,12 @@
   100%{ transform: scale(1); }
 }
 .post__acao.curtido .icone{ animation: pulso 280ms ease; }
+
+.comentarios{ margin-top: var(--space-3); padding-top: var(--space-3); border-top: 1px solid var(--cinza-100); display: flex; flex-direction: column; gap: var(--space-3); }
+.comentario{ display: flex; gap: var(--space-2); align-items: flex-start; }
+.comentario strong{ font-size: var(--fs-xs); }
+.comentario p{ margin: 2px 0 0; color: var(--cinza-700); font-size: var(--fs-sm); line-height: 1.45; }
+.comentario-form{ display: flex; gap: var(--space-2); }
+.comentario-form input{ flex: 1; min-width: 0; border: 1px solid var(--cinza-200); background: var(--cinza-50); color: var(--cinza-900); border-radius: var(--radius-full); padding: 9px var(--space-4); }
+.comentario-form button{ width: 38px; height: 38px; border: 0; border-radius: 50%; background: var(--roxo-500); color: white; display: grid; place-items: center; }
+.comentario-form button:disabled{ opacity: .45; cursor: default; }

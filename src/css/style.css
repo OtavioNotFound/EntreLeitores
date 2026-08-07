@@ -151,20 +151,79 @@ textarea:focus-visible{
 
 .conteudo-principal{
   grid-area: main;
-  display: grid;
-  grid-template-columns: 1fr var(--largura-widgets);
-  gap: var(--space-6);
+  display: block;
   padding: var(--space-6);
-  align-items: start;
 }
 
+.app-loading{
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  color: var(--cinza-500);
+}
+.loading-spinner{
+  width: 22px; height: 22px; border-radius: 50%;
+  border: 3px solid var(--cinza-200); border-top-color: var(--roxo-500);
+  animation: girar .7s linear infinite;
+}
+@keyframes girar{ to{ transform: rotate(360deg); } }
+
+.avatar--placeholder{
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--branco);
+  font-weight: 800;
+  line-height: 1;
+}
+
+.estado-vazio{
+  min-height: 190px;
+  padding: var(--space-8);
+  border: 1px dashed var(--cinza-300);
+  border-radius: var(--radius-md);
+  background: var(--bg-card);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  text-align: center;
+}
+.estado-vazio__icone{ color: var(--roxo-400); font-size: 2rem; }
+.estado-vazio__texto{ max-width: 48ch; color: var(--cinza-500); font-size: var(--fs-sm); line-height: 1.55; }
+
+.skeleton-card{
+  height: 180px;
+  border-radius: var(--radius-md);
+  background: linear-gradient(90deg, var(--cinza-100) 25%, var(--cinza-50) 45%, var(--cinza-100) 65%);
+  background-size: 300% 100%;
+  animation: skeleton 1.2s ease infinite;
+}
+.skeleton-card--alto{ height: 420px; }
+@keyframes skeleton{ from{ background-position: 100% 0; } to{ background-position: 0 0; } }
+
 .feed-coluna{ min-width: 0; }
+#pagina-inicio{
+  grid-template-columns: minmax(0, 1fr) var(--largura-widgets);
+  gap: var(--space-6);
+  align-items: start;
+}
+#pagina-inicio.ativa{ display: grid; }
 .widgets-coluna{
   display: flex;
   flex-direction: column;
   gap: var(--space-5);
   position: sticky;
   top: calc(var(--altura-header) + var(--space-6));
+}
+
+.rodape-produto{
+  font-size: .72rem;
+  color: var(--cinza-400);
+  text-align: center;
 }
 
 .pagina{ display: none; }

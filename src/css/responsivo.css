@@ -23,7 +23,7 @@
   .sidebar__item{ justify-content: center; }
   .sidebar__logo{ justify-content: center; padding-inline: 0; }
 
-  .conteudo-principal{ grid-template-columns: 1fr; }
+  #pagina-inicio.ativa{ grid-template-columns: 1fr; }
   .widgets-coluna{ position: static; flex-direction: row; flex-wrap: wrap; }
   .widgets-coluna > *{ flex: 1 1 260px; }
   .header__nav{ display: none; }
@@ -62,6 +62,14 @@
   .conteudo-principal{ padding: var(--space-4); gap: var(--space-4); }
   .trio-topo{ gap: var(--space-3); }
   .widgets-coluna{ flex-direction: column; }
+  .feed-intro{ align-items: flex-start; }
+  .feed-intro h1{ font-size: var(--fs-lg); }
+  .leitores-ativos{ margin-inline: calc(var(--space-4) * -1); border-radius: 0; border-inline: 0; }
+  .feed__filtros{ overflow-x: auto; padding-bottom: var(--space-1); }
+  .feed__filtros .filtro-pill,
+  .feed__ordenar{ flex: 0 0 auto; }
+  .feed__ordenar{ margin-left: 0; }
+  .compositor__abas{ overflow-x: auto; }
   .dashboard-grid{ grid-template-columns: 1fr; }
   .livro-detalhe{ grid-template-columns: 1fr; }
   .livro-detalhe__capa{ width: 140px; }

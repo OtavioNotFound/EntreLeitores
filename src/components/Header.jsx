@@ -1,124 +1,84 @@
-import { useRef, useState } from 'react';
-import { linksHeader, mensagens, notificacoes } from '../data/mockData.js';
+import { useEffect, useRef, useState } from 'react';
+import { getNotifications } from '../services/social.js';
 import { useClickOutside } from '../hooks/useClickOutside.js';
-import { useToast } from './Toast.jsx';
-import { Menu as MenuIcon, Search as SearchIcon, LightMode as LightIcon, DarkMode as DarkIcon, ChatBubble as ChatIcon, Notifications as NotificationsIcon, Person as PersonIcon, Settings as SettingsIcon, Logout as LogoutIcon } from '@mui/icons-material';
+import {
+  Menu as MenuIcon,
+  Search as SearchIcon,
+  LightMode as LightIcon,
+  DarkMode as DarkIcon,
+  Notifications as NotificationsIcon,
+  Person as PersonIcon,
+  Settings as SettingsIcon,
+  Logout as LogoutIcon,
+} from '@mui/icons-material';
 
-export default function Header({ paginaAtual, irParaPagina, abrirSidebarMobile, temaEscuro, alternarTema, aoSair }) {
-  const mostrarToast = useToast();
-  const [dropdownAberto, setDropdownAberto] = useState(null); // 'mensagens' | 'notificacoes' | 'perfil' | null
+function notificationText(item) {
+  const nome = item.actor?.display_name || 'Alguém';
+  if (item.type === 'follow') return `${nome} começou a seguir você`;
+  if (item.type === 'like') return `${nome} curtiu sua publicação`;
+  if (item.type === 'comment') return `${nome} comentou na sua publicação`;
+  if (item.type === 'event') return `Há uma novidade em um evento`;
+  return `Há uma novidade em um dos seus clubes`;
+}
+
+export default function Header({ irParaPagina, abrirSidebarMobile, temaEscuro, alternarTema, aoSair, profile, userId, aoBuscar: executarBusca }) {
+  const [dropdownAberto, setDropdownAberto] = useState(null);
   const [busca, setBusca] = useState('');
-
-  const refMensagens = useRef(null);
+  const [notificacoes, setNotificacoes] = useState([]);
   const refNotificacoes = useRef(null);
   const refPerfil = useRef(null);
 
-  useClickOutside(
-    [refMensagens, refNotificacoes, refPerfil],
-    () => setDropdownAberto(null),
-    dropdownAberto !== null
-  );
+  useEffect(() => {
+    getNotifications(userId).then(setNotificacoes).catch((error) => console.error('Falha ao carregar notificações:', error.message));
+  }, [userId]);
 
-  function alternarDropdown(nome) {
-    setDropdownAberto((atual) => (atual === nome ? null : nome));
-  }
+  useClickOutside([refNotificacoes, refPerfil], () => setDropdownAberto(null), dropdownAberto !== null);
 
   function aoBuscar(evento) {
     if (evento.key === 'Enter' && busca.trim()) {
-      mostrarToast(`Buscando por "${busca.trim()}"...`);
+      executarBusca?.(busca.trim());
     }
   }
+
+  const nome = profile?.display_name || 'Leitor';
+  const inicial = nome.trim().charAt(0).toUpperCase() || 'L';
+  const naoLidas = notificacoes.filter((item) => !item.read_at).length;
 
   return (
     <header className="header">
       <button className="menu-mobile-toggle" aria-label="Abrir menu" onClick={abrirSidebarMobile}><MenuIcon /></button>
-
-      <nav className="header__nav">
-        {linksHeader.map((link, i) => (
-          <a
-            key={i}
-            href="#"
-            className={`header__link${paginaAtual === link.pagina ? ' ativo' : ''}`}
-            onClick={(e) => { e.preventDefault(); irParaPagina(link.pagina); }}
-          >
-            {link.label}
-          </a>
-        ))}
-      </nav>
-
       <div className="header__busca">
         <span className="header__busca-icone"><SearchIcon fontSize="small" /></span>
-        <input
-          type="search"
-          placeholder="Buscar livros, autores..."
-          value={busca}
-          onChange={(e) => setBusca(e.target.value)}
-          onKeyDown={aoBuscar}
-        />
+        <input type="search" placeholder="Buscar pessoas, livros ou clubes..." value={busca} onChange={(e) => setBusca(e.target.value)} onKeyDown={aoBuscar} />
       </div>
-
       <div className="header__acoes">
-        <button className="header__icone-btn" title="Alternar tema" onClick={alternarTema}>
+        <button className="header__icone-btn" aria-label="Alternar tema" title="Alternar tema" onClick={alternarTema}>
           {temaEscuro ? <LightIcon fontSize="small" /> : <DarkIcon fontSize="small" />}
         </button>
-
-        <div style={{ position: 'relative' }} ref={refMensagens}>
-          <button className="header__icone-btn" onClick={() => alternarDropdown('mensagens')}><ChatIcon fontSize="small" /></button>
-          <div className={`dropdown${dropdownAberto === 'mensagens' ? ' aberto' : ''}`}>
-            <div className="dropdown__titulo">Mensagens</div>
-            {mensagens.map((m, i) => (
-              <div className="dropdown__item" key={i}>
-                <img className="avatar sm" src={m.avatar} alt="" />
-                <div>
-                  <div className="dropdown__item-texto"><strong>{m.destaque}</strong> {m.texto}</div>
-                  <div className="dropdown__item-tempo">{m.tempo}</div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div style={{ position: 'relative' }} ref={refNotificacoes}>
-          <button className="header__icone-btn" onClick={() => alternarDropdown('notificacoes')}>
-            <NotificationsIcon fontSize="small" /><span className="header__ponto" />
+        <div className="header__dropdown-wrap" ref={refNotificacoes}>
+          <button className="header__icone-btn" aria-label="Notificações" onClick={() => setDropdownAberto(dropdownAberto === 'notificacoes' ? null : 'notificacoes')}>
+            <NotificationsIcon fontSize="small" />{naoLidas > 0 && <span className="header__ponto" />}
           </button>
           <div className={`dropdown${dropdownAberto === 'notificacoes' ? ' aberto' : ''}`}>
             <div className="dropdown__titulo">Notificações</div>
-            {notificacoes.map((n, i) => (
-              <div className="dropdown__item" key={i}>
-                {(() => {
-                  const IconeComponente = n.icone;
-                  return IconeComponente ? <span className="badge-emoji"><IconeComponente /></span> : null;
-                })()}
-                <div>
-                  <div className="dropdown__item-texto">
-                    {n.destaque ? <><strong>{n.destaque}</strong> {n.texto.replace(n.destaque, '').trim()}</> : n.texto}
-                  </div>
-                  <div className="dropdown__item-tempo">{n.tempo}</div>
-                </div>
-              </div>
-            ))}
+            {notificacoes.length ? notificacoes.slice(0, 5).map((item) => (
+              <button className="dropdown__item dropdown__item--button" key={item.id} onClick={() => { irParaPagina('notificacoes'); setDropdownAberto(null); }}>
+                <span className="avatar sm avatar--placeholder">{item.actor?.display_name?.charAt(0) || '•'}</span>
+                <span><span className="dropdown__item-texto">{notificationText(item)}</span></span>
+              </button>
+            )) : <p className="dropdown__vazio">Nenhuma notificação ainda.</p>}
           </div>
         </div>
-
-        <div style={{ position: 'relative' }} ref={refPerfil}>
-          <button className="header__perfil" onClick={() => alternarDropdown('perfil')}>
-            <img className="avatar" src="/img/assets/avatar-usuario.svg" alt="Ana Clara" />
-            <span className="header__perfil-texto">
-              <span className="header__perfil-nome">Ana Clara</span><br />
-              <span className="header__perfil-user">@anaclara</span>
-            </span>
+        <div className="header__dropdown-wrap" ref={refPerfil}>
+          <button className="header__perfil" onClick={() => setDropdownAberto(dropdownAberto === 'perfil' ? null : 'perfil')}>
+            {profile?.avatar_url ? <img className="avatar" src={profile.avatar_url} alt={nome} /> : <span className="avatar avatar--placeholder">{inicial}</span>}
+            <span className="header__perfil-texto"><span className="header__perfil-nome">{nome}</span><br /><span className="header__perfil-user">@{profile?.username || 'perfil'}</span></span>
             <span className="header__perfil-chevron">▾</span>
           </button>
           <div className={`dropdown${dropdownAberto === 'perfil' ? ' aberto' : ''}`}>
-            <div className="dropdown__item" onClick={() => { irParaPagina('perfil'); setDropdownAberto(null); }}><PersonIcon fontSize="small" /> Ver perfil</div>
-            <div className="dropdown__item" onClick={() => { irParaPagina('configuracoes'); setDropdownAberto(null); }}><SettingsIcon fontSize="small" /> Configurações</div>
-            <div
-              className="dropdown__item"
-              onClick={() => { setDropdownAberto(null); aoSair?.(); }}
-            >
-              <LogoutIcon fontSize="small" /> Sair
-            </div>
+            <button className="dropdown__item dropdown__item--button" onClick={() => { irParaPagina('perfil'); setDropdownAberto(null); }}><PersonIcon fontSize="small" /> Ver perfil</button>
+            <button className="dropdown__item dropdown__item--button" onClick={() => { irParaPagina('configuracoes'); setDropdownAberto(null); }}><SettingsIcon fontSize="small" /> Configurações</button>
+            <button className="dropdown__item dropdown__item--button" onClick={() => { setDropdownAberto(null); aoSair(); }}><LogoutIcon fontSize="small" /> Sair</button>
           </div>
         </div>
       </div>

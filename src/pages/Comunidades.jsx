@@ -1,33 +1,61 @@
-import { comunidades } from '../data/mockData.js';
+import { useCallback, useEffect, useState } from 'react';
+import EmptyState from '../components/EmptyState.jsx';
+import { useAuth } from '../context/AuthContext.jsx';
+import { createClub, getClubs, toggleClubMembership } from '../services/social.js';
 import { useToast } from '../components/Toast.jsx';
+import { Groups as GroupsIcon } from '@mui/icons-material';
 
 export default function Comunidades() {
+  const { user } = useAuth();
   const mostrarToast = useToast();
+  const [clubes, setClubes] = useState([]);
+  const [formAberto, setFormAberto] = useState(false);
+  const [form, setForm] = useState({ name: '', description: '' });
+  const [loading, setLoading] = useState(true);
+
+  const carregar = useCallback(() => {
+    setLoading(true);
+    getClubs(user.id).then(setClubes).catch((error) => mostrarToast(error.message)).finally(() => setLoading(false));
+  }, [user.id]);
+  useEffect(carregar, [carregar]);
+
+  async function criar(evento) {
+    evento.preventDefault();
+    try {
+      await createClub(user.id, form.name.trim(), form.description.trim() || null);
+      setForm({ name: '', description: '' });
+      setFormAberto(false);
+      carregar();
+      mostrarToast('Clube criado. Você já é o primeiro membro!');
+    } catch (error) { mostrarToast(error.message); }
+  }
+
+  async function alternar(clube) {
+    if (clube.owner_id === user.id) return mostrarToast('Você é responsável por este clube.');
+    try {
+      const joined = await toggleClubMembership(user.id, clube.id, clube.joined);
+      setClubes((atuais) => atuais.map((item) => item.id === clube.id ? { ...item, joined, member_count: Math.max(0, item.member_count + (joined ? 1 : -1)) } : item));
+    } catch (error) { mostrarToast(error.message); }
+  }
 
   return (
     <section className="pagina ativa" id="pagina-comunidades">
       <div className="pagina-cabecalho">
-        <div><h1 className="pagina-cabecalho__titulo">Comunidades</h1><p className="pagina-cabecalho__sub">Participe de clubes de leitura e discussões em grupo.</p></div>
-        <button className="btn-primario" onClick={() => mostrarToast('Criação de comunidades em breve!')}>+ Criar comunidade</button>
+        <div><h1 className="pagina-cabecalho__titulo">Clubes</h1><p className="pagina-cabecalho__sub">Crie espaços reais para leituras e conversas em grupo.</p></div>
+        <button className="btn-primario" onClick={() => setFormAberto(!formAberto)}>{formAberto ? 'Cancelar' : '+ Criar clube'}</button>
       </div>
-      <div className="biblioteca__grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(240px,1fr))' }}>
-        {comunidades.map((c, i) => (
-          <div className="cartao-mini" key={i}>
-            <div className="cartao-mini__topo">
-              <div className={`cartao-mini__icone cartao-mini__icone--${c.cor}`}>
-                {(() => {
-                  const IconeComponente = c.icone;
-                  return IconeComponente ? <IconeComponente /> : null;
-                })()}
-              </div>
-              <span className="cartao-mini__valor">{c.membros}</span>
-            </div>
-            <div className="cartao-mini__titulo">{c.titulo}</div>
-            <p className="post__texto" style={{ margin: 0 }}>{c.desc}</p>
-            <button className="btn-secundario" onClick={() => mostrarToast(`Você entrou em ${c.titulo}!`)}>Entrar</button>
-          </div>
-        ))}
-      </div>
+      {formAberto && <form className="widget clube-form" onSubmit={criar}>
+        <label>Nome do clube<input required minLength={3} maxLength={80} value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /></label>
+        <label>Descrição<textarea rows={3} maxLength={500} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} /></label>
+        <button className="btn-primario">Criar clube</button>
+      </form>}
+
+      {loading ? <div className="skeleton-card" /> : clubes.length ? <div className="clubes-grid">{clubes.map((clube) => (
+        <article className="clube-card" key={clube.id}>
+          <div className="clube-card__capa">{clube.cover_url ? <img src={clube.cover_url} alt="" /> : <GroupsIcon />}</div>
+          <div className="clube-card__corpo"><span className="clube-card__membros">{clube.member_count} {clube.member_count === 1 ? 'membro' : 'membros'}</span><h2>{clube.name}</h2><p>{clube.description || 'O clube ainda não adicionou uma descrição.'}</p><button className={clube.joined ? 'btn-secundario' : 'btn-primario'} onClick={() => alternar(clube)}>{clube.owner_id === user.id ? 'Você administra' : clube.joined ? 'Sair do clube' : 'Entrar no clube'}</button></div>
+        </article>
+      ))}</div> : <EmptyState icon={<GroupsIcon />} title="Ainda não há clubes" description="Crie o primeiro espaço da comunidade e convide leitores com os mesmos interesses." action={<button className="btn-primario" onClick={() => setFormAberto(true)}>Criar o primeiro clube</button>} />}
     </section>
   );
 }

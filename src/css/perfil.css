@@ -49,6 +49,11 @@
   border-bottom: 1px solid var(--cinza-200);
   margin-bottom: var(--space-5);
 }
+.perfil__bio--vazia{ color: var(--cinza-400); font-style: italic; }
+
+.perfil__painel{ display: none; }
+.perfil__painel.ativo{ display: block; animation: fade-in var(--transicao-normal); }
+.perfil__feed{ max-width: 760px; }
 
 .dashboard-grid{
   display: grid;

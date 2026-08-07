@@ -1,151 +1,131 @@
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Post from '../components/Post.jsx';
 import Compositor from '../components/Compositor.jsx';
-import { postsIniciais, plataformas, ranking } from '../data/mockData.js';
-import { MenuBook as BookIcon, EmojiEvents as TrophyIcon, LocalFireDepartment as FireIcon, Forum as ForumIcon, Description as DescriptionIcon, AccessTime as AccessTimeIcon, AutoAwesome as AutoAwesomeIcon, EmojiPeople as EmojiPeopleIcon } from '@mui/icons-material';
+import EmptyState from '../components/EmptyState.jsx';
+import { useToast } from '../components/Toast.jsx';
+import { useAuth } from '../context/AuthContext.jsx';
+import { createPost, getClubs, getFeed, getProfileSuggestions, getShelf, toggleFollow } from '../services/social.js';
+import { MenuBook as BookIcon, LocalFireDepartment as FireIcon, Forum as ForumIcon, Groups as GroupsIcon, PersonSearch as PersonSearchIcon } from '@mui/icons-material';
 
-const filtros = ['Para você', 'Seguindo', 'Populares', 'Recentes'];
+const filtros = [
+  { id: 'para-voce', label: 'Todos' },
+  { id: 'seguindo', label: 'Seguindo' },
+];
 
-function gerarId() {
-  return `post-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
-}
+export default function Inicio({ aoAbrirLivro, aoAbrirPerfil, aoAbrirClubes }) {
+  const { user, profile } = useAuth();
+  const mostrarToast = useToast();
+  const [posts, setPosts] = useState([]);
+  const [sugestoes, setSugestoes] = useState([]);
+  const [clubes, setClubes] = useState([]);
+  const [leituraAtual, setLeituraAtual] = useState(null);
+  const [filtroAtivo, setFiltroAtivo] = useState('para-voce');
+  const [carregando, setCarregando] = useState(true);
+  const [erro, setErro] = useState('');
 
-export default function Inicio({ aoAbrirLivro }) {
-  const [posts, setPosts] = useState(postsIniciais);
-  const [filtroAtivo, setFiltroAtivo] = useState(filtros[0]);
+  const carregarFeed = useCallback(async () => {
+    setCarregando(true);
+    setErro('');
+    try { setPosts(await getFeed(user.id, filtroAtivo)); }
+    catch (error) { setErro(error.message); }
+    finally { setCarregando(false); }
+  }, [user.id, filtroAtivo]);
 
-  function publicarPost(texto) {
-    setPosts((atual) => [
-      {
-        id: gerarId(),
-        autor: 'Ana Clara',
-        usuario: '@anaclara',
-        tempo: 'agora',
-        avatar: '/img/assets/avatar-usuario.svg',
-        tag: { texto: 'Publicação', classe: 'post__tag--resenha' },
-        texto,
-        curtidas: 0,
-        comentarios: 0,
-      },
-      ...atual,
-    ]);
+  useEffect(() => { carregarFeed(); }, [carregarFeed]);
+  useEffect(() => {
+    Promise.all([getProfileSuggestions(user.id), getClubs(user.id), getShelf(user.id)])
+      .then(([profiles, allClubs, shelf]) => {
+        setSugestoes(profiles);
+        setClubes(allClubs.slice(0, 3));
+        setLeituraAtual(shelf.find((book) => book.status === 'lendo') || null);
+      })
+      .catch((error) => console.error('Falha nas descobertas:', error.message));
+  }, [user.id]);
+
+  async function publicarPost(post) {
+    await createPost(user.id, post);
+    await carregarFeed();
   }
+
+  async function alternarSeguir(pessoa) {
+    try {
+      const following = await toggleFollow(user.id, pessoa.id, pessoa.following);
+      setSugestoes((atuais) => atuais.map((item) => item.id === pessoa.id ? { ...item, following } : item));
+      mostrarToast(following ? `Agora você segue ${pessoa.display_name}` : `Você deixou de seguir ${pessoa.display_name}`);
+    } catch (error) { mostrarToast(error.message); }
+  }
+
+  const nome = profile?.display_name?.split(' ')[0] || 'leitor';
 
   return (
     <section className="pagina ativa" id="pagina-inicio">
       <div className="feed-coluna">
-
-        <div className="trio-topo">
-          <div className="cartao-boasvindas">
-            <span className="cartao-boasvindas__eyebrow">BEM-VINDA DE VOLTA</span>
-            <h2 className="cartao-boasvindas__titulo">Ana Clara! <EmojiPeopleIcon fontSize="small" /></h2>
-            <p className="cartao-boasvindas__texto">Você tem 3 livros em andamento esta semana.</p>
-            <button className="cartao-boasvindas__btn">Ver atividade</button>
-          </div>
-
-          <div className="cartao-mini">
-            <div className="cartao-mini__topo">
-              <div className="cartao-mini__icone cartao-mini__icone--azul"><BookIcon /></div>
-              <span className="cartao-mini__valor">Kafka</span>
-            </div>
-            <div>
-              <div className="cartao-mini__legenda">Leitura atual</div>
-              <div className="cartao-mini__titulo">A Metamorfose</div>
-            </div>
-            <div className="progresso"><span className="progresso__barra progresso__barra--azul" style={{ width: '68%' }} /></div>
-            <div className="cartao-mini__rodape">Pág. 84 de 124 · estimativa: 1h restante</div>
-          </div>
-
-          <div className="cartao-mini">
-            <div className="cartao-mini__topo">
-              <div className="cartao-mini__icone cartao-mini__icone--amarelo"><TrophyIcon /></div>
-              <span className="cartao-mini__valor">24/30</span>
-            </div>
-            <div>
-              <div className="cartao-mini__legenda">Desafio 2025</div>
-              <div className="cartao-mini__titulo">Meta anual</div>
-            </div>
-            <div className="progresso"><span className="progresso__barra progresso__barra--amarelo" style={{ width: '80%' }} /></div>
-            <div className="cartao-mini__rodape">6 livros para completar a meta! <FireIcon fontSize="small" /></div>
-          </div>
+        <div className="feed-intro">
+          <div><span className="feed-intro__saudacao">Olá, {nome}</span><h1>O que os leitores estão comentando?</h1></div>
+          <button className="btn-texto" onClick={aoAbrirClubes}>Encontrar clubes</button>
         </div>
 
-        <Compositor aoPublicar={publicarPost} />
+        {sugestoes.length > 0 && (
+          <div className="leitores-ativos" aria-label="Leitores para conhecer">
+            {sugestoes.slice(0, 6).map((pessoa) => (
+              <button className="leitor-ativo" key={pessoa.id} onClick={() => aoAbrirPerfil(pessoa.id)}>
+                <span className="leitor-ativo__avatar">
+                  {pessoa.avatar_url ? <img src={pessoa.avatar_url} alt="" /> : <span className="avatar avatar--placeholder">{pessoa.display_name?.charAt(0) || 'L'}</span>}
+                </span>
+                <span className="leitor-ativo__nome">{pessoa.display_name}</span>
+                <span className="leitor-ativo__estado">@{pessoa.username}</span>
+              </button>
+            ))}
+          </div>
+        )}
 
+        <Compositor aoPublicar={publicarPost} />
         <div className="feed__filtros">
-          {filtros.map((f) => (
-            <button
-              key={f}
-              className={`filtro-pill${filtroAtivo === f ? ' ativo' : ''}`}
-              onClick={() => setFiltroAtivo(f)}
-            >
-              {f}
-            </button>
-          ))}
-          <button className="feed__ordenar">⇅ Ordenar</button>
+          {filtros.map((filtro) => <button key={filtro.id} className={`filtro-pill${filtroAtivo === filtro.id ? ' ativo' : ''}`} onClick={() => setFiltroAtivo(filtro.id)}>{filtro.label}</button>)}
         </div>
 
         <div className="feed__lista">
-          {posts.map((post) => (
-            <Post key={post.id} post={post} aoAbrirLivro={aoAbrirLivro} />
-          ))}
+          {carregando ? <div className="skeleton-card" /> : erro ? (
+            <EmptyState title="Não foi possível carregar o feed" description={erro} action={<button className="btn-secundario" onClick={carregarFeed}>Tentar novamente</button>} />
+          ) : posts.length ? posts.map((post) => <Post key={post.id} post={post} aoAbrirLivro={aoAbrirLivro} aoAbrirPerfil={aoAbrirPerfil} />) : (
+            <EmptyState icon={<ForumIcon />} title="O feed começa com você" description="Publique sua primeira leitura ou siga outras pessoas para ver novas conversas aqui." />
+          )}
         </div>
       </div>
 
-      <div className="widgets-coluna">
+      <aside className="widgets-coluna" aria-label="Descobertas">
         <div className="widget">
-          <div className="titulo-secao" style={{ marginBottom: 12 }}>
-            Plataformas disponíveis <AutoAwesomeIcon fontSize="small" style={{ cursor: 'pointer', marginLeft: 8 }} />
-          </div>
-          <div className="lista-plataformas">
-            {plataformas.map((p, i) => (
-              <div className="item-plataforma" key={i}>
-                <div className="item-plataforma__icone">
-                  {(() => {
-                    const IconeComponente = p.icone;
-                    return IconeComponente ? <IconeComponente /> : null;
-                  })()}
-                </div>
-                <div><div className="item-plataforma__titulo">{p.titulo}</div><div className="item-plataforma__sub">{p.sub}</div></div>
-                <span className="item-plataforma__seta">›</span>
-              </div>
-            ))}
-          </div>
+          <div className="titulo-secao">Quem seguir <PersonSearchIcon fontSize="small" /></div>
+          {sugestoes.length ? <div className="sugestoes-lista">{sugestoes.slice(0, 4).map((pessoa) => (
+            <div className="sugestao-pessoa" key={pessoa.id}>
+              <button className="sugestao-pessoa__perfil" onClick={() => aoAbrirPerfil(pessoa.id)}>
+                {pessoa.avatar_url ? <img className="avatar" src={pessoa.avatar_url} alt="" /> : <span className="avatar avatar--placeholder">{pessoa.display_name?.charAt(0) || 'L'}</span>}
+                <span><strong>{pessoa.display_name}</strong><small>@{pessoa.username}</small></span>
+              </button>
+              <button className={`btn-seguir${pessoa.following ? ' seguindo' : ''}`} onClick={() => alternarSeguir(pessoa)}>{pessoa.following ? 'Seguindo' : 'Seguir'}</button>
+            </div>
+          ))}</div> : <p className="widget__vazio">Novos leitores aparecerão aqui quando entrarem na comunidade.</p>}
         </div>
 
-        <div className="widget-discussao">
-          <div className="widget-discussao__eyebrow"><FireIcon /> DISCUSSÃO EM DESTAQUE</div>
-          <div className="widget-discussao__titulo">Qual o melhor plot twist da ficção?</div>
-          <div className="widget-discussao__meta">312 respostas · Clube Ficção</div>
-        </div>
+        {clubes[0] && <button className="widget-discussao" onClick={aoAbrirClubes}>
+          <span className="widget-discussao__eyebrow"><FireIcon /> CLUBE PARA CONHECER</span>
+          <span className="widget-discussao__titulo">{clubes[0].name}</span>
+          <span className="widget-discussao__meta">{clubes[0].member_count} {clubes[0].member_count === 1 ? 'membro' : 'membros'}</span>
+        </button>}
 
-        <div className="widget">
-          <div className="titulo-secao">Mais comentados <span className="ver-todos">Ver todos</span></div>
-          <div className="lista-ranking">
-            {ranking.map((r) => (
-              <div className="item-ranking" key={r.numero}>
-                <div className="item-ranking__numero">{r.numero}</div>
-                <div className="item-ranking__texto">
-                  <div className="item-ranking__titulo">{r.titulo}</div>
-                  <div className="item-ranking__autor">{r.autor}</div>
-                  <div className="item-ranking__meta"><ForumIcon fontSize="small" /> {r.comentarios} comentários</div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+        {leituraAtual && <div className="widget">
+          <div className="titulo-secao">Continue lendo <BookIcon fontSize="small" /></div>
+          <button className="continuar-lendo continuar-lendo--button" onClick={() => aoAbrirLivro(leituraAtual)}>
+            <div className="continuar-lendo__capa">{leituraAtual.cover_url ? <img src={leituraAtual.cover_url} alt="" /> : <BookIcon />}</div>
+            <div className="continuar-lendo__info"><strong>{leituraAtual.title}</strong><span>{leituraAtual.author} · {leituraAtual.progress}%</span><div className="progresso"><span className="progresso__barra progresso__barra--roxo" style={{ width: `${leituraAtual.progress}%` }} /></div></div>
+          </button>
+        </div>}
 
-        <div className="widget">
-          <div className="titulo-secao">Sua semana</div>
-          <div className="resumo-grid">
-            <div className="resumo-item"><div className="resumo-item__icone"><DescriptionIcon /></div><div className="resumo-item__valor">312</div><div className="resumo-item__label">Páginas</div></div>
-            <div className="resumo-item"><div className="resumo-item__icone"><AccessTimeIcon /></div><div className="resumo-item__valor">8,4</div><div className="resumo-item__label">Horas</div></div>
-            <div className="resumo-item"><div className="resumo-item__icone"><ForumIcon /></div><div className="resumo-item__valor">14</div><div className="resumo-item__label">Posts</div></div>
-          </div>
-        </div>
-
-        <p style={{ fontSize: '.72rem', color: 'var(--cinza-400)', textAlign: 'center' }}>Entre Leitores © 2026 · Termos · Privacidade</p>
-      </div>
+        <button className="widget clube-convite" onClick={aoAbrirClubes}>
+          <GroupsIcon /><span><strong>{clubes.length ? `${clubes.length} clubes para conhecer` : 'Crie o primeiro clube'}</strong><small>Construa uma comunidade de leitura</small></span><ForumIcon fontSize="small" />
+        </button>
+        <p className="rodape-produto">Entre Leitores © 2026 · Termos · Privacidade</p>
+      </aside>
     </section>
   );
 }

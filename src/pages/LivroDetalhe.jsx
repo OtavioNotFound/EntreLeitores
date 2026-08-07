@@ -1,65 +1,50 @@
+import { useEffect, useState } from 'react';
 import Post from '../components/Post.jsx';
-import { lojasLivroDetalhe } from '../data/mockData.js';
+import EmptyState from '../components/EmptyState.jsx';
+import { useAuth } from '../context/AuthContext.jsx';
+import { addToShelf, getPostsByBook } from '../services/social.js';
 import { useToast } from '../components/Toast.jsx';
-import { MenuBook as BookIcon, Group as GroupIcon } from '@mui/icons-material';
-
-const resenhaExemplo = {
-  id: 'resenha-livro-1',
-  autor: 'Mariana Souza',
-  usuario: '@mariana.s',
-  tempo: 'há 2 dias',
-  avatar: '/img/assets/avatar-1.svg',
-  tag: { texto: 'Resenha', classe: 'post__tag--resenha' },
-  texto: 'Uma obra-prima sobre alienação. Kafka constrói uma atmosfera claustrofóbica que reflete muito sobre a condição humana.',
-  curtidas: 58,
-  comentarios: 9,
-};
+import { MenuBook as BookIcon, Forum as ForumIcon } from '@mui/icons-material';
 
 export default function LivroDetalhe({ livro }) {
+  const { user } = useAuth();
   const mostrarToast = useToast();
-  const dados = livro || { titulo: 'A Metamorfose', autor: 'Franz Kafka', capaIcon: BookIcon };
+  const [posts, setPosts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const title = livro?.title || livro?.titulo;
+  const author = livro?.author || livro?.autor;
+  const cover = livro?.cover_url || livro?.capa;
+
+  useEffect(() => {
+    if (!livro?.id) { setLoading(false); return; }
+    getPostsByBook(livro.id, user.id).then(setPosts).catch((error) => mostrarToast(error.message)).finally(() => setLoading(false));
+  }, [livro?.id, user.id]);
+
+  async function adicionar(status) {
+    try { await addToShelf(user.id, livro.id, status); mostrarToast(status === 'lendo' ? 'Leitura iniciada.' : 'Livro adicionado à estante.'); }
+    catch (error) { mostrarToast(error.message); }
+  }
+
+  if (!livro?.id) return <section className="pagina ativa"><EmptyState icon={<BookIcon />} title="Selecione um livro" description="Abra um livro pela sua estante ou pela página Explorar." /></section>;
 
   return (
     <section className="pagina ativa" id="pagina-livro">
       <div className="livro-detalhe">
-        <div className="livro-detalhe__capa">{dados.capaIcon ? (() => { const C = dados.capaIcon; return <C fontSize="large" />; })() : dados.capa || <BookIcon fontSize="large" />}</div>
+        <div className="livro-detalhe__capa">{cover ? <img src={cover} alt={`Capa de ${title}`} /> : <BookIcon fontSize="large" />}</div>
         <div>
-          <h1 className="livro-detalhe__titulo">{dados.titulo}</h1>
-          <div className="livro-detalhe__autor">{dados.autor}</div>
-          <p className="livro-detalhe__sinopse">Gregor Samsa acorda uma manhã transformado em um inseto monstruoso. A partir desse evento absurdo, a novela explora temas de alienação, identidade e a fragilidade das relações familiares diante do inesperado.</p>
+          <h1 className="livro-detalhe__titulo">{title}</h1>
+          <div className="livro-detalhe__autor">{author}</div>
+          {livro.description && <p className="livro-detalhe__sinopse">{livro.description}</p>}
           <div className="livro-detalhe__meta">
-            <div className="livro-detalhe__meta-item"><div className="livro-detalhe__meta-valor">★ 4.6</div><div className="livro-detalhe__meta-label">Nota média</div></div>
-            <div className="livro-detalhe__meta-item"><div className="livro-detalhe__meta-valor">124</div><div className="livro-detalhe__meta-label">Páginas</div></div>
-            <div className="livro-detalhe__meta-item"><div className="livro-detalhe__meta-valor">Ficção</div><div className="livro-detalhe__meta-label">Gênero</div></div>
-            <div className="livro-detalhe__meta-item"><div className="livro-detalhe__meta-valor">Companhia das Letras</div><div className="livro-detalhe__meta-label">Editora</div></div>
+            {livro.page_count && <div className="livro-detalhe__meta-item"><div className="livro-detalhe__meta-valor">{livro.page_count}</div><div className="livro-detalhe__meta-label">Páginas</div></div>}
+            {livro.genre && <div className="livro-detalhe__meta-item"><div className="livro-detalhe__meta-valor">{livro.genre}</div><div className="livro-detalhe__meta-label">Gênero</div></div>}
+            {livro.publisher && <div className="livro-detalhe__meta-item"><div className="livro-detalhe__meta-valor">{livro.publisher}</div><div className="livro-detalhe__meta-label">Editora</div></div>}
           </div>
-          <div className="livro-detalhe__acoes">
-            <button className="btn-primario" onClick={() => mostrarToast('Livro adicionado à sua biblioteca!')}>+ Adicionar à biblioteca</button>
-            <button className="btn-secundario">▶ Começar leitura</button>
-            <button className="btn-secundario"><GroupIcon fontSize="small" /> Participar do Clube</button>
-          </div>
+          <div className="livro-detalhe__acoes"><button className="btn-primario" onClick={() => adicionar('quero-ler')}>+ Quero ler</button><button className="btn-secundario" onClick={() => adicionar('lendo')}>Começar leitura</button></div>
         </div>
       </div>
-
-      <div className="titulo-secao">Onde encontrar</div>
-      <div className="lojas-grid">
-        {lojasLivroDetalhe.map((loja, i) => (
-          <div className="item-plataforma widget" style={{ margin: 0 }} key={i}>
-            <div className="item-plataforma__icone">
-              {(() => {
-                const IconeComponente = loja.icone;
-                return IconeComponente ? <IconeComponente /> : null;
-              })()}
-            </div>
-            <div><div className="item-plataforma__titulo">{loja.titulo}</div><div className="item-plataforma__sub">{loja.sub}</div></div>
-          </div>
-        ))}
-      </div>
-
-      <div className="titulo-secao" style={{ marginTop: 'var(--space-6)' }}>Resenhas da comunidade</div>
-      <div className="feed__lista">
-        <Post post={resenhaExemplo} />
-      </div>
+      <div className="titulo-secao" style={{ marginTop: 'var(--space-6)' }}>Conversas sobre este livro</div>
+      {loading ? <div className="skeleton-card" /> : posts.length ? <div className="feed__lista">{posts.map((post) => <Post key={post.id} post={post} />)}</div> : <EmptyState icon={<ForumIcon />} title="Ainda não há conversas" description="Associe este livro a uma publicação para iniciar a discussão." />}
     </section>
   );
 }

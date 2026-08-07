@@ -1,72 +1,58 @@
-# Entre Leitores — versão React
+# Entre Leitores
 
-Conversão do site original (HTML + CSS + JavaScript puro) do repositório
-[jobbsoon/entre-leitores](https://github.com/jobbsoon/entre-leitores) para
-**React + Vite**.
+Rede social de leitura construída com React, Vite e Supabase. O aplicativo não possui dados de demonstração: perfis, publicações, livros, clubes e interações são carregados do banco de dados.
 
-## O que mudou
+## Funcionalidades
 
-Toda a lógica que antes estava em `js/app.js`, `sidebar.js`, `feed.js`,
-`perfil.js`, `livros.js`, `modal.js`, `storage.js` e `utils.js` foi
-reescrita em componentes e hooks do React:
+- Cadastro, confirmação de e-mail, login e sessão persistente com Supabase Auth
+- Perfis públicos e edição do próprio perfil
+- Feed com publicações, resenhas, citações e enquetes
+- Curtidas, itens salvos e comentários persistentes
+- Seguidores e notificações automáticas
+- Clubes com participação de membros
+- Catálogo comunitário de livros e estante pessoal
+- Políticas de Row Level Security em todas as tabelas
+- Bucket público de avatares com escrita restrita ao proprietário
 
-| Original (JS puro)              | Agora (React)                                   |
-|----------------------------------|--------------------------------------------------|
-| `Sidebar` (módulo IIFE)          | `src/components/Sidebar.jsx` + estado no `App.jsx` |
-| `App.iniciarDropdown`            | `src/components/Header.jsx` (`useState` + `useClickOutside`) |
-| `App.iniciarTema` / `Storage`    | `src/hooks/useLocalStorage.js` (persiste no localStorage) |
-| `Feed.alternarCurtida/Salvar`    | `src/components/Post.jsx` (`useConjuntoStorage`) |
-| `Feed.criarNovoPost`             | `src/components/Compositor.jsx` + estado em `Inicio.jsx` |
-| `Perfil.animarContador`          | `src/components/AnimatedNumber.jsx` |
-| `Toast.mostrar` / `Modal`        | `src/components/Toast.jsx` (Context Provider) |
-| Navegação entre `<section class="pagina">` | Roteamento simples por estado (`paginaAtual`) em `App.jsx`, com uma página React em `src/pages/*` para cada seção |
-
-Todo o CSS original (`css/*.css`) foi mantido sem alterações — está em
-`src/css/`. Os avatares SVG estão em `public/img/assets/`.
-
-## Como rodar
+## Configuração local
 
 ```bash
 npm install
-npm run dev       # ambiente de desenvolvimento (http://localhost:5173)
-npm run build     # gera a versão de produção em dist/
-npm run preview   # serve a build de produção localmente
+cp .env.example .env.local
+npm run dev
 ```
 
-## Estrutura
+Configure `.env.local`:
 
-```
-src/
-  App.jsx                 # estado global: página atual, tema, sidebar
-  main.jsx                # ponto de entrada, importa os CSS
-  components/
-    Sidebar.jsx
-    Header.jsx
-    Post.jsx
-    Compositor.jsx
-    AnimatedNumber.jsx
-    Toast.jsx
-  pages/
-    Inicio.jsx, Explorar.jsx, Comunidades.jsx, Biblioteca.jsx,
-    LivroDetalhe.jsx, Discussoes.jsx, Resenhas.jsx, Favoritos.jsx,
-    Desafios.jsx, Eventos.jsx, Notificacoes.jsx, Perfil.jsx,
-    Configuracoes.jsx
-  hooks/
-    useLocalStorage.js     # substitui Storage.definir/obter
-    useClickOutside.js     # substitui fecharAoClicarFora
-  data/
-    mockData.js            # todo o conteúdo fictício (posts, livros, etc.)
-  css/                      # os mesmos arquivos .css do projeto original
+```env
+VITE_SUPABASE_URL=https://seu-projeto.supabase.co
+VITE_SUPABASE_PUBLISHABLE_KEY=sb_publishable_sua_chave
 ```
 
-## Funcionalidades preservadas
+Nunca coloque a chave `service_role` no frontend.
 
-- Alternar tema claro/escuro (persistido)
-- Recolher/expandir sidebar e menu mobile (persistido)
-- Navegação entre todas as páginas, com destaque do item ativo na sidebar e no header
-- Dropdowns de mensagens, notificações e perfil (fecham ao clicar fora)
-- Curtir e salvar posts (persistido por post)
-- Compositor de posts com abas (Publicar/Resenha/Citação/Enquete) e publicação de novos posts no topo do feed
-- Filtros do feed, abas da biblioteca (com busca) e abas do perfil
-- Contadores animados e gráfico de barras do dashboard do perfil
-- Sistema de notificações "toast"
+Durante o desenvolvimento, configure em **Authentication → URL Configuration** a Site URL `http://localhost:5173`. Troque-a pela URL pública quando o aplicativo for implantado.
+
+## Banco de dados
+
+As migrações estão em [`supabase/migrations`](supabase/migrations). Para um projeto novo, execute os arquivos em ordem pelo Supabase CLI ou pelo SQL Editor.
+
+Principais tabelas:
+
+- `profiles`
+- `books` e `user_books`
+- `posts`, `comments`, `post_likes` e `saved_posts`
+- `follows`
+- `clubs` e `club_members`
+- `events` e `event_attendees`
+- `notifications`
+
+O cadastro em `auth.users` cria automaticamente o registro correspondente em `profiles`. Curtidas, comentários e novos seguidores geram notificações por triggers no PostgreSQL.
+
+## Comandos
+
+```bash
+npm run dev
+npm run build
+npm run preview
+```

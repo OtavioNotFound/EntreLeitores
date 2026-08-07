@@ -3,29 +3,27 @@ import Sidebar from './components/Sidebar.jsx';
 import Header from './components/Header.jsx';
 import { ToastProvider } from './components/Toast.jsx';
 import { useLocalStorage } from './hooks/useLocalStorage.js';
+import { AuthProvider, useAuth } from './context/AuthContext.jsx';
 
 import Inicio from './pages/Inicio.jsx';
 import Explorar from './pages/Explorar.jsx';
 import Comunidades from './pages/Comunidades.jsx';
 import Biblioteca from './pages/Biblioteca.jsx';
 import LivroDetalhe from './pages/LivroDetalhe.jsx';
-import Discussoes from './pages/Discussoes.jsx';
-import Resenhas from './pages/Resenhas.jsx';
-import Favoritos from './pages/Favoritos.jsx';
-import Desafios from './pages/Desafios.jsx';
-import Eventos from './pages/Eventos.jsx';
 import Notificacoes from './pages/Notificacoes.jsx';
 import Perfil from './pages/Perfil.jsx';
 import Configuracoes from './pages/Configuracoes.jsx';
 import Login from './pages/Login.jsx';
 
 function AppInterno() {
-  const [autenticado, setAutenticado] = useLocalStorage('autenticado', false);
+  const { user, profile, loading, signOut } = useAuth();
   const [paginaAtual, setPaginaAtual] = useLocalStorage('paginaAtual', 'inicio');
   const [sidebarRecolhida, setSidebarRecolhida] = useLocalStorage('sidebarRecolhida', false);
   const [temaEscuro, setTemaEscuro] = useLocalStorage('tema', 'claro');
   const [sidebarMobileAberta, setSidebarMobileAberta] = useState(false);
   const [livroSelecionado, setLivroSelecionado] = useState(null);
+  const [perfilSelecionadoId, setPerfilSelecionadoId] = useState(null);
+  const [buscaGlobal, setBuscaGlobal] = useState('');
 
   const escuro = temaEscuro === 'escuro';
 
@@ -34,23 +32,20 @@ function AppInterno() {
     document.body.classList.toggle('tema-escuro', escuro);
   }, [escuro]);
 
-  function aoLogar() {
-    setAutenticado(true);
-    setPaginaAtual('inicio');
-  }
-
-  function sair() {
-    setAutenticado(false);
-  }
-
-  if (!autenticado) {
-    return <Login aoLogar={aoLogar} />;
-  }
+  if (loading) return <div className="app-loading"><span className="loading-spinner" />Conectando ao Entre Leitores...</div>;
+  if (!user) return <Login />;
 
   function irParaPagina(nomePagina) {
+    if (nomePagina === 'perfil') setPerfilSelecionadoId(user.id);
     setPaginaAtual(nomePagina);
     window.scrollTo({ top: 0, behavior: 'smooth' });
     if (window.innerWidth <= 768) setSidebarMobileAberta(false);
+  }
+
+  function abrirPerfil(profileId) {
+    setPerfilSelecionadoId(profileId || user.id);
+    setPaginaAtual('perfil');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   function abrirLivro(livro) {
@@ -63,18 +58,13 @@ function AppInterno() {
   }
 
   const paginas = {
-    inicio: <Inicio aoAbrirLivro={abrirLivro} />,
-    explorar: <Explorar aoAbrirLivro={abrirLivro} />,
+    inicio: <Inicio aoAbrirLivro={abrirLivro} aoAbrirPerfil={abrirPerfil} aoAbrirClubes={() => irParaPagina('comunidades')} />,
+    explorar: <Explorar aoAbrirLivro={abrirLivro} buscaInicial={buscaGlobal} />,
     comunidades: <Comunidades />,
     biblioteca: <Biblioteca aoAbrirLivro={abrirLivro} />,
     livro: <LivroDetalhe livro={livroSelecionado} />,
-    discussoes: <Discussoes />,
-    resenhas: <Resenhas />,
-    favoritos: <Favoritos />,
-    desafios: <Desafios />,
-    eventos: <Eventos />,
     notificacoes: <Notificacoes />,
-    perfil: <Perfil />,
+    perfil: <Perfil profileId={perfilSelecionadoId || user.id} aoAbrirLivro={abrirLivro} />,
     configuracoes: <Configuracoes alternarTema={alternarTema} />,
   };
 
@@ -87,6 +77,8 @@ function AppInterno() {
         alternarRecolhida={() => setSidebarRecolhida((v) => !v)}
         aberta={sidebarMobileAberta}
         fecharMobile={() => setSidebarMobileAberta(false)}
+        userId={user.id}
+        aoBuscar={(termo) => { setBuscaGlobal(termo); irParaPagina('explorar'); }}
       />
 
       <Header
@@ -95,7 +87,9 @@ function AppInterno() {
         abrirSidebarMobile={() => setSidebarMobileAberta(true)}
         temaEscuro={escuro}
         alternarTema={alternarTema}
-        aoSair={sair}
+        aoSair={signOut}
+        profile={profile}
+        userId={user.id}
       />
 
       <main className="conteudo-principal">
@@ -108,7 +102,9 @@ function AppInterno() {
 export default function App() {
   return (
     <ToastProvider>
-      <AppInterno />
+      <AuthProvider>
+        <AppInterno />
+      </AuthProvider>
     </ToastProvider>
   );
 }

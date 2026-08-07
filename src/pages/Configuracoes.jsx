@@ -1,24 +1,15 @@
-import { useToast } from '../components/Toast.jsx';
+import { useAuth } from '../context/AuthContext.jsx';
+import { CheckCircle as CheckIcon } from '@mui/icons-material';
 
 export default function Configuracoes({ alternarTema }) {
-  const mostrarToast = useToast();
-
+  const { user } = useAuth();
   return (
     <section className="pagina ativa" id="pagina-configuracoes">
-      <div className="pagina-cabecalho"><div><h1 className="pagina-cabecalho__titulo">Configurações</h1></div></div>
-      <div className="widget" style={{ maxWidth: 480, display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span>Tema escuro</span>
-          <button className="btn-secundario" onClick={alternarTema}>Alternar</button>
-        </div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span>Notificações por e-mail</span>
-          <button className="btn-secundario" onClick={() => mostrarToast('Preferências de e-mail em breve!')}>Gerenciar</button>
-        </div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span>Privacidade do perfil</span>
-          <button className="btn-secundario" onClick={() => mostrarToast('Preferências de privacidade em breve!')}>Gerenciar</button>
-        </div>
+      <div className="pagina-cabecalho"><div><h1 className="pagina-cabecalho__titulo">Configurações</h1><p className="pagina-cabecalho__sub">Preferências locais e informações da sua conta.</p></div></div>
+      <div className="widget configuracoes-card">
+        <div className="configuracao-linha"><span><strong>Aparência</strong><small>Alternar entre tema claro e escuro</small></span><button className="btn-secundario" onClick={alternarTema}>Alternar tema</button></div>
+        <div className="configuracao-linha"><span><strong>E-mail da conta</strong><small>{user.email}</small></span></div>
+        <div className="configuracao-linha"><span><strong>Sincronização</strong><small>Seus dados são armazenados no Supabase</small></span><span className="status-ok"><CheckIcon fontSize="small" /> Ativa</span></div>
       </div>
     </section>
   );

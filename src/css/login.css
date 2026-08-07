@@ -118,13 +118,15 @@
   color: var(--cinza-700);
 }
 
-.campo-grupo input[type="text"],
-.campo-grupo input[type="password"]{
+.campo-grupo input{
+  width: 100%;
+  min-height: 52px;
   padding: 11px 14px;
   border-radius: var(--radius-sm);
   border: 1px solid var(--cinza-200);
   background: var(--cinza-50);
   color: var(--cinza-900);
+  appearance: none;
   transition: border-color var(--transicao-rapida), background var(--transicao-rapida);
 }
 
@@ -181,6 +183,9 @@
   font-size: var(--fs-sm);
   color: var(--cinza-500);
 }
+.link-button{ border: 0; background: transparent; padding: 0; color: var(--roxo-500); font-weight: 700; }
+.login-card__erro{ padding: var(--space-3); border-radius: var(--radius-sm); background: rgba(239,68,68,.1); color: var(--vermelho-500); font-size: var(--fs-xs); line-height: 1.45; }
+.btn-primario:disabled{ opacity: .55; cursor: not-allowed; }
 .login-card__rodape a{
   color: var(--roxo-500);
   font-weight: 700;

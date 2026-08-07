@@ -1,15 +1,12 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 const formatarNumero = (numero) => new Intl.NumberFormat('pt-BR').format(numero);
 
 /** Anima um contador numérico de 0 até o valor alvo — equivalente a animarContador() do utils.js */
 export default function AnimatedNumber({ valor, duracaoMs = 900 }) {
   const [exibido, setExibido] = useState(0);
-  const iniciouRef = useRef(false);
-
   useEffect(() => {
-    if (iniciouRef.current) return;
-    iniciouRef.current = true;
+    setExibido(0);
 
     const inicio = performance.now();
     let quadro;
