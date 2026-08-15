@@ -4,10 +4,23 @@ import { LoanDashboard } from '../components/TrustedLending.jsx';
 import NextReadPicker from '../components/NextReadPicker.jsx';
 import { useToast } from '../components/Toast.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
+import { useLocalStorage } from '../hooks/useLocalStorage.js';
 import { abasBiblioteca } from '../data/navigation.js';
 import { addToShelf, createBook, createReadingSession, getActiveReadingGoal, getReadingMemories, getReadingSessions, getShelf, saveReadingGoal } from '../services/social.js';
 import { buildWeeklyActivity, calculateGentleGoal, calculateReadingStreak, summarizeSessions } from '../lib/readerIntelligence.js';
-import { Search as SearchIcon, MenuBook as BookIcon } from '@mui/icons-material';
+import { Search as SearchIcon, MenuBook as BookIcon, MusicNote as MusicNoteIcon, OpenInNew as OpenInNewIcon } from '@mui/icons-material';
+
+function youtubeEmbedUrl(value) {
+  try {
+    const url = new URL(value.trim());
+    const host = url.hostname.replace(/^www\./, '');
+    if (!['youtube.com', 'm.youtube.com', 'music.youtube.com', 'youtu.be'].includes(host)) return '';
+    const playlist = url.searchParams.get('list');
+    if (playlist) return `https://www.youtube-nocookie.com/embed/videoseries?list=${encodeURIComponent(playlist)}`;
+    const videoId = host === 'youtu.be' ? url.pathname.split('/').filter(Boolean)[0] : url.pathname.startsWith('/shorts/') ? url.pathname.split('/')[2] : url.searchParams.get('v');
+    return /^[a-zA-Z0-9_-]{6,}$/.test(videoId || '') ? `https://www.youtube-nocookie.com/embed/${videoId}` : '';
+  } catch { return ''; }
+}
 
 export default function Biblioteca({ aoAbrirLivro }) {
   const { user } = useAuth();
@@ -27,6 +40,8 @@ export default function Biblioteca({ aoAbrirLivro }) {
   const [timerSeconds, setTimerSeconds] = useState(0);
   const [goal, setGoal] = useState(null); const [goalForm, setGoalForm] = useState({metric:'minutes',target:120});
   const [memories,setMemories]=useState([]);
+  const [musicaUrl, setMusicaUrl] = useLocalStorage('trilhaLeituraUrl', '');
+  const [musicaRascunho, setMusicaRascunho] = useState(musicaUrl || '');
 
   const carregar = useCallback(() => {
     setLoading(true);
@@ -56,6 +71,13 @@ export default function Biblioteca({ aoAbrirLivro }) {
   function iniciarTimer() { if (!timerBookId) return mostrarToast('Escolha o livro antes de iniciar.'); setTimerStart(Date.now()); setTimerSeconds(0); }
   function pararTimer() { const minutes=Math.max(1,Math.ceil(timerSeconds/60)); setSessao((current)=>({...current,bookId:timerBookId,minutes})); setTimerStart(null); setSessaoAberta(true); }
   async function salvarMeta(evento){evento.preventDefault();try{setGoal(await saveReadingGoal(user.id,goalForm.metric,Number(goalForm.target)));mostrarToast('Meta flexível criada. Ajustaremos a sugestão ao seu ritmo.');}catch(error){mostrarToast(error.message)}}
+  function salvarMusica(evento) {
+    evento.preventDefault();
+    const link = musicaRascunho.trim();
+    if (!youtubeEmbedUrl(link)) return mostrarToast('Cole um link válido do YouTube ou YouTube Music.');
+    setMusicaUrl(link);
+    mostrarToast('Trilha de leitura adicionada.');
+  }
 
   const filtrados = livros.filter((livro) => (categoriaAtiva === 'todos' || livro.status === categoriaAtiva) && (formato === 'todos' || livro.format === formato) && `${livro.title} ${livro.author} ${(livro.tags || []).join(' ')}`.toLowerCase().includes(busca.toLowerCase().trim()));
   const resumo = summarizeSessions(sessoes); const sequencia = calculateReadingStreak(sessoes);
@@ -71,6 +93,18 @@ export default function Biblioteca({ aoAbrirLivro }) {
       </div>
       <NextReadPicker books={livros} onOpen={aoAbrirLivro}/>
       <LoanDashboard />
+
+      <section className="trilha-leitura widget">
+        <div className="trilha-leitura__cabecalho"><span className="trilha-leitura__icone"><MusicNoteIcon /></span><div><h2>Trilha de leitura</h2><p>Cole um link do YouTube para ouvir enquanto organiza ou acompanha sua leitura.</p></div></div>
+        <form className="trilha-leitura__form" onSubmit={salvarMusica}>
+          <label><span>Link de reprodução</span><input type="url" inputMode="url" placeholder="https://youtube.com/watch?v=..." value={musicaRascunho} onChange={(e) => setMusicaRascunho(e.target.value)} /></label>
+          <button className="btn-primario">Carregar player</button>
+        </form>
+        {musicaUrl && youtubeEmbedUrl(musicaUrl) && <div className="trilha-leitura__player">
+          <iframe src={youtubeEmbedUrl(musicaUrl)} title="Player da trilha de leitura" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen />
+          <div className="trilha-leitura__acoes"><span>Reprodução fornecida pelo YouTube</span><a href={musicaUrl} target="_blank" rel="noreferrer">Abrir no YouTube <OpenInNewIcon fontSize="inherit" /></a><button type="button" onClick={() => { setMusicaUrl(''); setMusicaRascunho(''); }}>Remover</button></div>
+        </div>}
+      </section>
 
       <section className="diario-leitura widget"><div className="diario-leitura__stats"><span><strong>{sequencia}</strong><small>dias de sequência</small></span><span><strong>{resumo.pages}</strong><small>páginas em 30 dias</small></span><span><strong>{resumo.minutes}</strong><small>minutos em 30 dias</small></span><span><strong>{resumo.days.size}</strong><small>dias ativos</small></span></div><button className="btn-primario" onClick={() => setSessaoAberta(!sessaoAberta)}>{sessaoAberta ? 'Cancelar' : '+ Registrar leitura'}</button></section>
       <section className="painel-leitura"><div className="widget atividade-semanal"><div><strong>Seus últimos 7 dias</strong><small>Páginas ou minutos registrados</small></div><div className="atividade-semanal__grafico">{semana.map((day)=><span key={day.date}><i style={{height:`${Math.max(4,((day.minutes||day.pages)/maiorDia)*100)}%`}} title={`${day.pages} páginas · ${day.minutes} min`}/><small>{day.label}</small></span>)}</div></div><div className="widget timer-leitura"><strong>Leitura focada</strong><select disabled={Boolean(timerStart)} value={timerBookId} onChange={(e)=>setTimerBookId(e.target.value)}><option value="">Escolha o livro</option>{livros.filter((book)=>book.status==='lendo').map((book)=><option key={book.id} value={book.id}>{book.title}</option>)}</select><div className="timer-leitura__relogio">{String(Math.floor(timerSeconds/60)).padStart(2,'0')}:{String(timerSeconds%60).padStart(2,'0')}</div>{timerStart?<button className="btn-primario" onClick={pararTimer}>Parar e registrar</button>:<button className="btn-secundario" onClick={iniciarTimer}>Iniciar cronômetro</button>}<small>{Object.entries(porFormato).map(([key,value])=>`${key}: ${value}`).join(' · ') || 'Suas sessões aparecerão aqui.'}</small></div></section>
