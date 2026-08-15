@@ -10,7 +10,7 @@ export default function TrustedLending({ book, isOwned = false }) {
   const [offers,setOffers]=useState([]); const [open,setOpen]=useState(false); const [busy,setBusy]=useState(false);
   const [form,setForm]=useState({city:'',notes:'',audience:'followers'});
   const load=()=>getBookLendingOffers(book.id).then(setOffers).catch((error)=>toast(error.message));
-  useEffect(load,[book.id]);
+  useEffect(()=>{ load(); },[book.id]);
   async function publish(event){event.preventDefault();setBusy(true);try{await saveLendingOffer(user.id,book.id,form);await load();setOpen(false);toast('Livro disponível para empréstimo. Só sua cidade será exibida.');}catch(error){toast(error.message)}finally{setBusy(false)}}
   async function request(offer){const message=window.prompt('Escreva uma mensagem curta para o dono (opcional):','Olá! Gostaria de ler este livro.');if(message===null)return;setBusy(true);try{await requestBookLoan(user.id,offer.id,message);await load();toast('Pedido enviado. Combine a entrega somente após o aceite.');}catch(error){toast(error.message)}finally{setBusy(false)}}
   const mine=offers.find((item)=>item.owner_id===user.id);
@@ -24,7 +24,7 @@ export default function TrustedLending({ book, isOwned = false }) {
 export function LoanDashboard(){
   const {user}=useAuth();const toast=useToast();const [data,setData]=useState({incoming:[],outgoing:[]});const [loading,setLoading]=useState(true);
   const load=()=>getLoanDashboard(user.id).then(setData).catch((error)=>toast(error.message)).finally(()=>setLoading(false));
-  useEffect(load,[user.id]);
+  useEffect(()=>{ load(); },[user.id]);
   async function respond(id,accept){let due=null;if(accept){due=window.prompt('Data sugerida para devolução (AAAA-MM-DD):',new Date(Date.now()+21*86400000).toISOString().slice(0,10));if(!due)return}try{await respondLoanRequest(id,accept,due);await load();toast(accept?'Empréstimo aceito.':'Pedido recusado.')}catch(error){toast(error.message)}}
   async function move(id,status){try{await updateLoanStatus(id,status);await load();toast(status==='returned'?'Devolução confirmada. Obrigado por circular histórias!':'Entrega registrada.')}catch(error){toast(error.message)}}
   const activeIncoming=data.incoming.filter((item)=>!['declined','cancelled','returned'].includes(item.status));const activeOutgoing=data.outgoing.filter((item)=>!['declined','cancelled','returned'].includes(item.status));

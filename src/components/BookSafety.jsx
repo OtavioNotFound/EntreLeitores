@@ -7,7 +7,7 @@ import { matchingWarnings, WARNING_CATEGORIES, WARNING_LABELS, warningConfidence
 export default function BookSafety({bookId}){
   const {user}=useAuth();const toast=useToast();const [data,setData]=useState({warnings:[],preferences:{categories:[],minimum_severity:2,blur_sensitive:true}});const [open,setOpen]=useState(false);const [busy,setBusy]=useState(false);const [form,setForm]=useState({category:'violencia',severity:2,details:''});
   const load=()=>getBookSafety(user.id,bookId).then(setData).catch((error)=>toast(error.message));
-  useEffect(load,[bookId,user.id]);
+  useEffect(()=>{ load(); },[bookId,user.id]);
   async function submit(event){event.preventDefault();setBusy(true);try{await saveBookWarning(user.id,bookId,form);await load();setOpen(false);setForm({...form,details:''});toast('Aviso registrado sem revelar sua identidade.');}catch(error){toast(error.message)}finally{setBusy(false)}}
   const matches=matchingWarnings(data.warnings,data.preferences);
   return <section className={`seguranca-leitura widget${matches.length&&data.preferences.blur_sensitive?' seguranca-leitura--alerta':''}`}>
