@@ -201,14 +201,26 @@ export function subscribeCommunityMessages(clubId, onChange) {
   return () => { supabase.removeChannel(channel); };
 }
 
-export async function getProfileSuggestions(userId) {
+export async function getProfileSuggestions(userId, limit = 24) {
   const [{ data: profiles, error }, { data: follows, error: followError }] = await Promise.all([
-    supabase.from('profiles').select('id,display_name,username,avatar_url,bio').neq('id', userId).limit(6),
+    supabase.from('profiles').select('id,display_name,username,avatar_url,bio,city,state_code').neq('id', userId).limit(limit),
     supabase.from('follows').select('following_id').eq('follower_id', userId),
   ]);
   ensure(error || followError);
   const following = new Set(follows.map((item) => item.following_id));
-  return profiles.map((profile) => ({ ...profile, following: following.has(profile.id) }));
+  return profiles.filter((profile) => !following.has(profile.id)).map((profile) => ({ ...profile, following: false }));
+}
+
+export async function uploadProfileImage(userId, file, kind) {
+  if (!['avatar', 'banner'].includes(kind)) throw new Error('Tipo de imagem inválido.');
+  if (!file?.type?.startsWith('image/')) throw new Error('Escolha um arquivo de imagem.');
+  if (file.size > 5 * 1024 * 1024) throw new Error('A imagem deve ter no máximo 5 MB.');
+  const extension = file.name.split('.').pop()?.toLowerCase() || 'jpg';
+  const path = `${userId}/${kind}.${extension}`;
+  const { error } = await supabase.storage.from('avatars').upload(path, file, { upsert: true, contentType: file.type });
+  ensure(error);
+  const { data } = supabase.storage.from('avatars').getPublicUrl(path);
+  return `${data.publicUrl}?v=${Date.now()}`;
 }
 
 export async function toggleFollow(userId, profileId, following) {

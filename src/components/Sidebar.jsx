@@ -1,13 +1,18 @@
 import { useEffect, useState } from 'react';
 import { itensMenu } from '../data/navigation.js';
-import { getMyClubs } from '../services/social.js';
-import { MenuBook as BookIcon } from '@mui/icons-material';
+import { getAchievementMetrics, getMyClubs } from '../services/social.js';
+import { LocalFireDepartment as FireIcon, MenuBook as BookIcon } from '@mui/icons-material';
 
 export default function Sidebar({ paginaAtual, irParaPagina, recolhida, alternarRecolhida, aberta, fecharMobile, userId }) {
   const [clubes, setClubes] = useState([]);
+  const [ofensiva, setOfensiva] = useState(0);
 
   useEffect(() => {
     getMyClubs(userId).then(setClubes).catch((error) => console.error('Falha ao carregar clubes:', error.message));
+  }, [userId, paginaAtual]);
+
+  useEffect(() => {
+    getAchievementMetrics(userId).then((metricas) => setOfensiva(metricas.streak || 0)).catch(() => setOfensiva(0));
   }, [userId, paginaAtual]);
 
   return (
@@ -30,6 +35,10 @@ export default function Sidebar({ paginaAtual, irParaPagina, recolhida, alternar
             );
           })}
         </nav>
+        <button className="sidebar__ofensiva" onClick={() => irParaPagina('conquistas')} aria-label={`Ofensiva de livros: ${ofensiva} dias`}>
+          <span className="sidebar__ofensiva-icone"><FireIcon /></span>
+          <span className="item-texto"><strong>Ofensiva de livros</strong><small>{ofensiva} {ofensiva === 1 ? 'dia seguido' : 'dias seguidos'}</small></span>
+        </button>
         <span className="sidebar__label">SEUS CLUBES</span>
         <div className="sidebar__canais">
           {clubes.length ? clubes.map((clube) => (

@@ -5,14 +5,14 @@ import EmptyState from '../components/EmptyState.jsx';
 import { useToast } from '../components/Toast.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 import { createPost, getClubs, getFeed, getProfileSuggestions, getShelf, toggleFollow } from '../services/social.js';
-import { MenuBook as BookIcon, LocalFireDepartment as FireIcon, Forum as ForumIcon, Groups as GroupsIcon, PersonSearch as PersonSearchIcon } from '@mui/icons-material';
+import { MenuBook as BookIcon, LocalFireDepartment as FireIcon, Forum as ForumIcon, Groups as GroupsIcon, PersonAdd as PersonAddIcon } from '@mui/icons-material';
 
 const filtros = [
   { id: 'para-voce', label: 'Todos' },
   { id: 'seguindo', label: 'Seguindo' },
 ];
 
-export default function Inicio({ aoAbrirLivro, aoAbrirPerfil, aoAbrirClubes }) {
+export default function Inicio({ aoAbrirLivro, aoAbrirPerfil, aoAbrirClubes, aoConhecerPessoas }) {
   const { user, profile } = useAuth();
   const mostrarToast = useToast();
   const [posts, setPosts] = useState([]);
@@ -50,7 +50,7 @@ export default function Inicio({ aoAbrirLivro, aoAbrirPerfil, aoAbrirClubes }) {
   async function alternarSeguir(pessoa) {
     try {
       const following = await toggleFollow(user.id, pessoa.id, pessoa.following);
-      setSugestoes((atuais) => atuais.map((item) => item.id === pessoa.id ? { ...item, following } : item));
+      setSugestoes((atuais) => following ? atuais.filter((item) => item.id !== pessoa.id) : atuais);
       mostrarToast(following ? `Agora você segue ${pessoa.display_name}` : `Você deixou de seguir ${pessoa.display_name}`);
     } catch (error) { mostrarToast(error.message); }
   }
@@ -95,14 +95,14 @@ export default function Inicio({ aoAbrirLivro, aoAbrirPerfil, aoAbrirClubes }) {
 
       <aside className="widgets-coluna" aria-label="Descobertas">
         <div className="widget">
-          <div className="titulo-secao">Quem seguir <PersonSearchIcon fontSize="small" /></div>
+          <div className="titulo-secao">Quem seguir <button className="titulo-secao__acao" onClick={aoConhecerPessoas} aria-label="Conhecer pessoas" title="Conhecer pessoas"><PersonAddIcon fontSize="small" /></button></div>
           {sugestoes.length ? <div className="sugestoes-lista">{sugestoes.slice(0, 4).map((pessoa) => (
             <div className="sugestao-pessoa" key={pessoa.id}>
               <button className="sugestao-pessoa__perfil" onClick={() => aoAbrirPerfil(pessoa.id)}>
                 {pessoa.avatar_url ? <img className="avatar" src={pessoa.avatar_url} alt="" /> : <span className="avatar avatar--placeholder">{pessoa.display_name?.charAt(0) || 'L'}</span>}
                 <span><strong>{pessoa.display_name}</strong><small>@{pessoa.username}</small></span>
               </button>
-              <button className={`btn-seguir${pessoa.following ? ' seguindo' : ''}`} onClick={() => alternarSeguir(pessoa)}>{pessoa.following ? 'Seguindo' : 'Seguir'}</button>
+              <button className="btn-seguir" onClick={() => alternarSeguir(pessoa)}>Seguir</button>
             </div>
           ))}</div> : <p className="widget__vazio">Novos leitores aparecerão aqui quando entrarem na comunidade.</p>}
         </div>

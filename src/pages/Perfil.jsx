@@ -5,7 +5,7 @@ import Post from '../components/Post.jsx';
 import AchievementsPanel from '../components/AchievementsPanel.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 import { supabase } from '../lib/supabase.js';
-import { blockUser, getAchievementMetrics, getCompatibility, getPostsByUser, getProfileStats, getShelf, reportContent, toggleFollow } from '../services/social.js';
+import { blockUser, getAchievementMetrics, getCompatibility, getPostsByUser, getProfileStats, getShelf, reportContent, toggleFollow, uploadProfileImage } from '../services/social.js';
 import { useToast } from '../components/Toast.jsx';
 import { MenuBook as BookIcon, Forum as ForumIcon } from '@mui/icons-material';
 
@@ -18,7 +18,8 @@ export default function Perfil({ profileId, aoAbrirLivro }) {
   const [shelf, setShelf] = useState([]);
   const [painelAtivo, setPainelAtivo] = useState('posts');
   const [editing, setEditing] = useState(false);
-  const [form, setForm] = useState({ display_name: '', bio: '', city: '', state_code: '' });
+  const [form, setForm] = useState({ display_name: '', bio: '', city: '', state_code: '', avatar_url: '', banner_url: '' });
+  const [uploading, setUploading] = useState('');
   const [following, setFollowing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [compatibilidade, setCompatibilidade] = useState(null);
@@ -42,7 +43,7 @@ export default function Perfil({ profileId, aoAbrirLivro }) {
     ]).then(([profileResult, profileStats, profilePosts, profileShelf, followResult, compatibilityResult, blockResult,achievementResult]) => {
       if (profileResult.error) throw profileResult.error;
       setProfile(profileResult.data);
-      setForm({ display_name: profileResult.data.display_name, bio: profileResult.data.bio || '', city: profileResult.data.city || '', state_code: profileResult.data.state_code || '' });
+      setForm({ display_name: profileResult.data.display_name, bio: profileResult.data.bio || '', city: profileResult.data.city || '', state_code: profileResult.data.state_code || '', avatar_url: profileResult.data.avatar_url || '', banner_url: profileResult.data.banner_url || '' });
       setStats(profileStats);
       setPosts(profilePosts);
       setShelf(profileShelf);
@@ -54,12 +55,24 @@ export default function Perfil({ profileId, aoAbrirLivro }) {
 
   async function salvarPerfil(evento) {
     evento.preventDefault();
-    const { data, error } = await supabase.from('profiles').update({ display_name: form.display_name.trim(), bio: form.bio.trim() || null, city: form.city.trim() || null, state_code: form.state_code.trim().toUpperCase() || null }).eq('id', user.id).select().single();
+    const { data, error } = await supabase.from('profiles').update({ display_name: form.display_name.trim(), bio: form.bio.trim() || null, city: form.city.trim() || null, state_code: form.state_code.trim().toUpperCase() || null, avatar_url: form.avatar_url || null, banner_url: form.banner_url || null }).eq('id', user.id).select().single();
     if (error) return mostrarToast(error.message);
     setProfile(data);
     setEditing(false);
     await refreshProfile();
     mostrarToast('Perfil atualizado.');
+  }
+
+  async function escolherImagem(evento, kind) {
+    const file = evento.target.files?.[0];
+    if (!file) return;
+    setUploading(kind);
+    try {
+      const url = await uploadProfileImage(user.id, file, kind);
+      setForm((atual) => ({ ...atual, [kind === 'avatar' ? 'avatar_url' : 'banner_url']: url }));
+      mostrarToast(kind === 'avatar' ? 'Nova foto pronta para salvar.' : 'Novo banner pronto para salvar.');
+    } catch (error) { mostrarToast(error.message); }
+    finally { setUploading(''); evento.target.value = ''; }
   }
 
   async function alternarFollow() {
@@ -76,7 +89,7 @@ export default function Perfil({ profileId, aoAbrirLivro }) {
 
   return (
     <section className="pagina ativa" id="pagina-perfil">
-      <div className="perfil__banner">
+      <div className={`perfil__banner${profile.banner_url ? ' perfil__banner--imagem' : ''}`} style={profile.banner_url ? { backgroundImage: `linear-gradient(180deg, transparent 25%, rgba(20, 14, 42, .42)), url(${profile.banner_url})` } : undefined}>
         <div className="perfil__cabecalho">
           {profile.avatar_url ? <img className="avatar lg" src={profile.avatar_url} alt={profile.display_name} /> : <span className="avatar lg avatar--placeholder">{inicial}</span>}
           <div className="perfil__info"><div className="perfil__nome">{profile.display_name}</div><div className="perfil__user">@{profile.username}</div></div>
@@ -87,10 +100,14 @@ export default function Perfil({ profileId, aoAbrirLivro }) {
       </div>
 
       {editing ? <form className="perfil-edicao widget" onSubmit={salvarPerfil}>
+        <div className="perfil-edicao__imagens">
+          <label className="perfil-imagem-campo"><span>Foto do perfil</span><span className="perfil-imagem-preview perfil-imagem-preview--avatar">{form.avatar_url ? <img src={form.avatar_url} alt="Prévia da foto do perfil" /> : inicial}</span><input type="file" accept="image/jpeg,image/png,image/webp" onChange={(e) => escolherImagem(e, 'avatar')} disabled={Boolean(uploading)} /><small>{uploading === 'avatar' ? 'Enviando foto...' : 'JPG, PNG ou WebP · até 5 MB'}</small></label>
+          <label className="perfil-imagem-campo perfil-imagem-campo--banner"><span>Banner do perfil</span><span className="perfil-imagem-preview perfil-imagem-preview--banner">{form.banner_url ? <img src={form.banner_url} alt="Prévia do banner" /> : 'Escolher banner'}</span><input type="file" accept="image/jpeg,image/png,image/webp" onChange={(e) => escolherImagem(e, 'banner')} disabled={Boolean(uploading)} /><small>{uploading === 'banner' ? 'Enviando banner...' : 'Imagem horizontal · até 5 MB'}</small></label>
+        </div>
         <label>Nome<input value={form.display_name} onChange={(e) => setForm({ ...form, display_name: e.target.value })} maxLength={60} /></label>
         <label>Bio<textarea value={form.bio} onChange={(e) => setForm({ ...form, bio: e.target.value })} maxLength={280} rows={3} /></label>
         <label>Cidade<input value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} maxLength={100} /></label><label>UF<input value={form.state_code} onChange={(e) => setForm({ ...form, state_code: e.target.value })} maxLength={2} /></label>
-        <button className="btn-primario" disabled={!form.display_name.trim()}>Salvar</button>
+        <button className="btn-primario" disabled={!form.display_name.trim() || Boolean(uploading)}>Salvar alterações</button>
       </form> : <p className={`perfil__bio${profile.bio ? '' : ' perfil__bio--vazia'}`}>{profile.bio || (isOwn ? 'Conte um pouco sobre você e suas leituras.' : 'Este leitor ainda não escreveu uma bio.')}</p>}
 
       <div className="perfil__stats">{stats.map((stat) => <div key={stat.label}><div className="perfil__stat-valor"><AnimatedNumber valor={stat.valor} /></div><div className="perfil__stat-label">{stat.label}</div></div>)}</div>

@@ -15,6 +15,7 @@ const Notificacoes = lazy(() => import('./pages/Notificacoes.jsx'));
 const Perfil = lazy(() => import('./pages/Perfil.jsx'));
 const Configuracoes = lazy(() => import('./pages/Configuracoes.jsx'));
 const Conquistas = lazy(() => import('./pages/Conquistas.jsx'));
+const Pessoas = lazy(() => import('./pages/Pessoas.jsx'));
 const Login = lazy(() => import('./pages/Login.jsx'));
 
 function AppInterno() {
@@ -65,11 +66,12 @@ function AppInterno() {
   }
 
   const paginas = {
-    inicio: <Inicio aoAbrirLivro={abrirLivro} aoAbrirPerfil={abrirPerfil} aoAbrirClubes={() => irParaPagina('comunidades')} />,
+    inicio: <Inicio aoAbrirLivro={abrirLivro} aoAbrirPerfil={abrirPerfil} aoAbrirClubes={() => irParaPagina('comunidades')} aoConhecerPessoas={() => irParaPagina('pessoas')} />,
     explorar: <Explorar aoAbrirLivro={abrirLivro} buscaInicial={buscaGlobal} />,
     comunidades: <Comunidades />,
     biblioteca: <Biblioteca aoAbrirLivro={abrirLivro} />,
     conquistas: <Conquistas />,
+    pessoas: <Pessoas aoAbrirPerfil={abrirPerfil} />,
     livro: <LivroDetalhe livro={livroSelecionado} aoAbrirLivro={abrirLivro} aoAbrirPerfil={abrirPerfil} />,
     notificacoes: <Notificacoes />,
     perfil: <Perfil profileId={perfilSelecionadoId || user.id} aoAbrirLivro={abrirLivro} />,

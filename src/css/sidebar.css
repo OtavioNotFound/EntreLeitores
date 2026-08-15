@@ -183,3 +183,10 @@
 .app.sidebar-recolhida .sidebar__toggle-texto{ display: none; }
 .app.sidebar-recolhida .sidebar__item{ justify-content: center; }
 .app.sidebar-recolhida .sidebar__logo{ justify-content: center; padding-inline: 0; }
+
+.sidebar__ofensiva{ display:flex; align-items:center; gap:var(--space-3); width:100%; margin:var(--space-2) 0 var(--space-4); padding:10px var(--space-3); border:1px solid rgba(251,146,60,.22); border-radius:var(--radius-sm); background:rgba(249,115,22,.1); color:var(--branco); text-align:left; }
+.sidebar__ofensiva:hover{ background:rgba(249,115,22,.18); }
+.sidebar__ofensiva-icone{ color:#fb923c; display:grid; place-items:center; }
+.sidebar__ofensiva .item-texto{ display:grid; gap:1px; }
+.sidebar__ofensiva small{ color:var(--cinza-400); font-size:.68rem; }
+.app.sidebar-recolhida .sidebar__ofensiva{ justify-content:center; padding-inline:0; }

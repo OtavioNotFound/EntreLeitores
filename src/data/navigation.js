@@ -3,7 +3,6 @@ import {
   Search as SearchIcon,
   Group as GroupIcon,
   MenuBook as BookIcon,
-  Notifications as NotificationsIcon,
   Person as PersonIcon,
   EmojiEvents as TrophyIcon,
 } from '@mui/icons-material';
@@ -14,7 +13,6 @@ export const itensMenu = [
   { pagina: 'comunidades', icone: GroupIcon, label: 'Clubes' },
   { pagina: 'biblioteca', icone: BookIcon, label: 'Estante' },
   { pagina: 'conquistas', icone: TrophyIcon, label: 'Conquistas' },
-  { pagina: 'notificacoes', icone: NotificationsIcon, label: 'Notificações' },
   { pagina: 'perfil', icone: PersonIcon, label: 'Perfil' },
 ];
 

@@ -271,3 +271,14 @@ textarea:focus-visible{
 }
 
 .badge-emoji{ font-size: 1em; }
+
+.titulo-secao__acao{ display:grid; place-items:center; width:32px; height:32px; border:0; border-radius:50%; background:var(--lilas-100); color:var(--roxo-500); }
+.titulo-secao__acao:hover{ background:var(--roxo-500); color:white; }
+.pessoas-busca{ display:grid; gap:6px; max-width:520px; margin-bottom:var(--space-5); color:var(--cinza-600); font-size:var(--fs-xs); font-weight:700; }
+.pessoas-busca input{ border:1px solid var(--cinza-200); border-radius:var(--radius-full); background:var(--bg-card); color:var(--cinza-900); padding:12px 18px; }
+.pessoas-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:var(--space-4); }
+.pessoa-card{ display:grid; align-content:start; justify-items:center; gap:var(--space-2); min-height:280px; padding:var(--space-5); border:1px solid var(--cinza-200); border-radius:var(--radius-md); background:var(--bg-card); text-align:center; box-shadow:var(--shadow-sm); }
+.pessoa-card__perfil{ display:grid; justify-items:center; gap:4px; border:0; background:transparent; color:var(--cinza-900); }
+.pessoa-card__perfil small,.pessoa-card__local{ color:var(--cinza-500); font-size:var(--fs-xs); }
+.pessoa-card p{ color:var(--cinza-600); font-size:var(--fs-sm); line-height:1.45; margin:var(--space-2) 0; }
+.pessoa-card>.btn-seguir{ margin-top:auto; min-width:96px; }
