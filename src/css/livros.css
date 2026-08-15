@@ -66,6 +66,14 @@
 }
 .livro-card__autor{ font-size: var(--fs-xs); color: var(--cinza-500); margin-top: 2px; }
 .livro-card__nota{ font-size: var(--fs-xs); color: var(--amarelo-500); font-weight: 700; margin-top: 6px; }
+.avaliacao-livrinhos{ display:flex; align-items:center; gap:4px; margin-top:6px; color:var(--cinza-300); }
+.avaliacao-livrinhos button{ display:grid; place-items:center; padding:2px; border:0; background:transparent; color:inherit; transition:transform var(--transicao-rapida),color var(--transicao-rapida); }
+.avaliacao-livrinhos button:hover{ transform:translateY(-2px); color:var(--amarelo-500); }
+.avaliacao-livrinhos span{ display:grid; place-items:center; }
+.avaliacao-livrinhos .ativo{ color:var(--amarelo-500); }
+.avaliacao-livrinhos--medium svg{ font-size:1.45rem; }
+.avaliacao-livrinhos--small{ gap:2px; }
+.avaliacao-livrinhos--small svg{ font-size:.82rem; }
 .livro-card__formato{ display:inline-block; margin-top:6px; padding:3px 7px; border-radius:var(--radius-full); background:var(--lilas-100); color:var(--roxo-500); font-size:.65rem; font-weight:800; }
 .livro-card__capa img{ width: 100%; height: 100%; object-fit: cover; }
 .livro-card__adicionar{ margin-top: var(--space-3); border: 0; background: var(--lilas-100); color: var(--roxo-500); border-radius: var(--radius-full); padding: 6px 10px; font-size: var(--fs-xs); font-weight: 800; display: flex; align-items: center; gap: 4px; }
@@ -91,6 +99,15 @@
 .trilha-leitura__acoes a,.trilha-leitura__acoes button{ display:inline-flex; align-items:center; gap:4px; margin-left:auto; border:0; background:transparent; color:#c4b5fd; font:inherit; font-weight:700; }
 .trilha-leitura__acoes button{ margin-left:0; color:#fca5a5; }
 @media (max-width:600px){ .trilha-leitura__form{ align-items:stretch; flex-direction:column; }.trilha-leitura__player iframe{ min-height:180px; }.trilha-leitura__acoes{ flex-wrap:wrap; }.trilha-leitura__acoes a{ margin-left:0; } }
+.resenhas-estante{ display:grid; gap:var(--space-4); }
+.resenhas-estante>header{ display:flex; justify-content:space-between; align-items:start; gap:var(--space-3); }
+.resenhas-estante h2{ font-size:var(--fs-md); color:var(--cinza-900); }
+.resenhas-estante header p,.resenhas-estante__vazia{ margin-top:4px; color:var(--cinza-500); font-size:var(--fs-sm); }
+.resenha-form{ display:grid; gap:var(--space-3); padding:var(--space-4); border-radius:var(--radius-sm); background:var(--cinza-50); }
+.resenha-form label{ display:grid; gap:6px; color:var(--cinza-700); font-size:var(--fs-xs); font-weight:700; }
+.resenha-form select,.resenha-form textarea{ border:1px solid var(--cinza-200); border-radius:var(--radius-sm); background:var(--bg-card); color:var(--cinza-900); padding:10px 12px; resize:vertical; }
+.resenha-form .btn-primario{ justify-self:start; }
+.resenhas-estante__lista{ display:grid; gap:var(--space-3); max-width:760px; }
 .diario-leitura{ display:flex; align-items:center; justify-content:space-between; gap:var(--space-4); margin-bottom:var(--space-4); }
 .diario-leitura__stats{ display:flex; flex-wrap:wrap; gap:var(--space-8); }.diario-leitura__stats span{display:grid}.diario-leitura__stats strong{font-size:var(--fs-xl);color:var(--roxo-500)}.diario-leitura__stats small{color:var(--cinza-500)}
 .sessao-form{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:var(--space-3); margin-bottom:var(--space-5); }.sessao-form label{display:grid;gap:5px;color:var(--cinza-700);font-size:var(--fs-xs);font-weight:700}.sessao-form input,.sessao-form select,.colecao-inteligente select{border:1px solid var(--cinza-200);border-radius:var(--radius-sm);padding:10px;background:var(--cinza-50);color:var(--cinza-900)}.sessao-form__nota{grid-column:span 2}.sessao-form .btn-primario{align-self:end}
@@ -166,6 +183,7 @@
 .leitura-form label{ display: grid; gap: var(--space-1); color: var(--cinza-700); font-size: var(--fs-sm); font-weight: 600; }
 .leitura-form select,.leitura-form input{ min-height: 40px; border: 1px solid var(--cinza-200); border-radius: var(--radius-sm); background: var(--cinza-50); color: var(--cinza-900); padding: 0 var(--space-2); }
 .leitura-form .btn-primario{ align-self: end; }
+.leitura-form__avaliacao{ align-content:start; }
 .mapa-emocional{ max-width: 760px; display: grid; gap: var(--space-4); }
 .mapa-emocional h2,.descoberta-intencao h2,.descoberta-local h2{ font-size: var(--fs-md); }
 .mapa-emocional p,.descoberta-intencao p,.descoberta-local p{ margin-top: 4px; color: var(--cinza-500); font-size: var(--fs-sm); }

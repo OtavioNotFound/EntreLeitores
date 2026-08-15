@@ -1,11 +1,10 @@
 import { useState } from 'react';
 import { useToast } from './Toast.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
-import { Create as CreateIcon, RateReview as RateReviewIcon, FormatQuote as FormatQuoteIcon, Poll as PollIcon } from '@mui/icons-material';
+import { Create as CreateIcon, FormatQuote as FormatQuoteIcon, Poll as PollIcon } from '@mui/icons-material';
 
 const abas = [
   { chave: 'publicacao', label: 'Publicar', Icone: CreateIcon, placeholder: 'O que você está lendo ou pensando?' },
-  { chave: 'resenha', label: 'Resenha', Icone: RateReviewIcon, placeholder: 'Escreva sua resenha sobre uma leitura...' },
   { chave: 'citacao', label: 'Citação', Icone: FormatQuoteIcon, placeholder: 'Compartilhe uma citação e dê o devido crédito...' },
   { chave: 'enquete', label: 'Enquete', Icone: PollIcon, placeholder: 'Faça uma pergunta para a comunidade...' },
 ];

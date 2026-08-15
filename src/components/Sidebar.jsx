@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { itensMenu } from '../data/navigation.js';
 import { getAchievementMetrics, getMyClubs } from '../services/social.js';
-import { LocalFireDepartment as FireIcon, MenuBook as BookIcon } from '@mui/icons-material';
+import { LocalFireDepartment as FireIcon, Menu as MenuIcon, MenuBook as BookIcon } from '@mui/icons-material';
 
 export default function Sidebar({ paginaAtual, irParaPagina, recolhida, alternarRecolhida, aberta, fecharMobile, userId }) {
   const [clubes, setClubes] = useState([]);
@@ -22,6 +22,7 @@ export default function Sidebar({ paginaAtual, irParaPagina, recolhida, alternar
         <div className="sidebar__logo">
           <div className="sidebar__logo-icone"><BookIcon /></div>
           <span className="sidebar__logo-texto">Entre Leitores</span>
+          <button className="sidebar__hamburguer" onClick={alternarRecolhida} aria-label={recolhida ? 'Expandir menu' : 'Recolher menu'} title={recolhida ? 'Expandir menu' : 'Recolher menu'}><MenuIcon /></button>
         </div>
         <span className="sidebar__label">MENU</span>
         <nav className="sidebar__menu">
@@ -46,12 +47,6 @@ export default function Sidebar({ paginaAtual, irParaPagina, recolhida, alternar
               <span className="sidebar__canal-ponto" />{clube.name}
             </button>
           )) : <span className="sidebar__vazio item-texto">Você ainda não entrou em clubes.</span>}
-        </div>
-        <div className="sidebar__rodape">
-          <button className="sidebar__toggle" onClick={alternarRecolhida}>
-            <span className="sidebar__icone">{recolhida ? '⏵' : '⏴'}</span>
-            <span className="sidebar__toggle-texto">Recolher menu</span>
-          </button>
         </div>
       </aside>
     </>

@@ -6,6 +6,7 @@ import TrustedLending from '../components/TrustedLending.jsx';
 import BookSafety from '../components/BookSafety.jsx';
 import ReadingPause from '../components/ReadingPause.jsx';
 import EmptyState from '../components/EmptyState.jsx';
+import BookRating from '../components/BookRating.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 import { addToShelf, createPost, getEmotionMap, getPostsByBook, saveEmotion, startReread, updateBookOrganization, updateReading } from '../services/social.js';
 import { useToast } from '../components/Toast.jsx';
@@ -75,7 +76,7 @@ export default function LivroDetalhe({ livro, aoAbrirLivro, aoAbrirPerfil }) {
           {editandoLeitura && <form className="leitura-form" onSubmit={salvarLeitura}>
             <label>Status<select value={leitura.status} onChange={(e) => setLeitura({ ...leitura, status: e.target.value })}><option value="quero-ler">Quero ler</option><option value="lendo">Lendo</option><option value="pausados">Pausado</option><option value="lidos">Lido</option><option value="favoritos">Favorito</option><option value="abandonados">Abandonado</option></select></label>
             <label>Progresso: {leitura.progress}%<input type="range" min="0" max="100" value={leitura.progress} onChange={(e) => setLeitura({ ...leitura, progress: Number(e.target.value) })} /></label>
-            <label>Nota<select value={leitura.rating} onChange={(e) => setLeitura({ ...leitura, rating: Number(e.target.value) })}><option value="">Sem nota</option>{[1,2,3,4,5].map((nota) => <option key={nota} value={nota}>{nota} estrela{nota > 1 ? 's' : ''}</option>)}</select></label>
+            <label className="leitura-form__avaliacao">Sua avaliação<BookRating value={leitura.rating} onChange={(rating) => setLeitura({ ...leitura, rating })} /></label>
             <label>Formato<select value={leitura.format} onChange={(e) => setLeitura({ ...leitura, format:e.target.value })}><option value="">Não informado</option><option value="fisico">Físico</option><option value="ebook">E-book</option><option value="audiobook">Audiobook</option><option value="outro">Outro</option></select></label><label>Origem<select value={leitura.source} onChange={(e) => setLeitura({ ...leitura, source:e.target.value })}><option value="">Não informada</option><option value="proprio">Meu acervo</option><option value="biblioteca">Biblioteca</option><option value="emprestado">Emprestado</option><option value="assinatura">Assinatura</option><option value="outro">Outra</option></select></label><label>Etiquetas<input value={leitura.tags} onChange={(e) => setLeitura({ ...leitura, tags:e.target.value })} placeholder="fantasia, favorito, faculdade" /></label>
             <button className="btn-primario">Salvar leitura</button>
           </form>}

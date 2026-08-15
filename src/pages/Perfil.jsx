@@ -3,11 +3,12 @@ import AnimatedNumber from '../components/AnimatedNumber.jsx';
 import EmptyState from '../components/EmptyState.jsx';
 import Post from '../components/Post.jsx';
 import AchievementsPanel from '../components/AchievementsPanel.jsx';
+import ProfileConversation from '../components/ProfileConversation.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 import { supabase } from '../lib/supabase.js';
 import { blockUser, getAchievementMetrics, getCompatibility, getPostsByUser, getProfileStats, getShelf, reportContent, toggleFollow, uploadProfileImage } from '../services/social.js';
 import { useToast } from '../components/Toast.jsx';
-import { MenuBook as BookIcon, Forum as ForumIcon } from '@mui/icons-material';
+import { MenuBook as BookIcon, Forum as ForumIcon, ChatOutlined as ChatIcon } from '@mui/icons-material';
 
 export default function Perfil({ profileId, aoAbrirLivro }) {
   const { user, profile: ownProfile, refreshProfile } = useAuth();
@@ -25,9 +26,10 @@ export default function Perfil({ profileId, aoAbrirLivro }) {
   const [compatibilidade, setCompatibilidade] = useState(null);
   const [blocked, setBlocked] = useState(false);
   const [achievementMetrics,setAchievementMetrics]=useState(null);
+  const [conversaAberta, setConversaAberta] = useState(false);
   const isOwn = profileId === user.id;
 
-  useEffect(()=>setPainelAtivo('posts'),[profileId]);
+  useEffect(()=>{ setPainelAtivo('posts'); setConversaAberta(false); },[profileId]);
 
   useEffect(() => {
     setLoading(true);
@@ -94,7 +96,7 @@ export default function Perfil({ profileId, aoAbrirLivro }) {
           {profile.avatar_url ? <img className="avatar lg" src={profile.avatar_url} alt={profile.display_name} /> : <span className="avatar lg avatar--placeholder">{inicial}</span>}
           <div className="perfil__info"><div className="perfil__nome">{profile.display_name}</div><div className="perfil__user">@{profile.username}</div></div>
           <div className="perfil__acoes">
-            {isOwn ? <button className="btn-secundario" onClick={() => setEditing(!editing)}>{editing ? 'Cancelar' : 'Editar perfil'}</button> : <><button className={`btn-seguir${following ? ' seguindo' : ''}`} onClick={alternarFollow}>{following ? 'Seguindo' : 'Seguir'}</button><button className="btn-secundario" onClick={alternarBloqueio}>{blocked ? 'Desbloquear' : 'Bloquear'}</button><button className="btn-texto-perigo" onClick={denunciarPerfil}>Denunciar</button></>}
+            {isOwn ? <button className="btn-secundario" onClick={() => setEditing(!editing)}>{editing ? 'Cancelar' : 'Editar perfil'}</button> : <><button className="btn-primario" onClick={() => setConversaAberta(!conversaAberta)}><ChatIcon fontSize="small" /> {conversaAberta ? 'Fechar conversa' : 'Conversar'}</button><button className={`btn-seguir${following ? ' seguindo' : ''}`} onClick={alternarFollow}>{following ? 'Seguindo' : 'Seguir'}</button><button className="btn-secundario" onClick={alternarBloqueio}>{blocked ? 'Desbloquear' : 'Bloquear'}</button><button className="btn-texto-perigo" onClick={denunciarPerfil}>Denunciar</button></>}
           </div>
         </div>
       </div>
@@ -109,6 +111,8 @@ export default function Perfil({ profileId, aoAbrirLivro }) {
         <label>Cidade<input value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} maxLength={100} /></label><label>UF<input value={form.state_code} onChange={(e) => setForm({ ...form, state_code: e.target.value })} maxLength={2} /></label>
         <button className="btn-primario" disabled={!form.display_name.trim() || Boolean(uploading)}>Salvar alterações</button>
       </form> : <p className={`perfil__bio${profile.bio ? '' : ' perfil__bio--vazia'}`}>{profile.bio || (isOwn ? 'Conte um pouco sobre você e suas leituras.' : 'Este leitor ainda não escreveu uma bio.')}</p>}
+
+      {!isOwn && conversaAberta && <ProfileConversation person={profile} />}
 
       <div className="perfil__stats">{stats.map((stat) => <div key={stat.label}><div className="perfil__stat-valor"><AnimatedNumber valor={stat.valor} /></div><div className="perfil__stat-label">{stat.label}</div></div>)}</div>
       {!isOwn && compatibilidade && <section className="compatibilidade widget"><div className="compatibilidade__score">{compatibilidade.score}%</div><div><h2>Compatibilidade literária</h2><p>{compatibilidade.commonBooks} livros em comum{compatibilidade.sharedGenres.length ? ` · afinidade em ${compatibilidade.sharedGenres.join(', ')}` : ' · explorem um livro novo juntos'}.</p><small>A pontuação considera concordância de notas e gêneros compartilhados.</small></div></section>}

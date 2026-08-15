@@ -69,6 +69,19 @@
 .compatibilidade{ max-width: 680px; display: flex; align-items: center; gap: var(--space-4); margin-bottom: var(--space-5); }
 .compatibilidade__score{ width: 76px; height: 76px; flex: 0 0 auto; display: grid; place-items: center; border-radius: 50%; background: var(--lilas-100); color: var(--roxo-500); font-size: var(--fs-xl); font-weight: 900; }
 .compatibilidade h2{ font-size: var(--fs-md); }.compatibilidade p{ margin: 4px 0; color: var(--cinza-700); }.compatibilidade small{ color: var(--cinza-500); }
+.conversa-perfil{ max-width:680px; display:grid; gap:var(--space-3); margin-bottom:var(--space-5); }
+.conversa-perfil header>div{ display:grid; gap:3px; }
+.conversa-perfil header small{ color:var(--cinza-500); }
+.conversa-perfil__mensagens{ max-height:340px; overflow-y:auto; display:flex; flex-direction:column; gap:var(--space-2); padding:var(--space-3); border-radius:var(--radius-sm); background:var(--cinza-50); }
+.conversa-perfil__mensagem{ align-self:flex-start; max-width:min(78%,460px); padding:9px 12px; border-radius:4px var(--radius-md) var(--radius-md) var(--radius-md); background:var(--bg-card); border:1px solid var(--cinza-200); }
+.conversa-perfil__mensagem.propria{ align-self:flex-end; border:0; border-radius:var(--radius-md) 4px var(--radius-md) var(--radius-md); background:var(--roxo-500); color:white; }
+.conversa-perfil__mensagem p{ white-space:pre-wrap; overflow-wrap:anywhere; line-height:1.45; }
+.conversa-perfil__mensagem time{ display:block; margin-top:4px; font-size:.62rem; color:var(--cinza-400); text-align:right; }
+.conversa-perfil__mensagem.propria time{ color:rgba(255,255,255,.68); }
+.conversa-perfil__vazia{ align-self:center; padding:var(--space-6); color:var(--cinza-500); font-size:var(--fs-sm); text-align:center; }
+.conversa-perfil form{ display:flex; gap:var(--space-2); }
+.conversa-perfil form input{ flex:1; min-width:0; border:1px solid var(--cinza-200); border-radius:var(--radius-full); background:var(--cinza-50); color:var(--cinza-900); padding:10px 16px; }
+.conversa-perfil form .btn-primario{ width:42px; height:42px; flex:0 0 auto; display:grid; place-items:center; padding:0; border-radius:50%; }
 
 .dashboard-grid{
   display: grid;

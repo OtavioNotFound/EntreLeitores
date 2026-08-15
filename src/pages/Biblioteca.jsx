@@ -2,11 +2,13 @@ import { useCallback, useEffect, useState } from 'react';
 import EmptyState from '../components/EmptyState.jsx';
 import { LoanDashboard } from '../components/TrustedLending.jsx';
 import NextReadPicker from '../components/NextReadPicker.jsx';
+import BookRating from '../components/BookRating.jsx';
+import Post from '../components/Post.jsx';
 import { useToast } from '../components/Toast.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useLocalStorage } from '../hooks/useLocalStorage.js';
 import { abasBiblioteca } from '../data/navigation.js';
-import { addToShelf, createBook, createReadingSession, getActiveReadingGoal, getReadingMemories, getReadingSessions, getShelf, saveReadingGoal } from '../services/social.js';
+import { addToShelf, createBook, createPost, createReadingSession, getActiveReadingGoal, getPostsByUser, getReadingMemories, getReadingSessions, getShelf, saveReadingGoal } from '../services/social.js';
 import { buildWeeklyActivity, calculateGentleGoal, calculateReadingStreak, summarizeSessions } from '../lib/readerIntelligence.js';
 import { Search as SearchIcon, MenuBook as BookIcon, MusicNote as MusicNoteIcon, OpenInNew as OpenInNewIcon } from '@mui/icons-material';
 
@@ -40,12 +42,15 @@ export default function Biblioteca({ aoAbrirLivro }) {
   const [timerSeconds, setTimerSeconds] = useState(0);
   const [goal, setGoal] = useState(null); const [goalForm, setGoalForm] = useState({metric:'minutes',target:120});
   const [memories,setMemories]=useState([]);
+  const [resenhas, setResenhas] = useState([]);
+  const [resenhaAberta, setResenhaAberta] = useState(false);
+  const [resenha, setResenha] = useState({ bookId: '', content: '' });
   const [musicaUrl, setMusicaUrl] = useLocalStorage('trilhaLeituraUrl', '');
   const [musicaRascunho, setMusicaRascunho] = useState(musicaUrl || '');
 
   const carregar = useCallback(() => {
     setLoading(true);
-    Promise.all([getShelf(user.id), getReadingSessions(user.id), getActiveReadingGoal(user.id),getReadingMemories(user.id)]).then(([shelf, readingSessions, activeGoal,readingMemories]) => { setLivros(shelf); setSessoes(readingSessions); setGoal(activeGoal);setMemories(readingMemories); }).catch((error) => mostrarToast(error.message)).finally(() => setLoading(false));
+    Promise.all([getShelf(user.id), getReadingSessions(user.id), getActiveReadingGoal(user.id),getReadingMemories(user.id),getPostsByUser(user.id)]).then(([shelf, readingSessions, activeGoal,readingMemories,userPosts]) => { setLivros(shelf); setSessoes(readingSessions); setGoal(activeGoal);setMemories(readingMemories);setResenhas(userPosts.filter((post)=>post.type==='resenha')); }).catch((error) => mostrarToast(error.message)).finally(() => setLoading(false));
   }, [user.id]);
   useEffect(carregar, [carregar]);
   useEffect(() => { if (!timerStart) return undefined; const id=setInterval(() => setTimerSeconds(Math.floor((Date.now()-timerStart)/1000)),1000); return () => clearInterval(id); }, [timerStart]);
@@ -78,6 +83,16 @@ export default function Biblioteca({ aoAbrirLivro }) {
     setMusicaUrl(link);
     mostrarToast('Trilha de leitura adicionada.');
   }
+  async function publicarResenha(evento) {
+    evento.preventDefault();
+    if (!resenha.bookId || !resenha.content.trim()) return mostrarToast('Escolha um livro e escreva sua resenha.');
+    try {
+      await createPost(user.id, { type: 'resenha', bookId: resenha.bookId, content: resenha.content.trim() });
+      setResenha({ bookId: '', content: '' }); setResenhaAberta(false);
+      setResenhas((await getPostsByUser(user.id)).filter((post) => post.type === 'resenha'));
+      mostrarToast('Resenha publicada na sua estante.');
+    } catch (error) { mostrarToast(error.message); }
+  }
 
   const filtrados = livros.filter((livro) => (categoriaAtiva === 'todos' || livro.status === categoriaAtiva) && (formato === 'todos' || livro.format === formato) && `${livro.title} ${livro.author} ${(livro.tags || []).join(' ')}`.toLowerCase().includes(busca.toLowerCase().trim()));
   const resumo = summarizeSessions(sessoes); const sequencia = calculateReadingStreak(sessoes);
@@ -93,6 +108,12 @@ export default function Biblioteca({ aoAbrirLivro }) {
       </div>
       <NextReadPicker books={livros} onOpen={aoAbrirLivro}/>
       <LoanDashboard />
+
+      <section className="resenhas-estante widget">
+        <header><div><h2>Resumos e resenhas</h2><p>Uma resenha apresenta, resume e registra sua opinião sobre um livro da sua estante.</p></div><button className="btn-secundario" onClick={() => setResenhaAberta(!resenhaAberta)}>{resenhaAberta ? 'Cancelar' : '+ Escrever resenha'}</button></header>
+        {resenhaAberta && <form className="resenha-form" onSubmit={publicarResenha}><label>Livro<select required value={resenha.bookId} onChange={(e) => setResenha({ ...resenha, bookId:e.target.value })}><option value="">Escolha um livro salvo</option>{livros.map((livro)=><option key={livro.id} value={livro.id}>{livro.title}</option>)}</select></label><label>Sua resenha<textarea required maxLength={5000} rows={5} value={resenha.content} onChange={(e)=>setResenha({...resenha,content:e.target.value})} placeholder="Apresente o livro, faça um breve resumo sem spoilers e conte o que achou..."/></label><button className="btn-primario">Publicar resenha</button></form>}
+        {resenhas.length ? <div className="resenhas-estante__lista">{resenhas.map((post)=><Post key={post.id} post={post} aoAbrirLivro={aoAbrirLivro}/>)}</div> : <p className="resenhas-estante__vazia">Suas resenhas aparecerão aqui, junto dos livros salvos.</p>}
+      </section>
 
       <section className="trilha-leitura widget">
         <div className="trilha-leitura__cabecalho"><span className="trilha-leitura__icone"><MusicNoteIcon /></span><div><h2>Trilha de leitura</h2><p>Cole um link do YouTube para ouvir enquanto organiza ou acompanha sua leitura.</p></div></div>
@@ -126,7 +147,7 @@ export default function Biblioteca({ aoAbrirLivro }) {
       {loading ? <div className="skeleton-card" /> : filtrados.length ? <div className="biblioteca__grid">{filtrados.map((livro) => (
         <button className="livro-card" key={livro.id} onClick={() => aoAbrirLivro(livro)}>
           <div className="livro-card__capa">{livro.cover_url ? <img src={livro.cover_url} alt={`Capa de ${livro.title}`} /> : <BookIcon />}{livro.progress > 0 && <div className="livro-card__progresso"><span style={{ width: `${livro.progress}%` }} /></div>}</div>
-          <div className="livro-card__corpo"><div className="livro-card__titulo">{livro.title}</div><div className="livro-card__autor">{livro.author}</div>{livro.format && <span className="livro-card__formato">{({fisico:'Físico',ebook:'E-book',audiobook:'Áudio',outro:'Outro'})[livro.format]}</span>}{livro.rating && <div className="livro-card__nota">★ {livro.rating}</div>}</div>
+          <div className="livro-card__corpo"><div className="livro-card__titulo">{livro.title}</div><div className="livro-card__autor">{livro.author}</div>{livro.format && <span className="livro-card__formato">{({fisico:'Físico',ebook:'E-book',audiobook:'Áudio',outro:'Outro'})[livro.format]}</span>}{livro.rating && <BookRating value={livro.rating} size="small" />}</div>
         </button>
       ))}</div> : <EmptyState icon={<BookIcon />} title={busca ? 'Nenhum livro encontrado' : 'Sua estante está vazia'} description={busca ? 'Tente buscar por outro título ou autor.' : 'Adicione seu primeiro livro para começar a organizar suas leituras.'} />}
     </section>

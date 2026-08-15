@@ -231,6 +231,18 @@ export async function toggleFollow(userId, profileId, following) {
   return !following;
 }
 
+export async function getDirectMessages(userId, otherUserId) {
+  const { data, error } = await supabase.from('direct_messages').select('id,sender_id,recipient_id,content,created_at')
+    .or(`and(sender_id.eq.${userId},recipient_id.eq.${otherUserId}),and(sender_id.eq.${otherUserId},recipient_id.eq.${userId})`)
+    .order('created_at', { ascending: true }).limit(100);
+  ensure(error); return data || [];
+}
+
+export async function sendDirectMessage(userId, recipientId, content) {
+  const { data, error } = await supabase.from('direct_messages').insert({ sender_id:userId, recipient_id:recipientId, content:content.trim() }).select('id,sender_id,recipient_id,content,created_at').single();
+  ensure(error); return data;
+}
+
 export async function getClubs(userId) {
   const [{ data, error }, { data: memberships, error: memberError }] = await Promise.all([
     supabase.from('clubs').select('id,name,slug,description,cover_url,owner_id,club_members(count)').order('created_at', { ascending: false }),
