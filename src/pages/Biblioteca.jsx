@@ -6,25 +6,13 @@ import BookRating from '../components/BookRating.jsx';
 import Post from '../components/Post.jsx';
 import { useToast } from '../components/Toast.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
-import { useLocalStorage } from '../hooks/useLocalStorage.js';
 import { abasBiblioteca } from '../data/navigation.js';
 import { addToShelf, createBook, createPost, createReadingSession, getActiveReadingGoal, getPostsByUser, getReadingMemories, getReadingSessions, getShelf, saveReadingGoal } from '../services/social.js';
 import { buildWeeklyActivity, calculateGentleGoal, calculateReadingStreak, summarizeSessions } from '../lib/readerIntelligence.js';
-import { Search as SearchIcon, MenuBook as BookIcon, MusicNote as MusicNoteIcon, OpenInNew as OpenInNewIcon } from '@mui/icons-material';
+import { youtubeEmbedUrl } from '../lib/youtube.js';
+import { Search as SearchIcon, MenuBook as BookIcon, MusicNote as MusicNoteIcon } from '@mui/icons-material';
 
-function youtubeEmbedUrl(value) {
-  try {
-    const url = new URL(value.trim());
-    const host = url.hostname.replace(/^www\./, '');
-    if (!['youtube.com', 'm.youtube.com', 'music.youtube.com', 'youtu.be'].includes(host)) return '';
-    const playlist = url.searchParams.get('list');
-    if (playlist) return `https://www.youtube-nocookie.com/embed/videoseries?list=${encodeURIComponent(playlist)}`;
-    const videoId = host === 'youtu.be' ? url.pathname.split('/').filter(Boolean)[0] : url.pathname.startsWith('/shorts/') ? url.pathname.split('/')[2] : url.searchParams.get('v');
-    return /^[a-zA-Z0-9_-]{6,}$/.test(videoId || '') ? `https://www.youtube-nocookie.com/embed/${videoId}` : '';
-  } catch { return ''; }
-}
-
-export default function Biblioteca({ aoAbrirLivro }) {
+export default function Biblioteca({ aoAbrirLivro, musicaUrl, setMusicaUrl }) {
   const { user } = useAuth();
   const mostrarToast = useToast();
   const [livros, setLivros] = useState([]);
@@ -45,7 +33,6 @@ export default function Biblioteca({ aoAbrirLivro }) {
   const [resenhas, setResenhas] = useState([]);
   const [resenhaAberta, setResenhaAberta] = useState(false);
   const [resenha, setResenha] = useState({ bookId: '', content: '' });
-  const [musicaUrl, setMusicaUrl] = useLocalStorage('trilhaLeituraUrl', '');
   const [musicaRascunho, setMusicaRascunho] = useState(musicaUrl || '');
 
   const carregar = useCallback(() => {
@@ -121,10 +108,7 @@ export default function Biblioteca({ aoAbrirLivro }) {
           <label><span>Link de reprodução</span><input type="url" inputMode="url" placeholder="https://youtube.com/watch?v=..." value={musicaRascunho} onChange={(e) => setMusicaRascunho(e.target.value)} /></label>
           <button className="btn-primario">Carregar player</button>
         </form>
-        {musicaUrl && youtubeEmbedUrl(musicaUrl) && <div className="trilha-leitura__player">
-          <iframe src={youtubeEmbedUrl(musicaUrl)} title="Player da trilha de leitura" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen />
-          <div className="trilha-leitura__acoes"><span>Reprodução fornecida pelo YouTube</span><a href={musicaUrl} target="_blank" rel="noreferrer">Abrir no YouTube <OpenInNewIcon fontSize="inherit" /></a><button type="button" onClick={() => { setMusicaUrl(''); setMusicaRascunho(''); }}>Remover</button></div>
-        </div>}
+        {musicaUrl && youtubeEmbedUrl(musicaUrl) && <div className="trilha-leitura__ativa"><MusicNoteIcon fontSize="small"/><span>Player fixado no aplicativo. Você pode navegar sem interromper a reprodução.</span><button type="button" onClick={() => { setMusicaUrl(''); setMusicaRascunho(''); }}>Remover trilha</button></div>}
       </section>
 
       <section className="diario-leitura widget"><div className="diario-leitura__stats"><span><strong>{sequencia}</strong><small>dias de sequência</small></span><span><strong>{resumo.pages}</strong><small>páginas em 30 dias</small></span><span><strong>{resumo.minutes}</strong><small>minutos em 30 dias</small></span><span><strong>{resumo.days.size}</strong><small>dias ativos</small></span></div><button className="btn-primario" onClick={() => setSessaoAberta(!sessaoAberta)}>{sessaoAberta ? 'Cancelar' : '+ Registrar leitura'}</button></section>

@@ -5,6 +5,7 @@ import { ToastProvider } from './components/Toast.jsx';
 import { useLocalStorage } from './hooks/useLocalStorage.js';
 import { AuthProvider, useAuth } from './context/AuthContext.jsx';
 import PageErrorBoundary from './components/PageErrorBoundary.jsx';
+import GlobalMusicPlayer from './components/GlobalMusicPlayer.jsx';
 
 const Inicio = lazy(() => import('./pages/Inicio.jsx'));
 const Explorar = lazy(() => import('./pages/Explorar.jsx'));
@@ -27,6 +28,7 @@ function AppInterno() {
   const [livroSelecionado, setLivroSelecionado] = useLocalStorage('livroSelecionado', null);
   const [perfilSelecionadoId, setPerfilSelecionadoId] = useState(null);
   const [buscaGlobal, setBuscaGlobal] = useState('');
+  const [musicaUrl, setMusicaUrl] = useLocalStorage('trilhaLeituraUrl', '');
 
   const escuro = temaEscuro === 'escuro';
 
@@ -69,7 +71,7 @@ function AppInterno() {
     inicio: <Inicio aoAbrirLivro={abrirLivro} aoAbrirPerfil={abrirPerfil} aoAbrirClubes={() => irParaPagina('comunidades')} aoConhecerPessoas={() => irParaPagina('pessoas')} />,
     explorar: <Explorar aoAbrirLivro={abrirLivro} buscaInicial={buscaGlobal} />,
     comunidades: <Comunidades />,
-    biblioteca: <Biblioteca aoAbrirLivro={abrirLivro} />,
+    biblioteca: <Biblioteca aoAbrirLivro={abrirLivro} musicaUrl={musicaUrl} setMusicaUrl={setMusicaUrl} />,
     conquistas: <Conquistas />,
     pessoas: <Pessoas aoAbrirPerfil={abrirPerfil} />,
     livro: <LivroDetalhe livro={livroSelecionado} aoAbrirLivro={abrirLivro} aoAbrirPerfil={abrirPerfil} />,
@@ -105,6 +107,7 @@ function AppInterno() {
       <main className="conteudo-principal">
         <PageErrorBoundary key={paginaAtual}><Suspense fallback={<div className="pagina-carregando" aria-label="Carregando página"><span className="loading-spinner" /></div>}>{paginas[paginaAtual] ?? paginas.inicio}</Suspense></PageErrorBoundary>
       </main>
+      <GlobalMusicPlayer url={musicaUrl} onRemove={() => setMusicaUrl('')} />
     </div>
   );
 }
