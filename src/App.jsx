@@ -54,6 +54,7 @@ function AppInterno() {
   function abrirPerfil(profileId) {
     setPerfilSelecionadoId(profileId || user.id);
     setPaginaAtual('perfil');
+    window.location.hash = '/perfil';
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
@@ -89,7 +90,6 @@ function AppInterno() {
         aberta={sidebarMobileAberta}
         fecharMobile={() => setSidebarMobileAberta(false)}
         userId={user.id}
-        aoBuscar={(termo) => { setBuscaGlobal(termo); irParaPagina('explorar'); }}
       />
 
       <Header
@@ -101,6 +101,7 @@ function AppInterno() {
         aoSair={signOut}
         profile={profile}
         userId={user.id}
+        aoBuscar={(termo) => { setBuscaGlobal(termo); irParaPagina('explorar'); }}
       />
 
       <main className="conteudo-principal">

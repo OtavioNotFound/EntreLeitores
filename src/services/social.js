@@ -89,6 +89,30 @@ export async function getPostsByUser(userId) {
   return data.map((row) => normalizePost(row, new Set(), new Set()));
 }
 
+export async function getSavedPosts(userId) {
+  const { data: savedRows, error: savedError } = await supabase
+    .from('saved_posts')
+    .select('post_id,created_at')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false });
+  ensure(savedError);
+  if (!savedRows.length) return [];
+
+  const ids = savedRows.map((item) => item.post_id);
+  const [{ data: posts, error: postsError }, { data: likes, error: likesError }] = await Promise.all([
+    supabase.from('posts').select(POST_SELECT).in('id', ids),
+    supabase.from('post_likes').select('post_id').eq('user_id', userId).in('post_id', ids),
+  ]);
+  ensure(postsError || likesError);
+  const postsById = new Map(posts.map((row) => [row.id, row]));
+  const likedIds = new Set(likes.map((item) => item.post_id));
+  const savedIds = new Set(ids);
+  return ids
+    .map((id) => postsById.get(id))
+    .filter(Boolean)
+    .map((row) => normalizePost(row, likedIds, savedIds));
+}
+
 export async function getPostsByBook(bookId, userId) {
   const { data, error } = await supabase
     .from('posts')

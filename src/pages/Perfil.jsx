@@ -6,7 +6,7 @@ import AchievementsPanel from '../components/AchievementsPanel.jsx';
 import ProfileConversation from '../components/ProfileConversation.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 import { supabase } from '../lib/supabase.js';
-import { blockUser, getAchievementMetrics, getCompatibility, getPostsByUser, getProfileStats, getShelf, reportContent, toggleFollow, uploadProfileImage } from '../services/social.js';
+import { blockUser, getAchievementMetrics, getCompatibility, getPostsByUser, getProfileStats, getSavedPosts, getShelf, reportContent, toggleFollow, uploadProfileImage } from '../services/social.js';
 import { useToast } from '../components/Toast.jsx';
 import { MenuBook as BookIcon, Forum as ForumIcon, ChatOutlined as ChatIcon } from '@mui/icons-material';
 
@@ -16,6 +16,7 @@ export default function Perfil({ profileId, aoAbrirLivro }) {
   const [profile, setProfile] = useState(null);
   const [stats, setStats] = useState([]);
   const [posts, setPosts] = useState([]);
+  const [salvos, setSalvos] = useState([]);
   const [shelf, setShelf] = useState([]);
   const [painelAtivo, setPainelAtivo] = useState('posts');
   const [editing, setEditing] = useState(false);
@@ -38,17 +39,19 @@ export default function Perfil({ profileId, aoAbrirLivro }) {
       getProfileStats(profileId),
       getPostsByUser(profileId),
       getShelf(profileId),
+      isOwn ? getSavedPosts(user.id) : Promise.resolve([]),
       isOwn ? Promise.resolve({ data: null }) : supabase.from('follows').select('following_id').eq('follower_id', user.id).eq('following_id', profileId).maybeSingle(),
       isOwn ? Promise.resolve(null) : getCompatibility(user.id, profileId),
       isOwn ? Promise.resolve({ data: null }) : supabase.from('user_blocks').select('blocked_id').eq('blocker_id', user.id).eq('blocked_id', profileId).maybeSingle(),
       isOwn ? getAchievementMetrics(user.id) : Promise.resolve(null),
-    ]).then(([profileResult, profileStats, profilePosts, profileShelf, followResult, compatibilityResult, blockResult,achievementResult]) => {
+    ]).then(([profileResult, profileStats, profilePosts, profileShelf, savedPosts, followResult, compatibilityResult, blockResult,achievementResult]) => {
       if (profileResult.error) throw profileResult.error;
       setProfile(profileResult.data);
       setForm({ display_name: profileResult.data.display_name, bio: profileResult.data.bio || '', city: profileResult.data.city || '', state_code: profileResult.data.state_code || '', avatar_url: profileResult.data.avatar_url || '', banner_url: profileResult.data.banner_url || '' });
       setStats(profileStats);
       setPosts(profilePosts);
       setShelf(profileShelf);
+      setSalvos(savedPosts);
       setFollowing(Boolean(followResult.data));
       setCompatibilidade(compatibilityResult); setBlocked(Boolean(blockResult.data));
       setAchievementMetrics(achievementResult);
@@ -119,6 +122,7 @@ export default function Perfil({ profileId, aoAbrirLivro }) {
       <div className="perfil__abas">
         <button className={`filtro-pill perfil__aba${painelAtivo === 'posts' ? ' ativa' : ''}`} onClick={() => setPainelAtivo('posts')}>Publicações</button>
         <button className={`filtro-pill perfil__aba${painelAtivo === 'leituras' ? ' ativa' : ''}`} onClick={() => setPainelAtivo('leituras')}>Estante</button>
+        {isOwn&&<button className={`filtro-pill perfil__aba${painelAtivo === 'salvos' ? ' ativa' : ''}`} onClick={() => setPainelAtivo('salvos')}>Salvos</button>}
         {isOwn&&<button className={`filtro-pill perfil__aba${painelAtivo === 'conquistas' ? ' ativa' : ''}`} onClick={() => setPainelAtivo('conquistas')}>Conquistas</button>}
       </div>
 
@@ -128,6 +132,7 @@ export default function Perfil({ profileId, aoAbrirLivro }) {
       <div className={`perfil__painel${painelAtivo === 'leituras' ? ' ativo' : ''}`}>
         {shelf.length ? <div className="biblioteca__grid">{shelf.map((book) => <button className="livro-card" key={book.id} onClick={() => aoAbrirLivro(book)}><div className="livro-card__capa">{book.cover_url ? <img src={book.cover_url} alt="" /> : <BookIcon />}</div><div className="livro-card__corpo"><div className="livro-card__titulo">{book.title}</div><div className="livro-card__autor">{book.author}</div></div></button>)}</div> : <EmptyState icon={<BookIcon />} title="A estante está vazia" description={isOwn ? 'Adicione livros pelo Explorar para construir sua estante.' : 'Este leitor ainda não adicionou livros.'} />}
       </div>
+      {isOwn&&<div className={`perfil__painel${painelAtivo === 'salvos' ? ' ativo' : ''}`}><div className="feed__lista perfil__feed">{salvos.length ? salvos.map((post) => <Post key={post.id} post={post} aoAbrirLivro={aoAbrirLivro} aoRemoverSalvo={(postId) => setSalvos((atuais) => atuais.filter((item) => item.id !== postId))} />) : <EmptyState icon={<ForumIcon />} title="Nenhuma publicação salva" description="Use o marcador nas publicações para guardar resenhas e conversas para depois." />}</div></div>}
       {isOwn&&<div className={`perfil__painel${painelAtivo === 'conquistas' ? ' ativo' : ''}`}>{achievementMetrics&&<AchievementsPanel metrics={achievementMetrics}/>}</div>}
     </section>
   );

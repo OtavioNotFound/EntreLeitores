@@ -6,7 +6,7 @@ import { Favorite as FavoriteIcon, FavoriteBorder as FavoriteBorderIcon, ChatBub
 
 const formatarNumero = (numero) => new Intl.NumberFormat('pt-BR').format(numero);
 
-export default function Post({ post, aoAbrirLivro, aoAbrirPerfil }) {
+export default function Post({ post, aoAbrirLivro, aoAbrirPerfil, aoRemoverSalvo }) {
   const { user } = useAuth();
   const mostrarToast = useToast();
   const [curtido, setCurtido] = useState(Boolean(post.curtido));
@@ -43,6 +43,7 @@ export default function Post({ post, aoAbrirLivro, aoAbrirPerfil }) {
     try {
       const novoEstado = await toggleSave(user.id, post.id, salvo);
       setSalvo(novoEstado);
+      if (!novoEstado) aoRemoverSalvo?.(post.id);
       mostrarToast(novoEstado ? 'Publicação salva.' : 'Publicação removida dos salvos.');
     } catch (error) { mostrarToast(error.message); }
   }
