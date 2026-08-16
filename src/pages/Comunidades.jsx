@@ -3,6 +3,7 @@ import {
   ArrowBackRounded as BackIcon,
   ForumOutlined as ForumIcon,
   Groups as GroupsIcon,
+  QuestionAnswerOutlined as QuestionIcon,
   ImageOutlined as ImageIcon,
 } from '@mui/icons-material';
 import CommunityChat from '../components/CommunityChat.jsx';
@@ -28,7 +29,7 @@ function LeituraAdaptativa({ clube, userId }) {
   return <section className="leitura-adaptativa widget"><div><strong>Ritmo adaptativo do clube</strong>{reading ? <p><b>{reading.book?.title}</b>{pace ? ` · cerca de ${pace.pagesPerDay} páginas por dia até ${new Date(reading.target_end_at).toLocaleDateString('pt-BR')}` : ' · avance no seu próprio ritmo'}</p> : <p>Nenhuma leitura coletiva ativa.</p>}</div>{clube.owner_id === userId && <form onSubmit={definir}><select required value={bookId} onChange={(e) => setBookId(e.target.value)}><option value="">Escolha o livro</option>{books.map((book) => <option key={book.id} value={book.id}>{book.title}</option>)}</select><input type="date" value={date} onChange={(e) => setDate(e.target.value)} /><button className="btn-secundario">Definir leitura</button></form>}</section>;
 }
 
-export default function Comunidades() {
+export default function Comunidades({ buscaInicial = '' }) {
   const { user } = useAuth();
   const mostrarToast = useToast();
   const [clubes, setClubes] = useState([]);
@@ -37,6 +38,10 @@ export default function Comunidades() {
   const [capaInvalida, setCapaInvalida] = useState(false);
   const [form, setForm] = useState({ name: '', description: '', coverUrl: '', city: '', meetingPlace: '' });
   const [loading, setLoading] = useState(true);
+  const [busca, setBusca] = useState(buscaInicial);
+  const [abaSala, setAbaSala] = useState('conversa');
+
+  useEffect(() => { setBusca(buscaInicial); }, [buscaInicial]);
 
   const carregar = useCallback(() => {
     setLoading(true);
@@ -76,9 +81,8 @@ export default function Comunidades() {
           <button className="btn-voltar" onClick={() => setClubeAberto(null)}><BackIcon /> Voltar aos clubes</button>
           <span className="sala-clube__membros">{clubeAberto.member_count} {clubeAberto.member_count === 1 ? 'membro' : 'membros'}</span>
         </div>
-        <LeituraAdaptativa clube={clubeAberto} userId={user.id} />
-        <DiscussionKit club={clubeAberto} />
-        <CommunityChat club={clubeAberto} />
+        <nav className="comunidade-abas" aria-label="Áreas do clube"><button className={abaSala==='conversa'?'ativo':''} onClick={()=>setAbaSala('conversa')}><ForumIcon fontSize="small"/> Conversa</button><button className={abaSala==='perguntas'?'ativo':''} onClick={()=>setAbaSala('perguntas')}><QuestionIcon fontSize="small"/> Perguntas</button></nav>
+        {abaSala==='perguntas'?<><LeituraAdaptativa clube={clubeAberto} userId={user.id} /><DiscussionKit club={clubeAberto} /></>:<CommunityChat club={clubeAberto} />}
       </section>
     );
   }
@@ -103,7 +107,7 @@ export default function Comunidades() {
         <button className="btn-primario">Criar clube e abrir conversa</button>
       </form>}
 
-      {loading ? <div className="skeleton-card" /> : clubes.length ? <div className="clubes-grid">{clubes.map((clube) => {
+      {loading ? <div className="skeleton-card" /> : clubes.filter((clube)=>!busca.trim()||`${clube.name} ${clube.description||''} ${clube.city||''}`.toLocaleLowerCase('pt-BR').includes(busca.trim().toLocaleLowerCase('pt-BR'))).length ? <div className="clubes-grid">{clubes.filter((clube)=>!busca.trim()||`${clube.name} ${clube.description||''} ${clube.city||''}`.toLocaleLowerCase('pt-BR').includes(busca.trim().toLocaleLowerCase('pt-BR'))).map((clube) => {
         const podeConversar = clube.joined || clube.owner_id === user.id;
         return (
           <article className="clube-card" key={clube.id}>
@@ -113,13 +117,13 @@ export default function Comunidades() {
               <h2>{clube.name}</h2>
               <p>{clube.description || 'O clube ainda não adicionou uma descrição.'}</p>
               <div className="clube-card__acoes">
-                {podeConversar ? <button className="btn-primario" onClick={() => setClubeAberto(clube)}><ForumIcon fontSize="small" /> Abrir conversa</button> : <button className="btn-primario" onClick={() => alternar(clube)}>Entrar no clube</button>}
+                {podeConversar ? <button className="btn-primario" onClick={() => { setAbaSala('conversa'); setClubeAberto(clube); }}><ForumIcon fontSize="small" /> Abrir clube</button> : <button className="btn-primario" onClick={() => alternar(clube)}>Entrar no clube</button>}
                 {clube.joined && clube.owner_id !== user.id && <button className="btn-texto-perigo" onClick={() => alternar(clube)}>Sair</button>}
               </div>
             </div>
           </article>
         );
-      })}</div> : <EmptyState icon={<GroupsIcon />} title="Ainda não há clubes" description="Crie o primeiro clube e abra um espaço de conversa para leitores com os mesmos interesses." action={<button className="btn-primario" onClick={() => setFormAberto(true)}>Criar o primeiro clube</button>} />}
+      })}</div> : <EmptyState icon={<GroupsIcon />} title={busca.trim()?'Nenhum clube encontrado':'Ainda não há clubes'} description={busca.trim()?'Tente pesquisar por outro nome, cidade ou assunto.':'Crie o primeiro clube e abra um espaço de conversa para leitores com os mesmos interesses.'} action={!busca.trim()?<button className="btn-primario" onClick={() => setFormAberto(true)}>Criar o primeiro clube</button>:null} />}
     </section>
   );
 }

@@ -325,6 +325,13 @@ export async function addToShelf(userId, bookId, status = 'quero-ler') {
   ensure(error);
 }
 
+export async function removeFromShelf(userId, bookId) {
+  const { error: offerError } = await supabase.from('lending_offers').delete().eq('owner_id', userId).eq('book_id', bookId);
+  ensure(offerError);
+  const { error } = await supabase.from('user_books').delete().eq('user_id', userId).eq('book_id', bookId);
+  ensure(error);
+}
+
 export async function updateReading(userId, bookId, { status, progress, rating }) {
   const values = { user_id: userId, book_id: bookId, status, progress, rating: rating || null };
   if (status === 'lendo') values.started_at = new Date().toISOString().slice(0, 10);
@@ -455,6 +462,14 @@ export async function getSafeClubPrompts(clubId, bookId) {
 
 export async function createClubPrompt(userId, clubId, bookId, question, spoilerProgress) {
   const {error}=await supabase.from('club_prompts').insert({author_id:userId,club_id:clubId,book_id:bookId,question:question.trim(),spoiler_progress:Number(spoilerProgress)});ensure(error);
+}
+
+export async function updateClubPrompt(userId, promptId, question, spoilerProgress) {
+  const {error}=await supabase.from('club_prompts').update({question:question.trim(),spoiler_progress:Number(spoilerProgress)}).eq('id',promptId).eq('author_id',userId);ensure(error);
+}
+
+export async function deleteClubPrompt(userId, promptId) {
+  const {error}=await supabase.from('club_prompts').delete().eq('id',promptId).eq('author_id',userId);ensure(error);
 }
 
 export async function toggleClubPromptVote(promptId) {

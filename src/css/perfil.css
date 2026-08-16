@@ -69,7 +69,9 @@
 .compatibilidade{ max-width: 680px; display: flex; align-items: center; gap: var(--space-4); margin-bottom: var(--space-5); }
 .compatibilidade__score{ width: 76px; height: 76px; flex: 0 0 auto; display: grid; place-items: center; border-radius: 50%; background: var(--lilas-100); color: var(--roxo-500); font-size: var(--fs-xl); font-weight: 900; }
 .compatibilidade h2{ font-size: var(--fs-md); }.compatibilidade p{ margin: 4px 0; color: var(--cinza-700); }.compatibilidade small{ color: var(--cinza-500); }
-.conversa-perfil{ max-width:680px; display:grid; gap:var(--space-3); margin-bottom:var(--space-5); }
+.conversa-perfil{ max-width:680px; display:grid; gap:var(--space-3); margin-top:var(--space-4); margin-bottom:var(--space-5); }
+.perfil__acoes .btn-seguir:not(.seguindo){ border-color:var(--azul-500); background:var(--azul-500); color:var(--branco); box-shadow:0 6px 16px rgba(59,130,246,.22); }
+.perfil__acoes .btn-seguir:not(.seguindo):hover{ filter:brightness(.93); }
 .conversa-perfil header>div{ display:grid; gap:3px; }
 .conversa-perfil header small{ color:var(--cinza-500); }
 .conversa-perfil__mensagens{ max-height:340px; overflow-y:auto; display:flex; flex-direction:column; gap:var(--space-2); padding:var(--space-3); border-radius:var(--radius-sm); background:var(--cinza-50); }

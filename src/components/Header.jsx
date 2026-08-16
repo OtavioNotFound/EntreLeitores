@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useClickOutside } from '../hooks/useClickOutside.js';
 import {
   Menu as MenuIcon,
@@ -10,11 +10,12 @@ import {
   Logout as LogoutIcon,
 } from '@mui/icons-material';
 
-export default function Header({ irParaPagina, abrirSidebarMobile, temaEscuro, alternarTema, aoSair, profile, aoBuscar: executarBusca }) {
+export default function Header({ paginaAtual, irParaPagina, abrirSidebarMobile, temaEscuro, alternarTema, aoSair, profile, aoBuscar: executarBusca }) {
   const [dropdownAberto, setDropdownAberto] = useState(null);
   const [busca, setBusca] = useState('');
   const refPerfil = useRef(null);
   useClickOutside([refPerfil], () => setDropdownAberto(null), dropdownAberto !== null);
+  useEffect(() => { setBusca(''); }, [paginaAtual]);
 
   function aoBuscar(evento) {
     if (evento.key === 'Enter' && busca.trim()) {
@@ -24,13 +25,14 @@ export default function Header({ irParaPagina, abrirSidebarMobile, temaEscuro, a
 
   const nome = profile?.display_name || 'Leitor';
   const inicial = nome.trim().charAt(0).toUpperCase() || 'L';
+  const pesquisandoClubes = paginaAtual === 'comunidades';
 
   return (
     <header className="header">
       <button className="menu-mobile-toggle" aria-label="Abrir menu" onClick={abrirSidebarMobile}><MenuIcon /></button>
       <div className="header__busca">
         <span className="header__busca-icone"><SearchIcon fontSize="small" /></span>
-        <input aria-label="Buscar livros" type="search" placeholder="Buscar livros por título ou autor..." value={busca} onChange={(e) => setBusca(e.target.value)} onKeyDown={aoBuscar} />
+        <input aria-label={pesquisandoClubes ? 'Pesquisar clubes' : 'Buscar livros'} type="search" placeholder={pesquisandoClubes ? 'Pesquisar clubes por nome, cidade ou descrição...' : 'Buscar livros por título ou autor...'} value={busca} onChange={(e) => setBusca(e.target.value)} onKeyDown={aoBuscar} />
       </div>
       <div className="header__acoes">
         <button className="header__icone-btn" aria-label="Alternar tema" title="Alternar tema" onClick={alternarTema}>

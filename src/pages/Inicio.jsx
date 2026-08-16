@@ -117,7 +117,7 @@ export default function Inicio({ aoAbrirLivro, aoAbrirPerfil, aoAbrirClubes, aoC
           <div className="titulo-secao">Continue lendo <BookIcon fontSize="small" /></div>
           <button className="continuar-lendo continuar-lendo--button" onClick={() => aoAbrirLivro(leituraAtual)}>
             <div className="continuar-lendo__capa">{leituraAtual.cover_url ? <img src={leituraAtual.cover_url} alt="" /> : <BookIcon />}</div>
-            <div className="continuar-lendo__info"><strong>{leituraAtual.title}</strong><span>{leituraAtual.author} · {leituraAtual.progress}%</span><div className="progresso"><span className="progresso__barra progresso__barra--roxo" style={{ width: `${leituraAtual.progress}%` }} /></div></div>
+            <div className="continuar-lendo__info"><strong>{leituraAtual.title}</strong><span>{leituraAtual.author} · {leituraAtual.progress}%</span><div className="progresso"><span className="progresso__barra progresso__barra--azul" style={{ width: `${leituraAtual.progress}%` }} /></div></div>
           </button>
         </div>}
 

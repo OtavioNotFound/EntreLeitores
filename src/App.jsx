@@ -27,6 +27,7 @@ function AppInterno() {
   const [livroSelecionado, setLivroSelecionado] = useLocalStorage('livroSelecionado', null);
   const [perfilSelecionadoId, setPerfilSelecionadoId] = useState(null);
   const [buscaGlobal, setBuscaGlobal] = useState('');
+  const [buscaClubes, setBuscaClubes] = useState('');
   const [musicaUrl, setMusicaUrl] = useLocalStorage('trilhaLeituraUrl', '');
 
   const escuro = temaEscuro === 'escuro';
@@ -70,11 +71,11 @@ function AppInterno() {
   const paginas = {
     inicio: <Inicio aoAbrirLivro={abrirLivro} aoAbrirPerfil={abrirPerfil} aoAbrirClubes={() => irParaPagina('comunidades')} aoConhecerPessoas={() => irParaPagina('pessoas')} />,
     explorar: <Explorar aoAbrirLivro={abrirLivro} buscaInicial={buscaGlobal} />,
-    comunidades: <Comunidades />,
+    comunidades: <Comunidades buscaInicial={buscaClubes} />,
     biblioteca: <Biblioteca aoAbrirLivro={abrirLivro} musicaUrl={musicaUrl} setMusicaUrl={setMusicaUrl} />,
     conquistas: <Conquistas />,
     pessoas: <Pessoas aoAbrirPerfil={abrirPerfil} />,
-    livro: <LivroDetalhe livro={livroSelecionado} aoAbrirLivro={abrirLivro} aoAbrirPerfil={abrirPerfil} />,
+    livro: <LivroDetalhe livro={livroSelecionado} aoAbrirLivro={abrirLivro} aoAbrirPerfil={abrirPerfil} aoRemoverDaEstante={() => { setLivroSelecionado(null); irParaPagina('biblioteca'); }} />,
     notificacoes: <Notificacoes />,
     perfil: <Perfil profileId={perfilSelecionadoId || user.id} aoAbrirLivro={abrirLivro} />,
     configuracoes: <Configuracoes alternarTema={alternarTema} />,
@@ -101,7 +102,7 @@ function AppInterno() {
         aoSair={signOut}
         profile={profile}
         userId={user.id}
-        aoBuscar={(termo) => { setBuscaGlobal(termo); irParaPagina('explorar'); }}
+        aoBuscar={(termo) => { if (paginaAtual === 'comunidades') setBuscaClubes(termo); else { setBuscaGlobal(termo); irParaPagina('explorar'); } }}
       />
 
       <main className="conteudo-principal">

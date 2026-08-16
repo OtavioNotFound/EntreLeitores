@@ -8,11 +8,11 @@ import ReadingPause from '../components/ReadingPause.jsx';
 import EmptyState from '../components/EmptyState.jsx';
 import BookRating from '../components/BookRating.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
-import { addToShelf, createPost, getEmotionMap, getPostsByBook, saveEmotion, startReread, updateBookOrganization, updateReading } from '../services/social.js';
+import { addToShelf, createPost, getEmotionMap, getPostsByBook, removeFromShelf, saveEmotion, startReread, updateBookOrganization, updateReading } from '../services/social.js';
 import { useToast } from '../components/Toast.jsx';
 import { MenuBook as BookIcon, Forum as ForumIcon } from '@mui/icons-material';
 
-export default function LivroDetalhe({ livro, aoAbrirLivro, aoAbrirPerfil }) {
+export default function LivroDetalhe({ livro, aoAbrirLivro, aoAbrirPerfil, aoRemoverDaEstante }) {
   const { user } = useAuth();
   const mostrarToast = useToast();
   const [posts, setPosts] = useState([]);
@@ -54,6 +54,7 @@ export default function LivroDetalhe({ livro, aoAbrirLivro, aoAbrirPerfil }) {
 
   async function publicar(post) { await createPost(user.id, post); setPosts(await getPostsByBook(livro.id, user.id)); }
   async function reler(){try{const cycle=await startReread(livro.id,leitura.format);setLeitura({...leitura,status:'lendo',progress:0});mostrarToast(`Releitura ${cycle} iniciada sem apagar suas memórias anteriores.`)}catch(error){mostrarToast(error.message)}}
+  async function excluirDaEstante(){if(!window.confirm(`Excluir “${title}” da sua estante? Suas publicações sobre o livro não serão apagadas.`))return;try{await removeFromShelf(user.id,livro.id);mostrarToast('Livro excluído da estante.');aoRemoverDaEstante?.();}catch(error){mostrarToast(error.message)}}
 
   if (!livro?.id) return <section className="pagina ativa"><EmptyState icon={<BookIcon />} title="Selecione um livro" description="Abra um livro pela sua estante ou pela página Explorar." /></section>;
 
@@ -70,7 +71,7 @@ export default function LivroDetalhe({ livro, aoAbrirLivro, aoAbrirPerfil }) {
             {livro.genre && <div className="livro-detalhe__meta-item"><div className="livro-detalhe__meta-valor">{livro.genre}</div><div className="livro-detalhe__meta-label">Gênero</div></div>}
             {livro.publisher && <div className="livro-detalhe__meta-item"><div className="livro-detalhe__meta-valor">{livro.publisher}</div><div className="livro-detalhe__meta-label">Editora</div></div>}
           </div>
-          <div className="livro-detalhe__acoes"><button className="btn-primario" onClick={() => adicionar('quero-ler')}>+ Quero ler</button><button className="btn-secundario" onClick={() => adicionar('lendo')}>Começar leitura</button></div>
+          <div className="livro-detalhe__acoes"><button className="btn-primario" onClick={() => adicionar('quero-ler')}>+ Quero ler</button><button className="btn-secundario" onClick={() => adicionar('lendo')}>Começar leitura</button>{livro.status&&<button className="btn-texto-perigo" onClick={excluirDaEstante}>Excluir da estante</button>}</div>
           {(livro.status==='lidos'||livro.progress===100)&&<button className="btn-texto" onClick={reler}>↻ Iniciar releitura preservando histórico</button>}
           <button className="btn-texto" onClick={() => setEditandoLeitura(!editandoLeitura)}>{editandoLeitura ? 'Cancelar atualização' : 'Atualizar progresso e nota'}</button>
           {editandoLeitura && <form className="leitura-form" onSubmit={salvarLeitura}>
