@@ -23,3 +23,4 @@ export default function BookRating({ value = 0, onChange, label = 'Avaliação',
     })}
   </div>;
 }
+  
