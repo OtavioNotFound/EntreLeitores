@@ -4,13 +4,16 @@ import EmptyState from '../components/EmptyState.jsx';
 import Post from '../components/Post.jsx';
 import AchievementsPanel from '../components/AchievementsPanel.jsx';
 import ProfileConversation from '../components/ProfileConversation.jsx';
+import ProfilePeopleList from '../components/ProfilePeopleList.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 import { supabase } from '../lib/supabase.js';
 import { blockUser, getAchievementMetrics, getCompatibility, getPostsByUser, getProfileStats, getSavedPosts, getShelf, reportContent, toggleFollow, uploadProfileImage } from '../services/social.js';
 import { useToast } from '../components/Toast.jsx';
 import { MenuBook as BookIcon, Forum as ForumIcon, ChatOutlined as ChatIcon } from '@mui/icons-material';
 
-export default function Perfil({ profileId, aoAbrirLivro }) {
+const STAT_PANELS = { Livros: 'leituras', Seguidores: 'seguidores', Seguindo: 'seguindo', Posts: 'posts' };
+
+export default function Perfil({ profileId, aoAbrirLivro, aoAbrirPerfil }) {
   const { user, profile: ownProfile, refreshProfile } = useAuth();
   const mostrarToast = useToast();
   const [profile, setProfile] = useState(null);
@@ -117,11 +120,13 @@ export default function Perfil({ profileId, aoAbrirLivro }) {
 
       {!isOwn && conversaAberta && <ProfileConversation person={profile} />}
 
-      <div className="perfil__stats">{stats.map((stat) => <div key={stat.label}><div className="perfil__stat-valor"><AnimatedNumber valor={stat.valor} /></div><div className="perfil__stat-label">{stat.label}</div></div>)}</div>
+      <div className="perfil__stats">{stats.map((stat) => <button className={`perfil__stat${painelAtivo === STAT_PANELS[stat.label] ? ' ativo' : ''}`} key={stat.label} onClick={() => setPainelAtivo(STAT_PANELS[stat.label])} aria-pressed={painelAtivo === STAT_PANELS[stat.label]}><span className="perfil__stat-valor"><AnimatedNumber valor={stat.valor} /></span><span className="perfil__stat-label">{stat.label}</span></button>)}</div>
       {!isOwn && compatibilidade && <section className="compatibilidade widget"><div className="compatibilidade__score">{compatibilidade.score}%</div><div><h2>Compatibilidade literária</h2><p>{compatibilidade.commonBooks} livros em comum{compatibilidade.sharedGenres.length ? ` · afinidade em ${compatibilidade.sharedGenres.join(', ')}` : ' · explorem um livro novo juntos'}.</p><small>A pontuação considera concordância de notas e gêneros compartilhados.</small></div></section>}
       <div className="perfil__abas">
-        <button className={`filtro-pill perfil__aba${painelAtivo === 'posts' ? ' ativa' : ''}`} onClick={() => setPainelAtivo('posts')}>Publicações</button>
+        <button className={`filtro-pill perfil__aba${painelAtivo === 'posts' ? ' ativa' : ''}`} onClick={() => setPainelAtivo('posts')}>Posts</button>
         <button className={`filtro-pill perfil__aba${painelAtivo === 'leituras' ? ' ativa' : ''}`} onClick={() => setPainelAtivo('leituras')}>Estante</button>
+        <button className={`filtro-pill perfil__aba${painelAtivo === 'seguidores' ? ' ativa' : ''}`} onClick={() => setPainelAtivo('seguidores')}>Seguidores</button>
+        <button className={`filtro-pill perfil__aba${painelAtivo === 'seguindo' ? ' ativa' : ''}`} onClick={() => setPainelAtivo('seguindo')}>Seguindo</button>
         {isOwn&&<button className={`filtro-pill perfil__aba${painelAtivo === 'salvos' ? ' ativa' : ''}`} onClick={() => setPainelAtivo('salvos')}>Salvos</button>}
         {isOwn&&<button className={`filtro-pill perfil__aba${painelAtivo === 'conquistas' ? ' ativa' : ''}`} onClick={() => setPainelAtivo('conquistas')}>Conquistas</button>}
       </div>
@@ -132,6 +137,8 @@ export default function Perfil({ profileId, aoAbrirLivro }) {
       <div className={`perfil__painel${painelAtivo === 'leituras' ? ' ativo' : ''}`}>
         {shelf.length ? <div className="biblioteca__grid">{shelf.map((book) => <button className="livro-card" key={book.id} onClick={() => aoAbrirLivro(book)}><div className="livro-card__capa">{book.cover_url ? <img src={book.cover_url} alt="" /> : <BookIcon />}</div><div className="livro-card__corpo"><div className="livro-card__titulo">{book.title}</div><div className="livro-card__autor">{book.author}</div></div></button>)}</div> : <EmptyState icon={<BookIcon />} title="A estante está vazia" description={isOwn ? 'Adicione livros pelo Explorar para construir sua estante.' : 'Este leitor ainda não adicionou livros.'} />}
       </div>
+      <div className={`perfil__painel${painelAtivo === 'seguidores' ? ' ativo' : ''}`}><ProfilePeopleList profileId={profileId} type="followers" aoAbrirPerfil={aoAbrirPerfil} /></div>
+      <div className={`perfil__painel${painelAtivo === 'seguindo' ? ' ativo' : ''}`}><ProfilePeopleList profileId={profileId} type="following" aoAbrirPerfil={aoAbrirPerfil} /></div>
       {isOwn&&<div className={`perfil__painel${painelAtivo === 'salvos' ? ' ativo' : ''}`}><div className="feed__lista perfil__feed">{salvos.length ? salvos.map((post) => <Post key={post.id} post={post} aoAbrirLivro={aoAbrirLivro} aoRemoverSalvo={(postId) => setSalvos((atuais) => atuais.filter((item) => item.id !== postId))} />) : <EmptyState icon={<ForumIcon />} title="Nenhuma publicação salva" description="Use o marcador nas publicações para guardar resenhas e conversas para depois." />}</div></div>}
       {isOwn&&<div className={`perfil__painel${painelAtivo === 'conquistas' ? ' ativo' : ''}`}>{achievementMetrics&&<AchievementsPanel metrics={achievementMetrics}/>}</div>}
     </section>

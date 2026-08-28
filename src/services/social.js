@@ -255,6 +255,20 @@ export async function toggleFollow(userId, profileId, following) {
   return !following;
 }
 
+export async function getProfileConnections(profileId, viewerId, type) {
+  const followers = type === 'followers';
+  const idColumn = followers ? 'follower_id' : 'following_id';
+  const filterColumn = followers ? 'following_id' : 'follower_id';
+  const relation = followers ? 'follows_follower_id_fkey' : 'follows_following_id_fkey';
+  const [{ data, error }, { data: viewerFollows, error: viewerError }] = await Promise.all([
+    supabase.from('follows').select(`${idColumn},person:profiles!${relation}(id,display_name,username,avatar_url,bio,city,state_code)`).eq(filterColumn, profileId).order('created_at', { ascending: false }),
+    supabase.from('follows').select('following_id').eq('follower_id', viewerId),
+  ]);
+  ensure(error || viewerError);
+  const followedIds = new Set(viewerFollows.map((item) => item.following_id));
+  return data.map((item) => ({ ...item.person, following: followedIds.has(item.person.id) }));
+}
+
 export async function getDirectMessages(userId, otherUserId) {
   const { data, error } = await supabase.from('direct_messages').select('id,sender_id,recipient_id,content,created_at')
     .or(`and(sender_id.eq.${userId},recipient_id.eq.${otherUserId}),and(sender_id.eq.${otherUserId},recipient_id.eq.${userId})`)
@@ -357,6 +371,43 @@ export async function getReadingSessions(userId, days = 30) {
   const since = new Date(); since.setDate(since.getDate() - days);
   const { data, error } = await supabase.from('reading_sessions').select('id,book_id,pages_read,minutes_read,format,note,occurred_on,book:books(title)').eq('user_id', userId).gte('occurred_on', since.toISOString().slice(0,10)).order('occurred_on', { ascending: false });
   ensure(error); return data;
+}
+
+export async function getStreakProtections(userId, fromDate, toDate) {
+  let query = supabase.from('streak_protections').select('id,protected_on,created_at').eq('user_id', userId).order('protected_on', { ascending: false });
+  if (fromDate) query = query.gte('protected_on', fromDate);
+  if (toDate) query = query.lte('protected_on', toDate);
+  const { data, error } = await query;
+  if (error && isMissingStreakTable(error)) return getLocalStreakProtections(userId, fromDate, toDate);
+  ensure(error);
+  return data || [];
+}
+
+export async function useStreakProtection(userId, date) {
+  const { data, error } = await supabase.from('streak_protections').insert({ user_id: userId, protected_on: date }).select('id,protected_on,created_at').single();
+  if (error && isMissingStreakTable(error)) {
+    const protections = getLocalStreakProtections(userId);
+    if (protections.some((item) => item.protected_on === date)) throw new Error('Este dia já está protegido.');
+    const month = date.slice(0, 7);
+    if (protections.filter((item) => item.protected_on.startsWith(month)).length >= 5) throw new Error('five protections already used this month');
+    const protection = { id: `local-${userId}-${date}`, protected_on: date, created_at: new Date().toISOString() };
+    localStorage.setItem(`streak-protections:${userId}`, JSON.stringify([...protections, protection]));
+    return protection;
+  }
+  ensure(error);
+  return data;
+}
+
+function isMissingStreakTable(error) {
+  return ['42P01', 'PGRST205'].includes(error?.code) || error?.message?.includes('streak_protections');
+}
+
+function getLocalStreakProtections(userId, fromDate, toDate) {
+  if (typeof localStorage === 'undefined') return [];
+  try {
+    const protections = JSON.parse(localStorage.getItem(`streak-protections:${userId}`) || '[]');
+    return protections.filter((item) => (!fromDate || item.protected_on >= fromDate) && (!toDate || item.protected_on <= toDate));
+  } catch { return []; }
 }
 
 export async function getActiveReadingGoal(userId) {
@@ -477,11 +528,11 @@ export async function toggleClubPromptVote(promptId) {
 }
 
 export async function exportUserData(userId) {
-  const tables = ['profiles','user_books','posts','comments','follows','saved_posts','reading_sessions','reading_notes','reading_cycles','reading_goals','reading_pauses','emotional_checkins','lending_offers','loan_requests','book_content_warnings','user_content_preferences','club_prompts','user_blocks','reports'];
+  const tables = ['profiles','user_books','posts','comments','follows','saved_posts','reading_sessions','streak_protections','reading_notes','reading_cycles','reading_goals','reading_pauses','emotional_checkins','lending_offers','loan_requests','book_content_warnings','user_content_preferences','club_prompts','user_blocks','reports'];
   const results = await Promise.all(tables.map(async (table) => {
     let query = supabase.from(table).select('*');
     if (table === 'profiles') query = query.eq('id', userId);
-    else if (['user_books','reading_sessions','reading_notes','reading_cycles','reading_goals','reading_pauses','emotional_checkins'].includes(table)) query = query.eq('user_id', userId);
+    else if (['user_books','reading_sessions','streak_protections','reading_notes','reading_cycles','reading_goals','reading_pauses','emotional_checkins'].includes(table)) query = query.eq('user_id', userId);
     else if (table === 'lending_offers') query = query.eq('owner_id', userId);
     else if (table === 'loan_requests') query = query.eq('borrower_id', userId);
     else if (table === 'book_content_warnings' || table === 'user_content_preferences') query = query.eq('user_id', userId);
@@ -597,8 +648,9 @@ export async function getProfileStats(userId) {
 }
 
 export async function getAchievementMetrics(userId) {
-  const [shelf,posts,sessions,notes,clubs,returnedLoans,resumedPauses]=await Promise.all([
+  const [shelf,posts,sessions,protections,notes,clubs,returnedLoans,resumedPauses]=await Promise.all([
     getShelf(userId),getPostsByUser(userId),getReadingSessions(userId,3650),
+    getStreakProtections(userId),
     supabase.from('reading_notes').select('*',{count:'exact',head:true}).eq('user_id',userId),
     supabase.from('club_members').select('*',{count:'exact',head:true}).eq('user_id',userId),
     supabase.from('loan_requests').select('*',{count:'exact',head:true}).eq('borrower_id',userId).eq('status','returned'),
@@ -608,7 +660,7 @@ export async function getAchievementMetrics(userId) {
   const finished=shelf.filter((book)=>['lidos','favoritos'].includes(book.status));
   return {
     finishedBooks:finished.length,
-    streak:calculateReadingStreak(sessions),
+    streak:calculateReadingStreak(sessions, new Date(), protections),
     genres:new Set(finished.map((book)=>book.genre).filter(Boolean)).size,
     reviews:posts.filter((post)=>post.type==='resenha').length,
     posts:posts.length,

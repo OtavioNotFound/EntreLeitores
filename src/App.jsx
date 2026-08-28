@@ -16,6 +16,7 @@ import Perfil from './pages/Perfil.jsx';
 import Configuracoes from './pages/Configuracoes.jsx';
 import Conquistas from './pages/Conquistas.jsx';
 import Pessoas from './pages/Pessoas.jsx';
+import Ofensiva from './pages/Ofensiva.jsx';
 import Login from './pages/Login.jsx';
 
 function AppInterno() {
@@ -74,10 +75,11 @@ function AppInterno() {
     comunidades: <Comunidades buscaInicial={buscaClubes} />,
     biblioteca: <Biblioteca aoAbrirLivro={abrirLivro} musicaUrl={musicaUrl} setMusicaUrl={setMusicaUrl} />,
     conquistas: <Conquistas />,
+    ofensiva: <Ofensiva />,
     pessoas: <Pessoas aoAbrirPerfil={abrirPerfil} />,
     livro: <LivroDetalhe livro={livroSelecionado} aoAbrirLivro={abrirLivro} aoAbrirPerfil={abrirPerfil} aoRemoverDaEstante={() => { setLivroSelecionado(null); irParaPagina('biblioteca'); }} />,
     notificacoes: <Notificacoes />,
-    perfil: <Perfil profileId={perfilSelecionadoId || user.id} aoAbrirLivro={abrirLivro} />,
+    perfil: <Perfil profileId={perfilSelecionadoId || user.id} aoAbrirLivro={abrirLivro} aoAbrirPerfil={abrirPerfil} />,
     configuracoes: <Configuracoes alternarTema={alternarTema} />,
   };
 

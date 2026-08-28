@@ -52,6 +52,9 @@
   margin-bottom: var(--space-6);
   flex-wrap: wrap;
 }
+.perfil__stat{ min-width:88px; padding:8px 12px; border:1px solid transparent; border-radius:var(--radius-sm); background:transparent; text-align:left; transition:background var(--transicao-rapida),border-color var(--transicao-rapida); }
+.perfil__stat:hover,.perfil__stat.ativo{ background:var(--lilas-100); border-color:var(--roxo-300); }
+.perfil__stat span{ display:block; }
 .perfil__stat-valor{ font-size: var(--fs-lg); font-weight: 800; color: var(--cinza-900); }
 .perfil__stat-label{ font-size: var(--fs-xs); color: var(--cinza-500); }
 
@@ -61,10 +64,49 @@
   border-bottom: 1px solid var(--cinza-200);
   margin-bottom: var(--space-5);
 }
+.perfil__abas{ overflow-x:auto; }
+.perfil__aba{ flex:0 0 auto; }
 .perfil__bio--vazia{ color: var(--cinza-400); font-style: italic; }
 
 .perfil__painel{ display: none; }
 .perfil__painel.ativo{ display: block; animation: fade-in var(--transicao-normal); }
+.perfil-pessoas{ max-width:760px; display:grid; gap:var(--space-2); }
+.perfil-pessoa{ display:flex; align-items:center; gap:var(--space-3); padding:var(--space-3); border:1px solid var(--cinza-200); border-radius:var(--radius-sm); background:var(--bg-card); }
+.perfil-pessoa__identidade{ flex:1; min-width:0; display:flex; align-items:center; gap:var(--space-3); border:0; background:transparent; color:var(--cinza-900); text-align:left; }
+.perfil-pessoa__identidade>span:last-child{ min-width:0; display:grid; }
+.perfil-pessoa__identidade strong,.perfil-pessoa__identidade small{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.perfil-pessoa__identidade small{ color:var(--cinza-500); }
+.perfil-pessoa__voce{ color:var(--cinza-500); font-size:var(--fs-xs); font-weight:700; }
+
+/* Ofensiva */
+.ofensiva-pagina{ max-width:980px; }
+.ofensiva-resumo{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:var(--space-4); margin-bottom:var(--space-4); }
+.ofensiva-resumo__card{ display:flex; align-items:center; gap:var(--space-4); }
+.ofensiva-resumo__card>svg{ width:46px; height:46px; padding:10px; border-radius:50%; background:var(--lilas-100); color:var(--roxo-500); }
+.ofensiva-resumo__card--fogo>svg{ background:var(--amarelo-100); color:#f97316; }
+.ofensiva-resumo__card div{ display:grid; gap:2px; }
+.ofensiva-resumo__card strong{ font-size:var(--fs-xl); color:var(--cinza-900); }
+.ofensiva-resumo__card span{ color:var(--cinza-500); font-size:var(--fs-xs); }
+.ofensiva-calendario header{ display:flex; align-items:center; justify-content:space-between; margin-bottom:var(--space-5); }
+.ofensiva-calendario h2{ text-transform:capitalize; font-size:var(--fs-lg); }
+.ofensiva-calendario__nav{ width:38px; height:38px; display:grid; place-items:center; border:1px solid var(--cinza-200); border-radius:50%; background:var(--bg-card); color:var(--cinza-700); }
+.ofensiva-calendario__nav:disabled{ opacity:.35; cursor:not-allowed; }
+.ofensiva-calendario__grade{ display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:8px; }
+.ofensiva-calendario__semana{ padding:4px; color:var(--cinza-500); font-size:var(--fs-xs); font-weight:800; text-align:center; }
+.ofensiva-dia{ min-height:72px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; border:1px solid var(--cinza-200); border-radius:var(--radius-sm); background:var(--cinza-50); color:var(--cinza-700); }
+.ofensiva-dia svg{ font-size:1.1rem; }
+.ofensiva-dia--read{ border-color:var(--azul-500); background:rgba(59,130,246,.12); color:var(--azul-500); }
+.ofensiva-dia--protected{ border-color:#fb923c; background:rgba(249,115,22,.12); color:#f97316; }
+.ofensiva-dia--missed:not(:disabled){ border-style:dashed; cursor:pointer; }
+.ofensiva-dia--missed:not(:disabled):hover{ border-color:#fb923c; background:rgba(249,115,22,.08); }
+.ofensiva-dia--future{ opacity:.4; }
+.ofensiva-dia.hoje{ outline:2px solid var(--roxo-400); outline-offset:2px; }
+.ofensiva-legenda{ display:flex; flex-wrap:wrap; gap:var(--space-4); margin-top:var(--space-5); color:var(--cinza-600); font-size:var(--fs-xs); }
+.ofensiva-legenda span{ display:flex; align-items:center; gap:6px; }
+.ofensiva-legenda i{ width:12px; height:12px; border-radius:3px; background:var(--cinza-100); border:1px solid var(--cinza-300); }
+.ofensiva-legenda i.lido{ background:var(--azul-500); border-color:var(--azul-500); }.ofensiva-legenda i.protegido{ background:#fb923c; border-color:#fb923c; }.ofensiva-legenda i.perdido{ border-style:dashed; }
+.ofensiva-ajuda{ margin-top:var(--space-3); color:var(--cinza-500); font-size:var(--fs-xs); }
+@media(max-width:680px){ .ofensiva-resumo{ grid-template-columns:1fr; }.ofensiva-dia{ min-height:48px; }.ofensiva-dia svg{ display:none; }.ofensiva-calendario{ padding:var(--space-3); }.perfil__stats{ gap:var(--space-2); }.perfil__stat{ min-width:74px; } }
 .perfil__feed{ max-width: 760px; }
 .compatibilidade{ max-width: 680px; display: flex; align-items: center; gap: var(--space-4); margin-bottom: var(--space-5); }
 .compatibilidade__score{ width: 76px; height: 76px; flex: 0 0 auto; display: grid; place-items: center; border-radius: 50%; background: var(--lilas-100); color: var(--roxo-500); font-size: var(--fs-xl); font-weight: 900; }

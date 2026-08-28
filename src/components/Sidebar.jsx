@@ -36,7 +36,7 @@ export default function Sidebar({ paginaAtual, irParaPagina, recolhida, alternar
             );
           })}
         </nav>
-        <button className="sidebar__ofensiva" onClick={() => irParaPagina('conquistas')} aria-label={`Ofensiva de livros: ${ofensiva} dias`}>
+        <button className={`sidebar__ofensiva${paginaAtual === 'ofensiva' ? ' ativo' : ''}`} onClick={() => irParaPagina('ofensiva')} aria-label={`Ofensiva de livros: ${ofensiva} dias`}>
           <span className="sidebar__ofensiva-icone"><FireIcon /></span>
           <span className="item-texto"><strong>Ofensiva de livros</strong><small>{ofensiva} {ofensiva === 1 ? 'dia seguido' : 'dias seguidos'}</small></span>
         </button>

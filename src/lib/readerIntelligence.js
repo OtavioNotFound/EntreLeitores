@@ -15,14 +15,47 @@ export function calculateDailyPace(pageCount, targetDate, now = new Date()) {
   return { days, pagesPerDay: Math.ceil((pageCount || 100) / days) };
 }
 
-export function calculateReadingStreak(sessions, today = new Date()) {
-  const days = new Set(sessions.map((session) => session.occurred_on));
+export function calculateReadingStreak(sessions, today = new Date(), protections = []) {
+  const days = new Set([
+    ...sessions.map((session) => session.occurred_on),
+    ...protections.map((item) => item.protected_on),
+  ]);
   let cursor = new Date(today); cursor.setHours(12, 0, 0, 0);
-  const todayKey = cursor.toISOString().slice(0, 10);
+  const todayKey = localDateKey(cursor);
   if (!days.has(todayKey)) cursor.setDate(cursor.getDate() - 1);
   let streak = 0;
-  while (days.has(cursor.toISOString().slice(0, 10))) { streak += 1; cursor.setDate(cursor.getDate() - 1); }
+  while (days.has(localDateKey(cursor))) { streak += 1; cursor.setDate(cursor.getDate() - 1); }
   return streak;
+}
+
+export function buildMonthlyStreakCalendar(sessions, protections, monthDate = new Date(), today = new Date()) {
+  const year = monthDate.getFullYear();
+  const month = monthDate.getMonth();
+  const lastDay = new Date(year, month + 1, 0).getDate();
+  const firstWeekday = new Date(year, month, 1).getDay();
+  const todayKey = localDateKey(today);
+  const readingDays = new Set(sessions.map((session) => session.occurred_on));
+  const protectedDays = new Set(protections.map((item) => item.protected_on));
+  const days = Array.from({ length: lastDay }, (_, index) => {
+    const date = new Date(year, month, index + 1, 12);
+    const key = localDateKey(date);
+    const future = key > todayKey;
+    return {
+      day: index + 1,
+      date: key,
+      future,
+      today: key === todayKey,
+      status: future ? 'future' : readingDays.has(key) ? 'read' : protectedDays.has(key) ? 'protected' : 'missed',
+    };
+  });
+  return { year, month, firstWeekday, days };
+}
+
+function localDateKey(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 }
 
 export function summarizeSessions(sessions) {
