@@ -5,12 +5,13 @@ import {
   Groups as GroupsIcon,
   QuestionAnswerOutlined as QuestionIcon,
   ImageOutlined as ImageIcon,
+  DeleteOutlined as DeleteIcon,
 } from '@mui/icons-material';
 import CommunityChat from '../components/CommunityChat.jsx';
 import DiscussionKit from '../components/DiscussionKit.jsx';
 import EmptyState from '../components/EmptyState.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
-import { createClub, getBooks, getClubReading, getClubs, setClubReading, toggleClubMembership } from '../services/social.js';
+import { createClub, deleteClub, getBooks, getClubReading, getClubs, setClubReading, toggleClubMembership } from '../services/social.js';
 import { useToast } from '../components/Toast.jsx';
 import { calculateDailyPace } from '../lib/readerIntelligence.js';
 
@@ -74,12 +75,23 @@ export default function Comunidades({ buscaInicial = '' }) {
     } catch (error) { mostrarToast(error.message); }
   }
 
+  async function excluirClube(clube) {
+    if (clube.owner_id !== user.id) return;
+    if (!window.confirm(`Excluir o clube “${clube.name}”? As conversas, perguntas e encontros dele também serão apagados.`)) return;
+    try {
+      await deleteClub(user.id, clube.id);
+      setClubes((atuais) => atuais.filter((item) => item.id !== clube.id));
+      if (clubeAberto?.id === clube.id) setClubeAberto(null);
+      mostrarToast('Clube excluído.');
+    } catch (error) { mostrarToast(error.message); }
+  }
+
   if (clubeAberto) {
     return (
       <section className="pagina ativa" id="pagina-comunidades">
         <div className="pagina-cabecalho pagina-cabecalho--sala">
           <button className="btn-voltar" onClick={() => setClubeAberto(null)}><BackIcon /> Voltar aos clubes</button>
-          <span className="sala-clube__membros">{clubeAberto.member_count} {clubeAberto.member_count === 1 ? 'membro' : 'membros'}</span>
+          <div className="sala-clube__cabecalho-acoes"><span className="sala-clube__membros">{clubeAberto.member_count} {clubeAberto.member_count === 1 ? 'membro' : 'membros'}</span>{clubeAberto.owner_id === user.id && <button className="btn-texto-perigo" onClick={() => excluirClube(clubeAberto)}><DeleteIcon fontSize="small" /> Excluir clube</button>}</div>
         </div>
         <nav className="comunidade-abas" aria-label="Áreas do clube"><button className={abaSala==='conversa'?'ativo':''} onClick={()=>setAbaSala('conversa')}><ForumIcon fontSize="small"/> Conversa</button><button className={abaSala==='perguntas'?'ativo':''} onClick={()=>setAbaSala('perguntas')}><QuestionIcon fontSize="small"/> Perguntas</button></nav>
         {abaSala==='perguntas'?<><LeituraAdaptativa clube={clubeAberto} userId={user.id} /><DiscussionKit club={clubeAberto} /></>:<CommunityChat club={clubeAberto} />}
@@ -119,6 +131,7 @@ export default function Comunidades({ buscaInicial = '' }) {
               <div className="clube-card__acoes">
                 {podeConversar ? <button className="btn-primario" onClick={() => { setAbaSala('conversa'); setClubeAberto(clube); }}><ForumIcon fontSize="small" /> Abrir clube</button> : <button className="btn-primario" onClick={() => alternar(clube)}>Entrar no clube</button>}
                 {clube.joined && clube.owner_id !== user.id && <button className="btn-texto-perigo" onClick={() => alternar(clube)}>Sair</button>}
+                {clube.owner_id === user.id && <button className="btn-texto-perigo" onClick={() => excluirClube(clube)}><DeleteIcon fontSize="small" /> Excluir</button>}
               </div>
             </div>
           </article>

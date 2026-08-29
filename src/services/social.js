@@ -298,6 +298,11 @@ export async function createClub(userId, name, description, coverUrl = null, cit
   return data;
 }
 
+export async function deleteClub(userId, clubId) {
+  const { error } = await supabase.from('clubs').delete().eq('id', clubId).eq('owner_id', userId);
+  ensure(error);
+}
+
 export async function toggleClubMembership(userId, clubId, joined) {
   const result = joined
     ? await supabase.from('club_members').delete().eq('club_id', clubId).eq('user_id', userId)
