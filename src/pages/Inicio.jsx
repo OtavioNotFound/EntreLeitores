@@ -4,7 +4,8 @@ import Compositor from '../components/Compositor.jsx';
 import EmptyState from '../components/EmptyState.jsx';
 import { useToast } from '../components/Toast.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
-import { createPost, getClubs, getFeed, getProfileSuggestions, getShelf, toggleFollow } from '../services/social.js';
+import { createPost, getAchievementMetrics, getClubs, getFeed, getProfileSuggestions, getShelf, toggleFollow } from '../services/social.js';
+import { calculateAchievements, difficultyLabels } from '../lib/achievements.js';
 import { MenuBook as BookIcon, LocalFireDepartment as FireIcon, Forum as ForumIcon, Groups as GroupsIcon, PersonAdd as PersonAddIcon } from '@mui/icons-material';
 
 const filtros = [
@@ -19,6 +20,7 @@ export default function Inicio({ aoAbrirLivro, aoAbrirPerfil, aoAbrirClubes, aoC
   const [sugestoes, setSugestoes] = useState([]);
   const [clubes, setClubes] = useState([]);
   const [leituraAtual, setLeituraAtual] = useState(null);
+  const [achievementMetrics, setAchievementMetrics] = useState(null);
   const [filtroAtivo, setFiltroAtivo] = useState('para-voce');
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState('');
@@ -33,11 +35,12 @@ export default function Inicio({ aoAbrirLivro, aoAbrirPerfil, aoAbrirClubes, aoC
 
   useEffect(() => { carregarFeed(); }, [carregarFeed]);
   useEffect(() => {
-    Promise.all([getProfileSuggestions(user.id), getClubs(user.id), getShelf(user.id)])
-      .then(([profiles, allClubs, shelf]) => {
+    Promise.all([getProfileSuggestions(user.id), getClubs(user.id), getShelf(user.id), getAchievementMetrics(user.id)])
+      .then(([profiles, allClubs, shelf, metrics]) => {
         setSugestoes(profiles);
         setClubes(allClubs.slice(0, 3));
         setLeituraAtual(shelf.find((book) => book.status === 'lendo') || null);
+        setAchievementMetrics(metrics);
       })
       .catch((error) => console.error('Falha nas descobertas:', error.message));
   }, [user.id]);
@@ -56,6 +59,7 @@ export default function Inicio({ aoAbrirLivro, aoAbrirPerfil, aoAbrirClubes, aoC
   }
 
   const nome = profile?.display_name?.split(' ')[0] || 'leitor';
+  const achievements = achievementMetrics ? calculateAchievements(achievementMetrics) : [];
 
   return (
     <section className="pagina ativa" id="pagina-inicio">
@@ -94,6 +98,7 @@ export default function Inicio({ aoAbrirLivro, aoAbrirPerfil, aoAbrirClubes, aoC
       </div>
 
       <aside className="widgets-coluna" aria-label="Descobertas">
+        {achievements.length > 0 && <details className="widget conquistas-entrada" open><summary><span><strong>Suas conquistas</strong><small>Nome, objetivo, dificuldade e XP</small></span><span>{achievements.filter((item) => item.unlocked).length}/{achievements.length}</span></summary><div>{achievements.map((achievement) => <article key={achievement.id} className={achievement.unlocked ? 'desbloqueada' : ''}><span>{achievement.secret && !achievement.unlocked ? '???' : achievement.title}</span><small>{achievement.secret && !achievement.unlocked ? 'Objetivo secreto' : achievement.description}</small><em>{difficultyLabels[achievement.difficulty]} · {achievement.xp} XP</em></article>)}</div></details>}
         <div className="widget">
           <div className="titulo-secao">Quem seguir <button className="titulo-secao__acao" onClick={aoConhecerPessoas} aria-label="Conhecer pessoas" title="Conhecer pessoas"><PersonAddIcon fontSize="small" /></button></div>
           {sugestoes.length ? <div className="sugestoes-lista">{sugestoes.slice(0, 4).map((pessoa) => (
