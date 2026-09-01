@@ -9,7 +9,7 @@ import { useAuth } from '../context/AuthContext.jsx';
 import { supabase } from '../lib/supabase.js';
 import { blockUser, getAchievementMetrics, getCompatibility, getPostsByUser, getProfileStats, getSavedPosts, getShelf, reportContent, toggleFollow, uploadProfileImage } from '../services/social.js';
 import { useToast } from '../components/Toast.jsx';
-import { MenuBook as BookIcon, Forum as ForumIcon, ChatOutlined as ChatIcon } from '@mui/icons-material';
+import { MenuBook as BookIcon, Forum as ForumIcon, ChatOutlined as ChatIcon, WorkspacePremiumOutlined as OwnerIcon, AdminPanelSettingsOutlined as AdminIcon } from '@mui/icons-material';
 
 const STAT_PANELS = { Livros: 'leituras', Seguidores: 'seguidores', Seguindo: 'seguindo', Posts: 'posts' };
 
@@ -100,7 +100,7 @@ export default function Perfil({ profileId, aoAbrirLivro, aoAbrirPerfil }) {
       <div className={`perfil__banner${profile.banner_url ? ' perfil__banner--imagem' : ''}`} style={profile.banner_url ? { backgroundImage: `linear-gradient(180deg, transparent 25%, rgba(20, 14, 42, .42)), url(${profile.banner_url})` } : undefined}>
         <div className="perfil__cabecalho">
           {profile.avatar_url ? <img className="avatar lg" src={profile.avatar_url} alt={profile.display_name} /> : <span className="avatar lg avatar--placeholder">{inicial}</span>}
-          <div className="perfil__info"><div className="perfil__nome">{profile.display_name}</div><div className="perfil__user">@{profile.username}</div></div>
+          <div className="perfil__info"><div className="perfil__nome">{profile.display_name}{profile.is_owner && <span className="perfil-selo perfil-selo--dono"><OwnerIcon fontSize="inherit" /> Dono</span>}{!profile.is_owner && profile.is_admin && <span className="perfil-selo perfil-selo--admin"><AdminIcon fontSize="inherit" /> Admin</span>}</div><div className="perfil__user">@{profile.username}</div></div>
           <div className="perfil__acoes">
             {isOwn ? <button className="btn-secundario" onClick={() => setEditing(!editing)}>{editing ? 'Cancelar' : 'Editar perfil'}</button> : <><button className="btn-primario" onClick={() => setConversaAberta(!conversaAberta)}><ChatIcon fontSize="small" /> {conversaAberta ? 'Fechar conversa' : 'Conversar'}</button><button className={`btn-seguir${following ? ' seguindo' : ''}`} onClick={alternarFollow}>{following ? 'Seguindo' : 'Seguir'}</button><button className="btn-secundario" onClick={alternarBloqueio}>{blocked ? 'Desbloquear' : 'Bloquear'}</button><button className="btn-texto-perigo" onClick={denunciarPerfil}>Denunciar</button></>}
           </div>

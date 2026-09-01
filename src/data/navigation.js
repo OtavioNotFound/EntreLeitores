@@ -5,6 +5,7 @@ import {
   MenuBook as BookIcon,
   AutoStories as StreakIcon,
   AdminPanelSettings as AdminIcon,
+  WorkspacePremium as OwnerIcon,
   Person as PersonIcon,
   EmojiEvents as TrophyIcon,
 } from '@mui/icons-material';
@@ -17,6 +18,7 @@ export const itensMenu = [
   { pagina: 'ofensiva', icone: StreakIcon, label: 'Ofensiva de livros' },
   { pagina: 'conquistas', icone: TrophyIcon, label: 'Conquistas' },
   { pagina: 'administracao', icone: AdminIcon, label: 'Administração', adminOnly: true },
+  { pagina: 'dono', icone: OwnerIcon, label: 'Área do dono', ownerOnly: true },
   { pagina: 'perfil', icone: PersonIcon, label: 'Perfil' },
 ];
 

@@ -437,6 +437,23 @@ export async function getSimilarBooks(book, limit = 6) {
   return data || [];
 }
 
+export async function getOwnerOverview() {
+  const { data, error } = await supabase.rpc('owner_platform_overview');
+  ensure(error);
+  return data?.[0] || { readers:0, books:0, clubs:0, reports:0 };
+}
+
+export async function getOwnerUsers() {
+  const { data, error } = await supabase.from('profiles').select('id,display_name,username,avatar_url,is_admin,is_owner,created_at').order('created_at', { ascending:false }).limit(200);
+  ensure(error);
+  return data || [];
+}
+
+export async function setOwnerAdminRole(userId, isAdmin) {
+  const { error } = await supabase.rpc('owner_set_admin', { target_user_id:userId, grant_admin:isAdmin });
+  ensure(error);
+}
+
 export async function getStreakProtections(userId, fromDate, toDate) {
   let query = supabase.from('streak_protections').select('id,protected_on,status,created_at').eq('user_id', userId).order('protected_on', { ascending: false });
   if (fromDate) query = query.gte('protected_on', fromDate);

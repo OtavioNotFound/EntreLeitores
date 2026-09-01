@@ -3,7 +3,7 @@ import { itensMenu } from '../data/navigation.js';
 import { getAchievementMetrics, getMyClubs } from '../services/social.js';
 import { Menu as MenuIcon, MenuBook as BookIcon } from '@mui/icons-material';
 
-export default function Sidebar({ paginaAtual, irParaPagina, recolhida, alternarRecolhida, aberta, fecharMobile, userId, isAdmin = false }) {
+export default function Sidebar({ paginaAtual, irParaPagina, recolhida, alternarRecolhida, aberta, fecharMobile, userId, isAdmin = false, isOwner = false }) {
   const [clubes, setClubes] = useState([]);
   const [ofensiva, setOfensiva] = useState(0);
 
@@ -26,7 +26,7 @@ export default function Sidebar({ paginaAtual, irParaPagina, recolhida, alternar
         </div>
         <span className="sidebar__label">MENU</span>
         <nav className="sidebar__menu">
-          {itensMenu.filter((item) => !item.adminOnly || isAdmin).map((item) => {
+          {itensMenu.filter((item) => (!item.adminOnly || isAdmin || isOwner) && (!item.ownerOnly || isOwner)).map((item) => {
             const Icone = item.icone;
             return (
               <button key={item.pagina} className={`sidebar__item${paginaAtual === item.pagina ? ' ativo' : ''}${item.pagina === 'ofensiva' ? ' sidebar__item--ofensiva' : ''}`} onClick={() => irParaPagina(item.pagina)} aria-label={item.pagina === 'ofensiva' ? `Ofensiva de livros: ${ofensiva} dias` : undefined}>
