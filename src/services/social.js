@@ -238,7 +238,8 @@ export async function getProfileSuggestions(userId, limit = 24) {
 
 export async function uploadProfileImage(userId, file, kind) {
   if (!['avatar', 'banner'].includes(kind)) throw new Error('Tipo de imagem inválido.');
-  if (!file?.type?.startsWith('image/')) throw new Error('Escolha um arquivo de imagem.');
+  const allowedTypes = kind === 'banner' ? ['image/jpeg', 'image/png', 'image/webp', 'image/gif'] : ['image/jpeg', 'image/png', 'image/webp'];
+  if (!allowedTypes.includes(file?.type)) throw new Error(kind === 'banner' ? 'Escolha JPG, PNG, WebP ou GIF para o banner.' : 'Escolha JPG, PNG ou WebP para a foto.');
   if (file.size > 5 * 1024 * 1024) throw new Error('A imagem deve ter no máximo 5 MB.');
   const extension = file.name.split('.').pop()?.toLowerCase() || 'jpg';
   const path = `${userId}/${kind}.${extension}`;
