@@ -4,6 +4,7 @@ import {
   Group as GroupIcon,
   MenuBook as BookIcon,
   AutoStories as StreakIcon,
+  AdminPanelSettings as AdminIcon,
   Person as PersonIcon,
   EmojiEvents as TrophyIcon,
 } from '@mui/icons-material';
@@ -15,7 +16,7 @@ export const itensMenu = [
   { pagina: 'biblioteca', icone: BookIcon, label: 'Estante' },
   { pagina: 'ofensiva', icone: StreakIcon, label: 'Ofensiva de livros' },
   { pagina: 'conquistas', icone: TrophyIcon, label: 'Conquistas' },
-  { pagina: 'administracao', icone: TrophyIcon, label: 'Administração', adminOnly: true },
+  { pagina: 'administracao', icone: AdminIcon, label: 'Administração', adminOnly: true },
   { pagina: 'perfil', icone: PersonIcon, label: 'Perfil' },
 ];
 
