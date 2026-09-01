@@ -7,7 +7,7 @@ import Post from '../components/Post.jsx';
 import { useToast } from '../components/Toast.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 import { abasBiblioteca } from '../data/navigation.js';
-import { addToShelf, createBook, createPost, createReadingSession, getActiveReadingGoal, getPostsByUser, getReadingMemories, getReadingSessions, getShelf, saveReadingGoal } from '../services/social.js';
+import { createPost, createReadingSession, getActiveReadingGoal, getPostsByUser, getReadingMemories, getReadingSessions, getShelf, saveReadingGoal } from '../services/social.js';
 import { buildWeeklyActivity, calculateGentleGoal, calculateReadingStreak, summarizeSessions } from '../lib/readerIntelligence.js';
 import { youtubeEmbedUrl } from '../lib/youtube.js';
 import { Search as SearchIcon, MenuBook as BookIcon, MusicNote as MusicNoteIcon } from '@mui/icons-material';
@@ -18,8 +18,6 @@ export default function Biblioteca({ aoAbrirLivro, musicaUrl, setMusicaUrl }) {
   const [livros, setLivros] = useState([]);
   const [categoriaAtiva, setCategoriaAtiva] = useState('todos');
   const [busca, setBusca] = useState('');
-  const [formAberto, setFormAberto] = useState(false);
-  const [form, setForm] = useState({ title: '', author: '', cover_url: '' });
   const [loading, setLoading] = useState(true);
   const [sessoes, setSessoes] = useState([]);
   const [formato, setFormato] = useState('todos');
@@ -41,18 +39,6 @@ export default function Biblioteca({ aoAbrirLivro, musicaUrl, setMusicaUrl }) {
   }, [user.id]);
   useEffect(carregar, [carregar]);
   useEffect(() => { if (!timerStart) return undefined; const id=setInterval(() => setTimerSeconds(Math.floor((Date.now()-timerStart)/1000)),1000); return () => clearInterval(id); }, [timerStart]);
-
-  async function adicionar(evento) {
-    evento.preventDefault();
-    try {
-      const book = await createBook(user.id, { title: form.title.trim(), author: form.author.trim(), cover_url: form.cover_url.trim() || null });
-      await addToShelf(user.id, book.id);
-      setForm({ title: '', author: '', cover_url: '' });
-      setFormAberto(false);
-      carregar();
-      mostrarToast('Livro adicionado à sua estante.');
-    } catch (error) { mostrarToast(error.message); }
-  }
 
   async function registrarSessao(evento) {
     evento.preventDefault();
@@ -91,7 +77,6 @@ export default function Biblioteca({ aoAbrirLivro, musicaUrl, setMusicaUrl }) {
     <section className="pagina ativa" id="pagina-biblioteca">
       <div className="pagina-cabecalho">
         <div><h1 className="pagina-cabecalho__titulo">Minha estante</h1><p className="pagina-cabecalho__sub">{livros.length} {livros.length === 1 ? 'livro organizado' : 'livros organizados'} por você.</p></div>
-        <button className="btn-primario" onClick={() => setFormAberto(!formAberto)}>{formAberto ? 'Cancelar' : '+ Adicionar livro'}</button>
       </div>
       <NextReadPicker books={livros} onOpen={aoAbrirLivro}/>
       <LoanDashboard />
@@ -116,12 +101,6 @@ export default function Biblioteca({ aoAbrirLivro, musicaUrl, setMusicaUrl }) {
       <section className="painel-leitura"><div className="widget atividade-semanal"><div><strong>Seus últimos 7 dias</strong><small>Páginas ou minutos registrados</small></div><div className="atividade-semanal__grafico">{semana.map((day)=><span key={day.date}><i style={{height:`${Math.max(4,((day.minutes||day.pages)/maiorDia)*100)}%`}} title={`${day.pages} páginas · ${day.minutes} min`}/><small>{day.label}</small></span>)}</div></div><div className="widget timer-leitura"><strong>Leitura focada</strong><select disabled={Boolean(timerStart)} value={timerBookId} onChange={(e)=>setTimerBookId(e.target.value)}><option value="">Escolha o livro</option>{livros.filter((book)=>book.status==='lendo').map((book)=><option key={book.id} value={book.id}>{book.title}</option>)}</select><div className="timer-leitura__relogio">{String(Math.floor(timerSeconds/60)).padStart(2,'0')}:{String(timerSeconds%60).padStart(2,'0')}</div>{timerStart?<button className="btn-primario" onClick={pararTimer}>Parar e registrar</button>:<button className="btn-secundario" onClick={iniciarTimer}>Iniciar cronômetro</button>}<small>{Object.entries(porFormato).map(([key,value])=>`${key}: ${value}`).join(' · ') || 'Suas sessões aparecerão aqui.'}</small></div></section>
       <section className="meta-gentil widget">{goal?<><div><strong>Meta flexível da semana</strong><p>{goalProgress.progress} de {goal.target} {metricLabel[goal.metric]} · {goalProgress.percent}%</p><small>{goalProgress.remaining?`Sugestão leve: ${goalProgress.dailySuggestion} ${metricLabel[goal.metric]} por dia. Sem punição se você pausar.`:'Meta alcançada — continue apenas se estiver com vontade.'}</small></div><div className="meta-gentil__barra"><span style={{width:`${goalProgress.percent}%`}}/></div></>:<form onSubmit={salvarMeta}><div><strong>Crie uma meta sem pressão</strong><small>Ela se adapta aos dias restantes, sem ranking ou sequência punitiva.</small></div><select value={goalForm.metric} onChange={(e)=>setGoalForm({...goalForm,metric:e.target.value})}><option value="minutes">Minutos</option><option value="pages">Páginas</option><option value="active_days">Dias ativos</option></select><input type="number" min="1" value={goalForm.target} onChange={(e)=>setGoalForm({...goalForm,target:e.target.value})}/><button className="btn-secundario">Criar meta semanal</button></form>}</section>
       {memories[0]&&<button className="memoria-leitura widget" onClick={()=>aoAbrirLivro(memories[0].book)}><span>Uma memória da sua leitura</span><blockquote>“{memories[0].content}”</blockquote><small>{memories[0].book?.title} · {memories[0].progress??0}%</small></button>}
-      {formAberto && <form className="widget livro-form" onSubmit={adicionar}>
-        <label>Título<input required value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} /></label>
-        <label>Autor<input required value={form.author} onChange={(e) => setForm({ ...form, author: e.target.value })} /></label>
-        <label>URL da capa <span>(opcional)</span><input type="url" value={form.cover_url} onChange={(e) => setForm({ ...form, cover_url: e.target.value })} /></label>
-        <button className="btn-primario">Adicionar à estante</button>
-      </form>}
 
       <div className="header__busca busca-pagina"><span className="header__busca-icone"><SearchIcon fontSize="small" /></span><input type="search" placeholder="Buscar na estante..." value={busca} onChange={(e) => setBusca(e.target.value)} /></div>
       <div className="biblioteca__abas">{abasBiblioteca.map((aba) => <button key={aba.categoria} className={`filtro-pill biblioteca__aba${categoriaAtiva === aba.categoria ? ' ativa' : ''}`} onClick={() => setCategoriaAtiva(aba.categoria)}>{aba.label}</button>)}</div>

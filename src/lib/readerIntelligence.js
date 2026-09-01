@@ -16,12 +16,12 @@ export function calculateDailyPace(pageCount, targetDate, now = new Date()) {
 }
 
 export function calculateReadingStreak(sessions, today = new Date(), protections = []) {
+  const todayKey = localDateKey(today);
   const days = new Set([
     ...sessions.map((session) => session.occurred_on),
-    ...protections.map((item) => item.protected_on),
+    ...protections.filter((item) => item.protected_on <= todayKey).map((item) => item.protected_on),
   ]);
   let cursor = new Date(today); cursor.setHours(12, 0, 0, 0);
-  const todayKey = localDateKey(cursor);
   if (!days.has(todayKey)) cursor.setDate(cursor.getDate() - 1);
   let streak = 0;
   while (days.has(localDateKey(cursor))) { streak += 1; cursor.setDate(cursor.getDate() - 1); }
@@ -35,7 +35,7 @@ export function buildMonthlyStreakCalendar(sessions, protections, monthDate = ne
   const firstWeekday = new Date(year, month, 1).getDay();
   const todayKey = localDateKey(today);
   const readingDays = new Set(sessions.map((session) => session.occurred_on));
-  const protectedDays = new Set(protections.map((item) => item.protected_on));
+  const protectionsByDay = new Map(protections.map((item) => [item.protected_on, item]));
   const days = Array.from({ length: lastDay }, (_, index) => {
     const date = new Date(year, month, index + 1, 12);
     const key = localDateKey(date);
@@ -45,7 +45,7 @@ export function buildMonthlyStreakCalendar(sessions, protections, monthDate = ne
       date: key,
       future,
       today: key === todayKey,
-      status: future ? 'future' : readingDays.has(key) ? 'read' : protectedDays.has(key) ? 'protected' : 'missed',
+      status: readingDays.has(key) ? 'read' : protectionsByDay.has(key) ? (future ? 'saved' : 'protected') : future ? 'future' : 'missed',
     };
   });
   return { year, month, firstWeekday, days };

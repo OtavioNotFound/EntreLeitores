@@ -3,6 +3,7 @@ import {
   Search as SearchIcon,
   Group as GroupIcon,
   MenuBook as BookIcon,
+  AutoStories as StreakIcon,
   Person as PersonIcon,
   EmojiEvents as TrophyIcon,
 } from '@mui/icons-material';
@@ -12,7 +13,9 @@ export const itensMenu = [
   { pagina: 'explorar', icone: SearchIcon, label: 'Explorar' },
   { pagina: 'comunidades', icone: GroupIcon, label: 'Clubes' },
   { pagina: 'biblioteca', icone: BookIcon, label: 'Estante' },
+  { pagina: 'ofensiva', icone: StreakIcon, label: 'Ofensiva de livros' },
   { pagina: 'conquistas', icone: TrophyIcon, label: 'Conquistas' },
+  { pagina: 'administracao', icone: TrophyIcon, label: 'Administração', adminOnly: true },
   { pagina: 'perfil', icone: PersonIcon, label: 'Perfil' },
 ];
 

@@ -2,15 +2,16 @@ import { useEffect, useState } from 'react';
 import Post from '../components/Post.jsx';
 import Compositor from '../components/Compositor.jsx';
 import ReadingNotebook from '../components/ReadingNotebook.jsx';
+import ReadingExperience from '../components/ReadingExperience.jsx';
 import TrustedLending from '../components/TrustedLending.jsx';
 import BookSafety from '../components/BookSafety.jsx';
 import ReadingPause from '../components/ReadingPause.jsx';
 import EmptyState from '../components/EmptyState.jsx';
 import BookRating from '../components/BookRating.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
-import { addToShelf, createPost, getEmotionMap, getPostsByBook, removeFromShelf, saveEmotion, startReread, updateBookOrganization, updateReading } from '../services/social.js';
+import { addToShelf, createPost, getBookReadingFiles, getEmotionMap, getPostsByBook, getReadingFileUrl, getSimilarBooks, removeFromShelf, saveEmotion, startReread, updateBookOrganization, updateReading } from '../services/social.js';
 import { useToast } from '../components/Toast.jsx';
-import { MenuBook as BookIcon, Forum as ForumIcon } from '@mui/icons-material';
+import { MenuBook as BookIcon, Forum as ForumIcon, OpenInNewOutlined as OpenIcon, AutoStoriesOutlined as ReaderIcon } from '@mui/icons-material';
 
 export default function LivroDetalhe({ livro, aoAbrirLivro, aoAbrirPerfil, aoRemoverDaEstante }) {
   const { user } = useAuth();
@@ -21,6 +22,9 @@ export default function LivroDetalhe({ livro, aoAbrirLivro, aoAbrirPerfil, aoRem
   const [leitura, setLeitura] = useState({ status: livro?.status || 'lendo', progress: livro?.progress || 0, rating: livro?.rating || '', format: livro?.format || '', source: livro?.source || '', tags: (livro?.tags || []).join(', ') });
   const [emocoes, setEmocoes] = useState([]);
   const [emocao, setEmocao] = useState('curioso');
+  const [materiais, setMateriais] = useState([]);
+  const [similares, setSimilares] = useState([]);
+  const [readerPage, setReaderPage] = useState(1);
   const title = livro?.title || livro?.titulo;
   const author = livro?.author || livro?.autor;
   const cover = livro?.cover_url || livro?.capa;
@@ -29,7 +33,7 @@ export default function LivroDetalhe({ livro, aoAbrirLivro, aoAbrirPerfil, aoRem
     if (!livro?.id) { setLoading(false); return; }
     setLeitura({ status: livro.status || 'lendo', progress: livro.progress || 0, rating: livro.rating || '', format: livro.format || '', source: livro.source || '', tags: (livro.tags || []).join(', ') });
     setEditandoLeitura(false);
-    Promise.all([getPostsByBook(livro.id, user.id), getEmotionMap(livro.id)]).then(([bookPosts, emotionMap]) => { setPosts(bookPosts); setEmocoes(emotionMap); }).catch((error) => mostrarToast(error.message)).finally(() => setLoading(false));
+    Promise.all([getPostsByBook(livro.id, user.id), getEmotionMap(livro.id), getBookReadingFiles(livro.id), getSimilarBooks(livro)]).then(([bookPosts, emotionMap, readingFiles, relatedBooks]) => { setPosts(bookPosts); setEmocoes(emotionMap); setMateriais(readingFiles); setSimilares(relatedBooks); }).catch((error) => mostrarToast(error.message)).finally(() => setLoading(false));
   }, [livro?.id, user.id]);
 
   async function adicionar(status) {
@@ -55,6 +59,7 @@ export default function LivroDetalhe({ livro, aoAbrirLivro, aoAbrirPerfil, aoRem
   async function publicar(post) { await createPost(user.id, post); setPosts(await getPostsByBook(livro.id, user.id)); }
   async function reler(){try{const cycle=await startReread(livro.id,leitura.format);setLeitura({...leitura,status:'lendo',progress:0});mostrarToast(`Releitura ${cycle} iniciada sem apagar suas memórias anteriores.`)}catch(error){mostrarToast(error.message)}}
   async function excluirDaEstante(){if(!window.confirm(`Excluir “${title}” da sua estante? Suas publicações sobre o livro não serão apagadas.`))return;try{await removeFromShelf(user.id,livro.id);mostrarToast('Livro excluído da estante.');aoRemoverDaEstante?.();}catch(error){mostrarToast(error.message)}}
+  async function abrirMaterial(material){try{const url=await getReadingFileUrl(material.file_path);window.open(url,'_blank','noopener,noreferrer');}catch(error){mostrarToast(error.message)}}
 
   if (!livro?.id) return <section className="pagina ativa"><EmptyState icon={<BookIcon />} title="Selecione um livro" description="Abra um livro pela sua estante ou pela página Explorar." /></section>;
 
@@ -87,7 +92,10 @@ export default function LivroDetalhe({ livro, aoAbrirLivro, aoAbrirPerfil, aoRem
       <BookSafety bookId={livro.id}/>
       <ReadingPause book={livro}/>
       <TrustedLending book={livro} isOwned={Boolean(livro.status) && (!livro.format || livro.format === 'fisico')}/>
-      <ReadingNotebook bookId={livro.id} currentProgress={Number(leitura.progress)||0}/>
+      <ReadingExperience bookId={livro.id} files={materiais} pageFromNotebook={readerPage}/>
+      <ReadingNotebook bookId={livro.id} currentProgress={Number(leitura.progress)||0} onGoToPage={setReaderPage}/>
+      <section className="materiais-leitura widget"><header><ReaderIcon /><div><h2>Leitura no Entre Leitores</h2><p>Materiais enviados por administradores para leitura autorizada.</p></div></header>{materiais.length ? <div>{materiais.map((material) => <button key={material.id} onClick={() => abrirMaterial(material)}><span>{material.file_type.toUpperCase()}</span><strong>{material.file_name}</strong><OpenIcon fontSize="small" /></button>)}</div> : <p className="estado-vazio__texto">Ainda não há um material de leitura para este título.</p>}<small>Use apenas arquivos que você tem autorização para acessar e compartilhar.</small></section>
+      {similares.length > 0 && <section className="similares widget"><header><h2>Você também pode gostar</h2><p>Outros livros do mesmo gênero disponíveis no catálogo.</p></header><div>{similares.map((item) => <button key={item.id} onClick={() => aoAbrirLivro(item)}>{item.cover_url ? <img src={item.cover_url} alt="" /> : <BookIcon />}<span><strong>{item.title}</strong><small>{item.author}</small></span></button>)}</div></section>}
       <div className="titulo-secao" style={{ marginTop: 'var(--space-6)' }}>Conversas sobre este livro</div>
       <Compositor aoPublicar={publicar} bookId={livro.id} showSpoilerControls />
       {loading ? <div className="skeleton-card" /> : posts.length ? <div className="feed__lista">{posts.map((post) => <Post key={post.id} post={post} aoAbrirLivro={aoAbrirLivro} aoAbrirPerfil={aoAbrirPerfil} />)}</div> : <EmptyState icon={<ForumIcon />} title="Ainda não há conversas" description="Associe este livro a uma publicação para iniciar a discussão." />}

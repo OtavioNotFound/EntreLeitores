@@ -26,6 +26,7 @@ function normalizePost(row, likedIds, savedIds) {
     tipo: row.type,
     tag: { texto: row.type === 'publicacao' ? 'Publicação' : row.type[0].toUpperCase() + row.type.slice(1), classe: `post__tag--${row.type === 'publicacao' ? 'resenha' : row.type}` },
     texto: row.content,
+    imageUrl: row.image_url || null,
     livro: row.book ? { id: row.book.id, title: row.book.title, author: row.book.author, cover_url: row.book.cover_url, titulo: row.book.title, autor: row.book.author, capa: row.book.cover_url } : null,
     curtidas: row.post_likes?.[0]?.count || 0,
     comentarios: row.comments?.[0]?.count || 0,
@@ -45,7 +46,7 @@ function normalizePost(row, likedIds, savedIds) {
   };
 }
 
-const POST_SELECT = 'id,author_id,book_id,type,content,created_at,spoiler_progress,spoiler_chapter,author:profiles!posts_author_id_fkey(id,display_name,username,avatar_url),book:books(id,title,author,cover_url),post_likes(count),comments(count),poll_options(id,label,position,poll_votes(user_id))';
+const POST_SELECT = 'id,author_id,book_id,type,content,image_url,created_at,spoiler_progress,spoiler_chapter,author:profiles!posts_author_id_fkey(id,display_name,username,avatar_url),book:books(id,title,author,cover_url),post_likes(count),comments(count),poll_options(id,label,position,poll_votes(user_id))';
 
 export async function getFeed(userId, filter = 'para-voce') {
   let authorIds = null;
@@ -130,8 +131,8 @@ export async function getPostsByBook(bookId, userId) {
   return data.map((row) => ({ ...normalizePost({ ...row, viewer_id: userId }, new Set((likes || []).map((x) => x.post_id)), new Set((saves || []).map((x) => x.post_id))), spoilerLocked: row.spoiler_progress != null && (reading?.progress || 0) < row.spoiler_progress }));
 }
 
-export async function createPost(userId, { content, type = 'publicacao', bookId = null, clubId = null, pollOptions = [], spoilerProgress = null, spoilerChapter = null }) {
-  const { data, error } = await supabase.from('posts').insert({ author_id: userId, content, type, book_id: bookId, club_id: clubId, spoiler_progress: spoilerProgress, spoiler_chapter: spoilerChapter }).select('id').single();
+export async function createPost(userId, { content, type = 'publicacao', bookId = null, clubId = null, pollOptions = [], spoilerProgress = null, spoilerChapter = null, imageUrl = null }) {
+  const { data, error } = await supabase.from('posts').insert({ author_id: userId, content, type, book_id: bookId, club_id: clubId, spoiler_progress: spoilerProgress, spoiler_chapter: spoilerChapter, image_url: imageUrl || null }).select('id').single();
   ensure(error);
   if (type === 'enquete') {
     const options = pollOptions.map((label, position) => ({ post_id: data.id, label: label.trim(), position })).filter((option) => option.label);
@@ -255,6 +256,25 @@ export async function toggleFollow(userId, profileId, following) {
   return !following;
 }
 
+export async function getPollVoters(userId, postId) {
+  const { data: post, error: postError } = await supabase.from('posts').select('id').eq('id', postId).eq('author_id', userId).maybeSingle();
+  ensure(postError);
+  if (!post) throw new Error('Somente quem criou a enquete pode ver as pessoas votantes.');
+  const [{ data: votes, error: votesError }, { data: followers, error: followersError }] = await Promise.all([
+    supabase.from('poll_votes').select('user_id,option:poll_options!inner(post_id,label),voter:profiles!poll_votes_user_id_fkey(id,display_name,username,avatar_url)').eq('option.post_id', postId),
+    supabase.from('follows').select('follower_id').eq('following_id', userId),
+  ]);
+  ensure(votesError || followersError);
+  const followerIds = new Set((followers || []).map((item) => item.follower_id));
+  const grouped = { seguidores: [], publicos: [] };
+  (votes || []).forEach((vote) => {
+    if (!vote.voter) return;
+    const item = { ...vote.voter, option: vote.option?.label || 'Opção' };
+    grouped[followerIds.has(vote.user_id) ? 'seguidores' : 'publicos'].push(item);
+  });
+  return grouped;
+}
+
 export async function getProfileConnections(profileId, viewerId, type) {
   const followers = type === 'followers';
   const idColumn = followers ? 'follower_id' : 'following_id';
@@ -283,7 +303,7 @@ export async function sendDirectMessage(userId, recipientId, content) {
 
 export async function getClubs(userId) {
   const [{ data, error }, { data: memberships, error: memberError }] = await Promise.all([
-    supabase.from('clubs').select('id,name,slug,description,cover_url,owner_id,club_members(count)').order('created_at', { ascending: false }),
+    supabase.from('clubs').select('id,name,slug,description,cover_url,city,meeting_place,owner_id,club_members(count)').order('created_at', { ascending: false }),
     supabase.from('club_members').select('club_id').eq('user_id', userId),
   ]);
   ensure(error || memberError);
@@ -299,8 +319,9 @@ export async function createClub(userId, name, description, coverUrl = null, cit
 }
 
 export async function deleteClub(userId, clubId) {
-  const { error } = await supabase.from('clubs').delete().eq('id', clubId).eq('owner_id', userId);
+  const { data, error } = await supabase.from('clubs').delete().eq('id', clubId).eq('owner_id', userId).select('id');
   ensure(error);
+  if (!data?.length) throw new Error('Não foi possível excluir este clube. Atualize a página e tente novamente.');
 }
 
 export async function toggleClubMembership(userId, clubId, joined) {
@@ -378,8 +399,46 @@ export async function getReadingSessions(userId, days = 30) {
   ensure(error); return data;
 }
 
+export async function getBookReadingFiles(bookId) {
+  const { data, error } = await supabase.from('book_reading_files').select('id,file_name,file_type,file_path,created_at').eq('book_id', bookId).order('created_at', { ascending: false });
+  ensure(error);
+  return data || [];
+}
+
+export async function getReadingFileUrl(filePath) {
+  const { data, error } = await supabase.storage.from('reading-materials').createSignedUrl(filePath, 60 * 15);
+  ensure(error);
+  return data?.signedUrl;
+}
+
+export async function uploadReadingFile(userId, bookId, file) {
+  if (!file || file.size > 20 * 1024 * 1024) throw new Error('Escolha um arquivo de até 20 MB.');
+  const normalized = file.name.toLowerCase();
+  const fileType = normalized.endsWith('.pdf') ? 'pdf' : normalized.endsWith('.epub') ? 'epub' : null;
+  if (!fileType) throw new Error('Envie um arquivo PDF ou EPUB.');
+  const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '-');
+  const filePath = `${userId}/${bookId}/${Date.now()}-${safeName}`;
+  const { error: uploadError } = await supabase.storage.from('reading-materials').upload(filePath, file, { contentType: file.type || (fileType === 'pdf' ? 'application/pdf' : 'application/epub+zip'), upsert: false });
+  ensure(uploadError);
+  const { data, error } = await supabase.from('book_reading_files').insert({ book_id: bookId, uploaded_by: userId, file_name: file.name, file_path: filePath, file_type: fileType }).select().single();
+  if (error) {
+    await supabase.storage.from('reading-materials').remove([filePath]);
+    throw error;
+  }
+  return data;
+}
+
+export async function getSimilarBooks(book, limit = 6) {
+  if (!book?.id) return [];
+  let query = supabase.from('books').select('*').neq('id', book.id).limit(limit);
+  if (book.genre) query = query.eq('genre', book.genre);
+  const { data, error } = await query.order('created_at', { ascending: false });
+  ensure(error);
+  return data || [];
+}
+
 export async function getStreakProtections(userId, fromDate, toDate) {
-  let query = supabase.from('streak_protections').select('id,protected_on,created_at').eq('user_id', userId).order('protected_on', { ascending: false });
+  let query = supabase.from('streak_protections').select('id,protected_on,status,created_at').eq('user_id', userId).order('protected_on', { ascending: false });
   if (fromDate) query = query.gte('protected_on', fromDate);
   if (toDate) query = query.lte('protected_on', toDate);
   const { data, error } = await query;
@@ -388,14 +447,14 @@ export async function getStreakProtections(userId, fromDate, toDate) {
   return data || [];
 }
 
-export async function useStreakProtection(userId, date) {
-  const { data, error } = await supabase.from('streak_protections').insert({ user_id: userId, protected_on: date }).select('id,protected_on,created_at').single();
+export async function useStreakProtection(userId, date, status = 'used') {
+  const { data, error } = await supabase.from('streak_protections').insert({ user_id: userId, protected_on: date, status }).select('id,protected_on,status,created_at').single();
   if (error && isMissingStreakTable(error)) {
     const protections = getLocalStreakProtections(userId);
     if (protections.some((item) => item.protected_on === date)) throw new Error('Este dia já está protegido.');
     const month = date.slice(0, 7);
     if (protections.filter((item) => item.protected_on.startsWith(month)).length >= 5) throw new Error('five protections already used this month');
-    const protection = { id: `local-${userId}-${date}`, protected_on: date, created_at: new Date().toISOString() };
+    const protection = { id: `local-${userId}-${date}`, protected_on: date, status, created_at: new Date().toISOString() };
     localStorage.setItem(`streak-protections:${userId}`, JSON.stringify([...protections, protection]));
     return protection;
   }
@@ -432,7 +491,7 @@ export async function getReadingNotes(userId, bookId, search = '') {
 }
 
 export async function saveReadingNote(userId, bookId, note) {
-  const {data,error}=await supabase.from('reading_notes').insert({user_id:userId,book_id:bookId,kind:note.kind,content:note.content,progress:note.progress ?? null,page_number:note.pageNumber||null,chapter:note.chapter||null}).select().single(); ensure(error); return data;
+  const {data,error}=await supabase.from('reading_notes').insert({user_id:userId,book_id:bookId,kind:note.kind,content:note.content,progress:note.progress ?? null,page_number:note.pageNumber||null,chapter:note.chapter||null,color:note.color||'yellow'}).select().single(); ensure(error); return data;
 }
 
 export async function deleteReadingNote(userId, noteId) {
@@ -521,11 +580,11 @@ export async function createClubPrompt(userId, clubId, bookId, question, spoiler
 }
 
 export async function updateClubPrompt(userId, promptId, question, spoilerProgress) {
-  const {error}=await supabase.from('club_prompts').update({question:question.trim(),spoiler_progress:Number(spoilerProgress)}).eq('id',promptId).eq('author_id',userId);ensure(error);
+  const {data,error}=await supabase.from('club_prompts').update({question:question.trim(),spoiler_progress:Number(spoilerProgress)}).eq('id',promptId).eq('author_id',userId).select('id');ensure(error);if(!data?.length)throw new Error('Você não pode editar esta pergunta ou ela já foi excluída.');
 }
 
 export async function deleteClubPrompt(userId, promptId) {
-  const {error}=await supabase.from('club_prompts').delete().eq('id',promptId).eq('author_id',userId);ensure(error);
+  const {data,error}=await supabase.from('club_prompts').delete().eq('id',promptId).eq('author_id',userId).select('id');ensure(error);if(!data?.length)throw new Error('Você não pode excluir esta pergunta ou ela já foi excluída.');
 }
 
 export async function toggleClubPromptVote(promptId) {
@@ -653,15 +712,19 @@ export async function getProfileStats(userId) {
 }
 
 export async function getAchievementMetrics(userId) {
-  const [shelf,posts,sessions,protections,notes,clubs,returnedLoans,resumedPauses]=await Promise.all([
+  const [shelf,posts,sessions,protections,notes,clubs,returnedLoans,resumedPauses,followers]=await Promise.all([
     getShelf(userId),getPostsByUser(userId),getReadingSessions(userId,3650),
     getStreakProtections(userId),
     supabase.from('reading_notes').select('*',{count:'exact',head:true}).eq('user_id',userId),
     supabase.from('club_members').select('*',{count:'exact',head:true}).eq('user_id',userId),
     supabase.from('loan_requests').select('*',{count:'exact',head:true}).eq('borrower_id',userId).eq('status','returned'),
     supabase.from('reading_pauses').select('*',{count:'exact',head:true}).eq('user_id',userId).not('resumed_at','is',null),
+    supabase.from('follows').select('*',{count:'exact',head:true}).eq('following_id',userId),
   ]);
-  ensure(notes.error||clubs.error||returnedLoans.error||resumedPauses.error);
+  ensure(notes.error||clubs.error||returnedLoans.error||resumedPauses.error||followers.error);
+  const postIds=posts.map((post)=>post.id);
+  const { count: likesReceived, error: likesError } = postIds.length ? await supabase.from('post_likes').select('*',{count:'exact',head:true}).in('post_id',postIds) : {count:0,error:null};
+  ensure(likesError);
   const finished=shelf.filter((book)=>['lidos','favoritos'].includes(book.status));
   return {
     finishedBooks:finished.length,
@@ -675,5 +738,8 @@ export async function getAchievementMetrics(userId) {
     clubs:clubs.count||0,
     returnedLoans:returnedLoans.count||0,
     resumedPauses:resumedPauses.count||0,
+    followers:followers.count||0,
+    likesReceived:likesReceived||0,
+    nightActions:posts.filter((post)=>new Date(post.createdAt).getHours()>=22).length,
   };
 }

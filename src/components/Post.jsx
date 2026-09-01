@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext.jsx';
-import { createComment, deleteComment, deletePost, getComments, reportContent, toggleLike, toggleSave, votePoll } from '../services/social.js';
+import { createComment, deleteComment, deletePost, getComments, getPollVoters, reportContent, toggleLike, toggleSave, votePoll } from '../services/social.js';
 import { useToast } from './Toast.jsx';
 import { Favorite as FavoriteIcon, FavoriteBorder as FavoriteBorderIcon, ChatBubble as ChatIcon, Bookmark as BookmarkIcon, BookmarkBorder as BookmarkBorderIcon, Send as SendIcon, MenuBook as BookIcon, DeleteOutlined as DeleteIcon } from '@mui/icons-material';
 
@@ -19,6 +19,8 @@ export default function Post({ post, aoAbrirLivro, aoAbrirPerfil, aoRemoverSalvo
   const [removido, setRemovido] = useState(false);
   const [opcoesEnquete, setOpcoesEnquete] = useState(post.opcoesEnquete || []);
   const [spoilerRevelado, setSpoilerRevelado] = useState(false);
+  const [votantes, setVotantes] = useState(null);
+  const [carregandoVotantes, setCarregandoVotantes] = useState(false);
 
   async function votar(optionId) {
     try {
@@ -29,6 +31,14 @@ export default function Post({ post, aoAbrirLivro, aoAbrirPerfil, aoRemoverSalvo
         votada: opcao.id === optionId,
       })));
     } catch (error) { mostrarToast(error.message); }
+  }
+
+  async function abrirVotantes() {
+    if (votantes) return setVotantes(null);
+    setCarregandoVotantes(true);
+    try { setVotantes(await getPollVoters(user.id, post.id)); }
+    catch (error) { mostrarToast(error.message); }
+    finally { setCarregandoVotantes(false); }
   }
 
   async function alternarCurtida() {
@@ -109,6 +119,7 @@ export default function Post({ post, aoAbrirLivro, aoAbrirPerfil, aoRemoverSalvo
         {post.autorId === user.id && <button className="btn-icone-perigo" aria-label="Apagar publicação" title="Apagar publicação" onClick={apagarPublicacao}><DeleteIcon fontSize="small" /></button>}
       </div>
       {post.spoilerLocked && !spoilerRevelado ? <div className="post__spoiler-bloqueado"><strong>Conteúdo protegido contra spoilers</strong><span>Esta conversa menciona eventos até {post.spoilerProgress}%{post.spoilerChapter ? ` · ${post.spoilerChapter}` : ''}.</span><button className="btn-secundario" onClick={() => setSpoilerRevelado(true)}>Revelar mesmo assim</button></div> : <p className="post__texto">{post.texto}</p>}
+      {post.imageUrl && <img className="post__imagem" src={post.imageUrl} alt="Imagem compartilhada na publicação" loading="lazy" />}
       {opcoesEnquete.length > 0 && <div className="post__enquete" aria-label="Opções da enquete">
         {opcoesEnquete.map((opcao) => {
           const total = opcoesEnquete.reduce((soma, item) => soma + item.votos, 0);
@@ -118,6 +129,8 @@ export default function Post({ post, aoAbrirLivro, aoAbrirPerfil, aoRemoverSalvo
             <span>{opcao.texto}</span><strong>{percentual}%</strong>
           </button>;
         })}
+        {post.autorId === user.id && <button className="btn-texto post__ver-votantes" onClick={abrirVotantes} disabled={carregandoVotantes}>{carregandoVotantes ? 'Carregando…' : votantes ? 'Ocultar votantes' : 'Ver quem votou'}</button>}
+        {votantes && <div className="post__votantes"><div><strong>Pessoas que te seguem</strong>{votantes.seguidores.length ? votantes.seguidores.map((pessoa) => <button key={pessoa.id} onClick={() => aoAbrirPerfil?.(pessoa.id)}>{pessoa.avatar_url ? <img src={pessoa.avatar_url} alt="" /> : <span>{pessoa.display_name?.[0] || 'L'}</span>}<small>{pessoa.display_name || 'Leitor'} · {pessoa.option}</small></button>) : <small>Nenhuma pessoa que te segue votou ainda.</small>}</div><div><strong>Pessoas públicas</strong>{votantes.publicos.length ? votantes.publicos.map((pessoa) => <button key={pessoa.id} onClick={() => aoAbrirPerfil?.(pessoa.id)}>{pessoa.avatar_url ? <img src={pessoa.avatar_url} alt="" /> : <span>{pessoa.display_name?.[0] || 'L'}</span>}<small>{pessoa.display_name || 'Leitor'} · {pessoa.option}</small></button>) : <small>Nenhuma pessoa pública votou ainda.</small>}</div></div>}
       </div>}
       {post.livro && (
         <button className="post__livro post__livro--button" onClick={() => aoAbrirLivro?.(post.livro)}>

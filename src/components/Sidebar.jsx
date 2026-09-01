@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import { itensMenu } from '../data/navigation.js';
 import { getAchievementMetrics, getMyClubs } from '../services/social.js';
-import { LocalFireDepartment as FireIcon, Menu as MenuIcon, MenuBook as BookIcon } from '@mui/icons-material';
+import { Menu as MenuIcon, MenuBook as BookIcon } from '@mui/icons-material';
 
-export default function Sidebar({ paginaAtual, irParaPagina, recolhida, alternarRecolhida, aberta, fecharMobile, userId }) {
+export default function Sidebar({ paginaAtual, irParaPagina, recolhida, alternarRecolhida, aberta, fecharMobile, userId, isAdmin = false }) {
   const [clubes, setClubes] = useState([]);
   const [ofensiva, setOfensiva] = useState(0);
 
@@ -26,20 +26,16 @@ export default function Sidebar({ paginaAtual, irParaPagina, recolhida, alternar
         </div>
         <span className="sidebar__label">MENU</span>
         <nav className="sidebar__menu">
-          {itensMenu.map((item) => {
+          {itensMenu.filter((item) => !item.adminOnly || isAdmin).map((item) => {
             const Icone = item.icone;
             return (
-              <button key={item.pagina} className={`sidebar__item${paginaAtual === item.pagina ? ' ativo' : ''}`} onClick={() => irParaPagina(item.pagina)}>
+              <button key={item.pagina} className={`sidebar__item${paginaAtual === item.pagina ? ' ativo' : ''}${item.pagina === 'ofensiva' ? ' sidebar__item--ofensiva' : ''}`} onClick={() => irParaPagina(item.pagina)} aria-label={item.pagina === 'ofensiva' ? `Ofensiva de livros: ${ofensiva} dias` : undefined}>
                 <span className="sidebar__icone"><Icone /></span>
-                <span className="item-texto">{item.label}</span>
+                <span className="item-texto">{item.label}{item.pagina === 'ofensiva' && <small>{ofensiva} {ofensiva === 1 ? 'dia seguido' : 'dias seguidos'}</small>}</span>
               </button>
             );
           })}
         </nav>
-        <button className={`sidebar__ofensiva${paginaAtual === 'ofensiva' ? ' ativo' : ''}`} onClick={() => irParaPagina('ofensiva')} aria-label={`Ofensiva de livros: ${ofensiva} dias`}>
-          <span className="sidebar__ofensiva-icone"><FireIcon /></span>
-          <span className="item-texto"><strong>Ofensiva de livros</strong><small>{ofensiva} {ofensiva === 1 ? 'dia seguido' : 'dias seguidos'}</small></span>
-        </button>
         <span className="sidebar__label">SEUS CLUBES</span>
         <div className="sidebar__canais">
           {clubes.length ? clubes.map((clube) => (

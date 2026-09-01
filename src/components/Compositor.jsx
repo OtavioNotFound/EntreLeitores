@@ -17,6 +17,7 @@ export default function Compositor({ aoPublicar, bookId = null, showSpoilerContr
   const [opcoes, setOpcoes] = useState(['', '']);
   const [spoilerProgress, setSpoilerProgress] = useState('');
   const [spoilerChapter, setSpoilerChapter] = useState('');
+  const [imageUrl, setImageUrl] = useState('');
   const [enviando, setEnviando] = useState(false);
   const placeholder = abas.find((aba) => aba.chave === abaAtiva)?.placeholder;
 
@@ -26,10 +27,10 @@ export default function Compositor({ aoPublicar, bookId = null, showSpoilerContr
     if (abaAtiva === 'enquete' && opcoes.filter((opcao) => opcao.trim()).length < 2) return mostrarToast('Adicione pelo menos duas opções.');
     setEnviando(true);
     try {
-      await aoPublicar({ content, type: abaAtiva, bookId, pollOptions: abaAtiva === 'enquete' ? opcoes : [], spoilerProgress: spoilerProgress === '' ? null : Number(spoilerProgress), spoilerChapter: spoilerChapter.trim() || null });
+      await aoPublicar({ content, type: abaAtiva, bookId, pollOptions: abaAtiva === 'enquete' ? opcoes : [], spoilerProgress: spoilerProgress === '' ? null : Number(spoilerProgress), spoilerChapter: spoilerChapter.trim() || null, imageUrl: imageUrl.trim() || null });
       setTexto('');
       setOpcoes(['', '']);
-      setSpoilerProgress(''); setSpoilerChapter('');
+      setSpoilerProgress(''); setSpoilerChapter(''); setImageUrl('');
       mostrarToast('Publicado com sucesso!');
     } catch (error) {
       mostrarToast(error.message || 'Não foi possível publicar.');
@@ -59,6 +60,7 @@ export default function Compositor({ aoPublicar, bookId = null, showSpoilerContr
         <label>Discussão segura até <input type="number" min="0" max="100" value={spoilerProgress} onChange={(e) => setSpoilerProgress(e.target.value)} placeholder="% do livro" /></label>
         <input aria-label="Capítulo da discussão" maxLength={80} value={spoilerChapter} onChange={(e) => setSpoilerChapter(e.target.value)} placeholder="Capítulo (opcional)" />
       </div>}
+      {abaAtiva !== 'enquete' && <div className="compositor__imagem"><label>Imagem (link opcional)<input type="url" value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} placeholder="https://exemplo.com/imagem.jpg" /></label></div>}
       <div className="compositor__rodape compositor__rodape--direita">
         <button className="btn-primario" onClick={publicar} disabled={enviando}>{enviando ? 'Publicando...' : 'Publicar'}</button>
       </div>

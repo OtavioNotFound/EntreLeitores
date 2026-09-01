@@ -17,6 +17,7 @@ import Configuracoes from './pages/Configuracoes.jsx';
 import Conquistas from './pages/Conquistas.jsx';
 import Pessoas from './pages/Pessoas.jsx';
 import Ofensiva from './pages/Ofensiva.jsx';
+import Administracao from './pages/Administracao.jsx';
 import Login from './pages/Login.jsx';
 
 function AppInterno() {
@@ -76,6 +77,7 @@ function AppInterno() {
     biblioteca: <Biblioteca aoAbrirLivro={abrirLivro} musicaUrl={musicaUrl} setMusicaUrl={setMusicaUrl} />,
     conquistas: <Conquistas />,
     ofensiva: <Ofensiva />,
+    administracao: <Administracao />,
     pessoas: <Pessoas aoAbrirPerfil={abrirPerfil} />,
     livro: <LivroDetalhe livro={livroSelecionado} aoAbrirLivro={abrirLivro} aoAbrirPerfil={abrirPerfil} aoRemoverDaEstante={() => { setLivroSelecionado(null); irParaPagina('biblioteca'); }} />,
     notificacoes: <Notificacoes />,
@@ -93,6 +95,7 @@ function AppInterno() {
         aberta={sidebarMobileAberta}
         fecharMobile={() => setSidebarMobileAberta(false)}
         userId={user.id}
+        isAdmin={Boolean(profile?.is_admin)}
       />
 
       <Header

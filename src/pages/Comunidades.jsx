@@ -125,9 +125,10 @@ export default function Comunidades({ buscaInicial = '' }) {
           <article className="clube-card" key={clube.id}>
             <div className="clube-card__capa"><CapaClube clube={clube} /></div>
             <div className="clube-card__corpo">
-              <span className="clube-card__membros">{clube.member_count} {clube.member_count === 1 ? 'membro' : 'membros'}</span>
               <h2>{clube.name}</h2>
               <p>{clube.description || 'O clube ainda não adicionou uma descrição.'}</p>
+              {(clube.city || clube.meeting_place) && <small className="clube-card__info">{[clube.city, clube.meeting_place].filter(Boolean).join(' · ')}</small>}
+              <span className="clube-card__membros">{clube.member_count} {clube.member_count === 1 ? 'membro' : 'membros'}</span>
               <div className="clube-card__acoes">
                 {podeConversar ? <button className="btn-primario" onClick={() => { setAbaSala('conversa'); setClubeAberto(clube); }}><ForumIcon fontSize="small" /> Abrir clube</button> : <button className="btn-primario" onClick={() => alternar(clube)}>Entrar no clube</button>}
                 {clube.joined && clube.owner_id !== user.id && <button className="btn-texto-perigo" onClick={() => alternar(clube)}>Sair</button>}
