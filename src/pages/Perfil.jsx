@@ -23,7 +23,7 @@ export default function Perfil({ profileId, aoAbrirLivro, aoAbrirPerfil }) {
   const [shelf, setShelf] = useState([]);
   const [painelAtivo, setPainelAtivo] = useState('posts');
   const [editing, setEditing] = useState(false);
-  const [form, setForm] = useState({ display_name: '', bio: '', city: '', state_code: '', avatar_url: '', banner_url: '' });
+  const [form, setForm] = useState({ display_name: '', bio: '', city: '', state_code: '', avatar_url: '', banner_url: '', avatar_position_x:50, avatar_position_y:50, banner_position_x:50, banner_position_y:50 });
   const [uploading, setUploading] = useState('');
   const [following, setFollowing] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -50,7 +50,7 @@ export default function Perfil({ profileId, aoAbrirLivro, aoAbrirPerfil }) {
     ]).then(([profileResult, profileStats, profilePosts, profileShelf, savedPosts, followResult, compatibilityResult, blockResult,achievementResult]) => {
       if (profileResult.error) throw profileResult.error;
       setProfile(profileResult.data);
-      setForm({ display_name: profileResult.data.display_name, bio: profileResult.data.bio || '', city: profileResult.data.city || '', state_code: profileResult.data.state_code || '', avatar_url: profileResult.data.avatar_url || '', banner_url: profileResult.data.banner_url || '' });
+      setForm({ display_name: profileResult.data.display_name, bio: profileResult.data.bio || '', city: profileResult.data.city || '', state_code: profileResult.data.state_code || '', avatar_url: profileResult.data.avatar_url || '', banner_url: profileResult.data.banner_url || '', avatar_position_x:profileResult.data.avatar_position_x ?? 50, avatar_position_y:profileResult.data.avatar_position_y ?? 50, banner_position_x:profileResult.data.banner_position_x ?? 50, banner_position_y:profileResult.data.banner_position_y ?? 50 });
       setStats(profileStats);
       setPosts(profilePosts);
       setShelf(profileShelf);
@@ -63,7 +63,7 @@ export default function Perfil({ profileId, aoAbrirLivro, aoAbrirPerfil }) {
 
   async function salvarPerfil(evento) {
     evento.preventDefault();
-    const { data, error } = await supabase.from('profiles').update({ display_name: form.display_name.trim(), bio: form.bio.trim() || null, city: form.city.trim() || null, state_code: form.state_code.trim().toUpperCase() || null, avatar_url: form.avatar_url || null, banner_url: form.banner_url || null }).eq('id', user.id).select().single();
+    const { data, error } = await supabase.from('profiles').update({ display_name: form.display_name.trim(), bio: form.bio.trim() || null, city: form.city.trim() || null, state_code: form.state_code.trim().toUpperCase() || null, avatar_url: form.avatar_url || null, banner_url: form.banner_url || null, avatar_position_x:Number(form.avatar_position_x), avatar_position_y:Number(form.avatar_position_y), banner_position_x:Number(form.banner_position_x), banner_position_y:Number(form.banner_position_y) }).eq('id', user.id).select().single();
     if (error) return mostrarToast(error.message);
     setProfile(data);
     setEditing(false);
@@ -97,9 +97,9 @@ export default function Perfil({ profileId, aoAbrirLivro, aoAbrirPerfil }) {
 
   return (
     <section className="pagina ativa" id="pagina-perfil">
-      <div className={`perfil__banner${profile.banner_url ? ' perfil__banner--imagem' : ''}`} style={profile.banner_url ? { backgroundImage: `linear-gradient(180deg, transparent 25%, rgba(20, 14, 42, .42)), url(${profile.banner_url})` } : undefined}>
+      <div className={`perfil__banner${profile.banner_url ? ' perfil__banner--imagem' : ''}`} style={profile.banner_url ? { backgroundImage: `linear-gradient(180deg, transparent 25%, rgba(20, 14, 42, .42)), url(${profile.banner_url})`, backgroundPosition: `${profile.banner_position_x ?? 50}% ${profile.banner_position_y ?? 50}%` } : undefined}>
         <div className="perfil__cabecalho">
-          {profile.avatar_url ? <img className="avatar lg" src={profile.avatar_url} alt={profile.display_name} /> : <span className="avatar lg avatar--placeholder">{inicial}</span>}
+          {profile.avatar_url ? <img className="avatar lg" src={profile.avatar_url} alt={profile.display_name} style={{ objectPosition:`${profile.avatar_position_x ?? 50}% ${profile.avatar_position_y ?? 50}%` }} /> : <span className="avatar lg avatar--placeholder">{inicial}</span>}
           <div className="perfil__info"><div className="perfil__nome">{profile.display_name}{profile.is_owner && <span className="perfil-selo perfil-selo--dono"><OwnerIcon fontSize="inherit" /> Dono</span>}{!profile.is_owner && profile.is_admin && <span className="perfil-selo perfil-selo--admin"><AdminIcon fontSize="inherit" /> Admin</span>}</div><div className="perfil__user">@{profile.username}</div></div>
           <div className="perfil__acoes">
             {isOwn ? <button className="btn-secundario" onClick={() => setEditing(!editing)}>{editing ? 'Cancelar' : 'Editar perfil'}</button> : <><button className="btn-primario" onClick={() => setConversaAberta(!conversaAberta)}><ChatIcon fontSize="small" /> {conversaAberta ? 'Fechar conversa' : 'Conversar'}</button><button className={`btn-seguir${following ? ' seguindo' : ''}`} onClick={alternarFollow}>{following ? 'Seguindo' : 'Seguir'}</button><button className="btn-secundario" onClick={alternarBloqueio}>{blocked ? 'Desbloquear' : 'Bloquear'}</button><button className="btn-texto-perigo" onClick={denunciarPerfil}>Denunciar</button></>}
@@ -109,8 +109,8 @@ export default function Perfil({ profileId, aoAbrirLivro, aoAbrirPerfil }) {
 
       {editing ? <form className="perfil-edicao widget" onSubmit={salvarPerfil}>
         <div className="perfil-edicao__imagens">
-          <label className="perfil-imagem-campo"><span>Foto do perfil</span><span className="perfil-imagem-preview perfil-imagem-preview--avatar">{form.avatar_url ? <img src={form.avatar_url} alt="Prévia da foto do perfil" /> : inicial}</span><input type="file" accept="image/jpeg,image/png,image/webp" onChange={(e) => escolherImagem(e, 'avatar')} disabled={Boolean(uploading)} /><input type="url" value={form.avatar_url} onChange={(e) => setForm({ ...form, avatar_url:e.target.value })} placeholder="ou cole o link da foto" /><small>{uploading === 'avatar' ? 'Enviando foto...' : 'Arquivo JPG, PNG ou WebP, ou link de imagem.'}</small></label>
-          <label className="perfil-imagem-campo perfil-imagem-campo--banner"><span>Banner do perfil</span><span className="perfil-imagem-preview perfil-imagem-preview--banner">{form.banner_url ? <img src={form.banner_url} alt="Prévia do banner" /> : 'Escolher banner'}</span><input type="file" accept="image/jpeg,image/png,image/webp,image/gif" onChange={(e) => escolherImagem(e, 'banner')} disabled={Boolean(uploading)} /><input type="url" value={form.banner_url} onChange={(e) => setForm({ ...form, banner_url:e.target.value })} placeholder="ou cole o link do banner" /><small>{uploading === 'banner' ? 'Enviando banner...' : 'Arquivo JPG, PNG, WebP ou GIF, ou link de imagem.'}</small></label>
+          <label className="perfil-imagem-campo"><span>Foto do perfil</span><span className="perfil-imagem-preview perfil-imagem-preview--avatar">{form.avatar_url ? <img src={form.avatar_url} alt="Prévia da foto do perfil" style={{ objectPosition:`${form.avatar_position_x}% ${form.avatar_position_y}%` }} /> : inicial}</span><input type="file" accept="image/jpeg,image/png,image/webp" onChange={(e) => escolherImagem(e, 'avatar')} disabled={Boolean(uploading)} /><input type="url" value={form.avatar_url} onChange={(e) => setForm({ ...form, avatar_url:e.target.value })} placeholder="ou cole o link da foto" /><span className="perfil-enquadramento"><strong>Enquadramento</strong><span>Horizontal<input type="range" min="0" max="100" value={form.avatar_position_x} onChange={(e) => setForm({ ...form, avatar_position_x:e.target.value })} /></span><span>Vertical<input type="range" min="0" max="100" value={form.avatar_position_y} onChange={(e) => setForm({ ...form, avatar_position_y:e.target.value })} /></span></span><small>{uploading === 'avatar' ? 'Enviando foto...' : 'Arquivo JPG, PNG ou WebP, ou link de imagem.'}</small></label>
+          <label className="perfil-imagem-campo perfil-imagem-campo--banner"><span>Banner do perfil</span><span className="perfil-imagem-preview perfil-imagem-preview--banner">{form.banner_url ? <img src={form.banner_url} alt="Prévia do banner" style={{ objectPosition:`${form.banner_position_x}% ${form.banner_position_y}%` }} /> : 'Escolher banner'}</span><input type="file" accept="image/jpeg,image/png,image/webp,image/gif" onChange={(e) => escolherImagem(e, 'banner')} disabled={Boolean(uploading)} /><input type="url" value={form.banner_url} onChange={(e) => setForm({ ...form, banner_url:e.target.value })} placeholder="ou cole o link do banner" /><span className="perfil-enquadramento"><strong>Enquadramento</strong><span>Horizontal<input type="range" min="0" max="100" value={form.banner_position_x} onChange={(e) => setForm({ ...form, banner_position_x:e.target.value })} /></span><span>Vertical<input type="range" min="0" max="100" value={form.banner_position_y} onChange={(e) => setForm({ ...form, banner_position_y:e.target.value })} /></span></span><small>{uploading === 'banner' ? 'Enviando banner...' : 'Arquivo JPG, PNG, WebP ou GIF, ou link de imagem.'}</small></label>
         </div>
         <label>Nome<input value={form.display_name} onChange={(e) => setForm({ ...form, display_name: e.target.value })} maxLength={60} /></label>
         <label>Bio<textarea value={form.bio} onChange={(e) => setForm({ ...form, bio: e.target.value })} maxLength={280} rows={3} /></label>
