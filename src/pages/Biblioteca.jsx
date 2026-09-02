@@ -7,7 +7,7 @@ import Post from '../components/Post.jsx';
 import { useToast } from '../components/Toast.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 import { abasBiblioteca } from '../data/navigation.js';
-import { createPost, createReadingSession, getActiveReadingGoal, getPostsByUser, getReadingMemories, getReadingSessions, getShelf, saveReadingGoal } from '../services/social.js';
+import { addToShelf, createBook, createPost, createReadingSession, getActiveReadingGoal, getPostsByUser, getReadingMemories, getReadingSessions, getShelf, saveReadingGoal, uploadReadingFile } from '../services/social.js';
 import { buildWeeklyActivity, calculateGentleGoal, calculateReadingStreak, summarizeSessions } from '../lib/readerIntelligence.js';
 import { youtubeEmbedUrl } from '../lib/youtube.js';
 import { Search as SearchIcon, MenuBook as BookIcon, MusicNote as MusicNoteIcon } from '@mui/icons-material';
@@ -32,6 +32,10 @@ export default function Biblioteca({ aoAbrirLivro, musicaUrl, setMusicaUrl }) {
   const [resenhaAberta, setResenhaAberta] = useState(false);
   const [resenha, setResenha] = useState({ bookId: '', content: '' });
   const [musicaRascunho, setMusicaRascunho] = useState(musicaUrl || '');
+  const [privateBookOpen, setPrivateBookOpen] = useState(false);
+  const [privateBook, setPrivateBook] = useState({ title:'', author:'', genre:'', description:'', cover_url:'' });
+  const [privateFile, setPrivateFile] = useState(null);
+  const [sendingPrivateBook, setSendingPrivateBook] = useState(false);
 
   const carregar = useCallback(() => {
     setLoading(true);
@@ -66,6 +70,17 @@ export default function Biblioteca({ aoAbrirLivro, musicaUrl, setMusicaUrl }) {
       mostrarToast('Resenha publicada na sua estante.');
     } catch (error) { mostrarToast(error.message); }
   }
+  async function enviarLivroPrivado(evento) {
+    evento.preventDefault();
+    if (!privateFile) return mostrarToast('Escolha o PDF do seu livro.');
+    setSendingPrivateBook(true);
+    try {
+      const book = await createBook(user.id, { ...privateBook, title:privateBook.title.trim(), author:privateBook.author.trim(), genre:privateBook.genre.trim() || null, description:privateBook.description.trim() || null, cover_url:privateBook.cover_url.trim() || null, visibility:'private' });
+      await uploadReadingFile(user.id, book.id, privateFile);
+      await addToShelf(user.id, book.id, 'quero-ler');
+      setPrivateBook({ title:'', author:'', genre:'', description:'', cover_url:'' }); setPrivateFile(null); setPrivateBookOpen(false); await carregar(); mostrarToast('Livro privado adicionado à sua estante. Só você pode vê-lo.');
+    } catch (error) { mostrarToast(error.message); } finally { setSendingPrivateBook(false); }
+  }
 
   const filtrados = livros.filter((livro) => (categoriaAtiva === 'todos' || livro.status === categoriaAtiva) && (formato === 'todos' || livro.format === formato) && `${livro.title} ${livro.author} ${(livro.tags || []).join(' ')}`.toLowerCase().includes(busca.toLowerCase().trim()));
   const resumo = summarizeSessions(sessoes); const sequencia = calculateReadingStreak(sessoes);
@@ -76,8 +91,9 @@ export default function Biblioteca({ aoAbrirLivro, musicaUrl, setMusicaUrl }) {
   return (
     <section className="pagina ativa" id="pagina-biblioteca">
       <div className="pagina-cabecalho">
-        <div><h1 className="pagina-cabecalho__titulo">Minha estante</h1><p className="pagina-cabecalho__sub">{livros.length} {livros.length === 1 ? 'livro organizado' : 'livros organizados'} por você.</p></div>
+        <div><h1 className="pagina-cabecalho__titulo">Minha estante</h1><p className="pagina-cabecalho__sub">{livros.length} {livros.length === 1 ? 'livro organizado' : 'livros organizados'} por você.</p></div><button className="btn-secundario" onClick={() => setPrivateBookOpen((value) => !value)}>{privateBookOpen ? 'Cancelar' : '+ Adicionar meu livro'}</button>
       </div>
+      {privateBookOpen && <form className="livro-privado-form widget" onSubmit={enviarLivroPrivado}><header><div><h2>Adicionar livro privado</h2><p>O arquivo fica disponível apenas na sua estante e no leitor do Entre Leitores.</p></div><span>Privado</span></header><label>Título<input required value={privateBook.title} onChange={(e) => setPrivateBook({ ...privateBook, title:e.target.value })} /></label><label>Autor<input required value={privateBook.author} onChange={(e) => setPrivateBook({ ...privateBook, author:e.target.value })} /></label><label>Gênero<input value={privateBook.genre} onChange={(e) => setPrivateBook({ ...privateBook, genre:e.target.value })} placeholder="Ex.: Fantasia" /></label><label>URL da capa (opcional)<input type="url" value={privateBook.cover_url} onChange={(e) => setPrivateBook({ ...privateBook, cover_url:e.target.value })} /></label><label className="livro-privado-form__sinopse">Sinopse ou observação<textarea value={privateBook.description} maxLength={3000} onChange={(e) => setPrivateBook({ ...privateBook, description:e.target.value })} /></label><label className="livro-privado-form__arquivo">Arquivo PDF<input required type="file" accept="application/pdf,.pdf" onChange={(e) => setPrivateFile(e.target.files?.[0] || null)} /></label><button className="btn-primario" disabled={sendingPrivateBook}>{sendingPrivateBook ? 'Adicionando…' : 'Adicionar à minha estante'}</button></form>}
       <NextReadPicker books={livros} onOpen={aoAbrirLivro}/>
       <LoanDashboard />
 

@@ -154,6 +154,7 @@
   .diario-leitura{align-items:flex-start;flex-direction:column}.diario-leitura__stats{gap:var(--space-4)}.sessao-form{grid-template-columns:1fr}.sessao-form__nota{grid-column:1}.colecao-inteligente{align-items:flex-start;flex-direction:column}
   .painel-leitura{grid-template-columns:1fr}
   .caderno-leitura form{grid-template-columns:1fr}.caderno-leitura textarea{grid-column:1}.caderno-leitura header{flex-direction:column}
+  .livro-privado-form,.experiencia-leitura__anotacao{grid-template-columns:1fr}.experiencia-leitura__anotacao strong,.experiencia-leitura__anotacao textarea{grid-column:1}.experiencia-leitura__pdf{max-height:560px}.experiencia-leitura__pagina{gap:var(--space-2)}.experiencia-leitura__grid-btn{width:100%}
 }
 
 @media (prefers-reduced-motion: reduce){

@@ -25,6 +25,7 @@ export default function LivroDetalhe({ livro, aoAbrirLivro, aoAbrirPerfil, aoRem
   const [materiais, setMateriais] = useState([]);
   const [similares, setSimilares] = useState([]);
   const [readerPage, setReaderPage] = useState(1);
+  const [notebookRevision, setNotebookRevision] = useState(0);
   const title = livro?.title || livro?.titulo;
   const author = livro?.author || livro?.autor;
   const cover = livro?.cover_url || livro?.capa;
@@ -92,8 +93,8 @@ export default function LivroDetalhe({ livro, aoAbrirLivro, aoAbrirPerfil, aoRem
       <BookSafety bookId={livro.id}/>
       <ReadingPause book={livro}/>
       <TrustedLending book={livro} isOwned={Boolean(livro.status) && (!livro.format || livro.format === 'fisico')}/>
-      <ReadingExperience bookId={livro.id} files={materiais} pageFromNotebook={readerPage}/>
-      <ReadingNotebook bookId={livro.id} currentProgress={Number(leitura.progress)||0} onGoToPage={setReaderPage}/>
+      <ReadingExperience key={livro.id} bookId={livro.id} bookTitle={title} files={materiais} pageFromNotebook={readerPage} onAnnotationSaved={() => setNotebookRevision((value) => value + 1)} onProgressChange={(progress) => setLeitura((current) => ({ ...current, progress }))}/>
+      <ReadingNotebook bookId={livro.id} currentProgress={Number(leitura.progress)||0} onGoToPage={setReaderPage} revision={notebookRevision}/>
       <section className="materiais-leitura widget"><header><ReaderIcon /><div><h2>Leitura no Entre Leitores</h2><p>Materiais enviados por administradores para leitura autorizada.</p></div></header>{materiais.length ? <div>{materiais.map((material) => <button key={material.id} onClick={() => abrirMaterial(material)}><span>{material.file_type.toUpperCase()}</span><strong>{material.file_name}</strong><OpenIcon fontSize="small" /></button>)}</div> : <p className="estado-vazio__texto">Ainda não há um material de leitura para este título.</p>}<small>Use apenas arquivos que você tem autorização para acessar e compartilhar.</small></section>
       {similares.length > 0 && <section className="similares widget"><header><h2>Você também pode gostar</h2><p>Outros livros do mesmo gênero disponíveis no catálogo.</p></header><div>{similares.map((item) => <button key={item.id} onClick={() => aoAbrirLivro(item)}>{item.cover_url ? <img src={item.cover_url} alt="" /> : <BookIcon />}<span><strong>{item.title}</strong><small>{item.author}</small></span></button>)}</div></section>}
       <div className="titulo-secao" style={{ marginTop: 'var(--space-6)' }}>Conversas sobre este livro</div>

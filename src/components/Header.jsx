@@ -5,6 +5,7 @@ import {
   Search as SearchIcon,
   LightMode as LightIcon,
   DarkMode as DarkIcon,
+  AutoStoriesOutlined as StreakIcon,
   Person as PersonIcon,
   Settings as SettingsIcon,
   Logout as LogoutIcon,
@@ -35,6 +36,9 @@ export default function Header({ paginaAtual, irParaPagina, abrirSidebarMobile, 
         <input aria-label={pesquisandoClubes ? 'Pesquisar clubes' : 'Buscar livros'} type="search" placeholder={pesquisandoClubes ? 'Pesquisar clubes por nome, cidade ou descrição...' : 'Buscar livros por título ou autor...'} value={busca} onChange={(e) => setBusca(e.target.value)} onKeyDown={aoBuscar} />
       </div>
       <div className="header__acoes">
+        <button className="header__icone-btn header__ofensiva-btn" aria-label="Ofensiva de livros" title="Ver minha Ofensiva de Leitura" onClick={() => irParaPagina('ofensiva')}>
+          <StreakIcon fontSize="small" /><i aria-hidden="true" />
+        </button>
         <button className="header__icone-btn" aria-label="Alternar tema" title="Alternar tema" onClick={alternarTema}>
           {temaEscuro ? <LightIcon fontSize="small" /> : <DarkIcon fontSize="small" />}
         </button>

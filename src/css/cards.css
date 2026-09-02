@@ -77,6 +77,7 @@
   transition: background var(--transicao-rapida);
 }
 .header__icone-btn:hover{ background: var(--lilas-100); }
+.header__ofensiva-btn{overflow:hidden;color:var(--roxo-600);box-shadow:inset 0 0 0 1px rgba(124,58,237,.08)}.header__ofensiva-btn i{position:absolute;right:9px;width:8px;height:13px;border-radius:1px 5px 5px 1px;border:1px solid currentColor;border-left:0;opacity:0;transform:translateX(5px)}.header__ofensiva-btn:hover svg{animation:ofensiva-folhear .55s ease}.header__ofensiva-btn:hover i{opacity:.55;animation:ofensiva-pagina .55s ease}@keyframes ofensiva-folhear{45%{transform:translateX(-3px) rotate(-8deg)}100%{transform:translateX(0)}}@keyframes ofensiva-pagina{45%{transform:translateX(-4px) scaleX(.55)}100%{transform:translateX(5px)}}
 
 .header__ponto{
   position: absolute;

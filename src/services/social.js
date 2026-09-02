@@ -355,6 +355,18 @@ export async function createBook(userId, book) {
   return data;
 }
 
+export async function updateCatalogBook(bookId, changes) {
+  const { data, error } = await supabase.from('books').update(changes).eq('id', bookId).select().single();
+  ensure(error);
+  return data;
+}
+
+export async function deleteCatalogBook(bookId) {
+  const { data, error } = await supabase.from('books').delete().eq('id', bookId).select('id');
+  ensure(error);
+  if (!data?.length) throw new Error('O livro não pôde ser excluído.');
+}
+
 export async function getShelf(userId) {
   const { data, error } = await supabase.from('user_books').select('status,progress,rating,format,source,reread_count,tags,updated_at,book:books(*)').eq('user_id', userId).order('updated_at', { ascending: false });
   ensure(error);
@@ -398,6 +410,14 @@ export async function getReadingSessions(userId, days = 30) {
   const since = new Date(); since.setDate(since.getDate() - days);
   const { data, error } = await supabase.from('reading_sessions').select('id,book_id,pages_read,minutes_read,format,note,occurred_on,book:books(title)').eq('user_id', userId).gte('occurred_on', since.toISOString().slice(0,10)).order('occurred_on', { ascending: false });
   ensure(error); return data;
+}
+
+export async function saveAutomaticReadingProgress(userId, bookId, progress) {
+  const safeProgress = Math.max(0, Math.min(100, Math.round(Number(progress) || 0)));
+  const values = { user_id: userId, book_id: bookId, status: safeProgress >= 100 ? 'lidos' : 'lendo', progress: safeProgress, started_at: new Date().toISOString().slice(0, 10) };
+  if (safeProgress >= 100) values.finished_at = new Date().toISOString().slice(0, 10);
+  const { error } = await supabase.from('user_books').upsert(values, { onConflict: 'user_id,book_id' });
+  ensure(error);
 }
 
 export async function getBookReadingFiles(bookId) {
