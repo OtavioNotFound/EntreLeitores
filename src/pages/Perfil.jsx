@@ -7,7 +7,7 @@ import ProfileConversation from '../components/ProfileConversation.jsx';
 import ProfilePeopleList from '../components/ProfilePeopleList.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 import { supabase } from '../lib/supabase.js';
-import { blockUser, getAchievementMetrics, getCompatibility, getPostsByUser, getProfileStats, getSavedPosts, getShelf, reportContent, toggleFollow, uploadProfileImage } from '../services/social.js';
+import { blockUser, getAchievementMetrics, getCompatibility, getPlatformSettings, getPostsByUser, getProfileStats, getSavedPosts, getShelf, reportContent, toggleFollow, uploadProfileImage } from '../services/social.js';
 import { useToast } from '../components/Toast.jsx';
 import { MenuBook as BookIcon, Forum as ForumIcon, ChatOutlined as ChatIcon, WorkspacePremiumOutlined as OwnerIcon, AdminPanelSettingsOutlined as AdminIcon } from '@mui/icons-material';
 
@@ -30,6 +30,7 @@ export default function Perfil({ profileId, aoAbrirLivro, aoAbrirPerfil }) {
   const [compatibilidade, setCompatibilidade] = useState(null);
   const [blocked, setBlocked] = useState(false);
   const [achievementMetrics,setAchievementMetrics]=useState(null);
+  const [platformSettings,setPlatformSettings]=useState(null);
   const [conversaAberta, setConversaAberta] = useState(false);
   const isOwn = profileId === user.id;
 
@@ -47,7 +48,8 @@ export default function Perfil({ profileId, aoAbrirLivro, aoAbrirPerfil }) {
       isOwn ? Promise.resolve(null) : getCompatibility(user.id, profileId),
       isOwn ? Promise.resolve({ data: null }) : supabase.from('user_blocks').select('blocked_id').eq('blocker_id', user.id).eq('blocked_id', profileId).maybeSingle(),
       isOwn ? getAchievementMetrics(user.id) : Promise.resolve(null),
-    ]).then(([profileResult, profileStats, profilePosts, profileShelf, savedPosts, followResult, compatibilityResult, blockResult,achievementResult]) => {
+      isOwn ? getPlatformSettings() : Promise.resolve(null),
+    ]).then(([profileResult, profileStats, profilePosts, profileShelf, savedPosts, followResult, compatibilityResult, blockResult,achievementResult,settingsResult]) => {
       if (profileResult.error) throw profileResult.error;
       setProfile(profileResult.data);
       setForm({ display_name: profileResult.data.display_name, bio: profileResult.data.bio || '', city: profileResult.data.city || '', state_code: profileResult.data.state_code || '', avatar_url: profileResult.data.avatar_url || '', banner_url: profileResult.data.banner_url || '', avatar_position_x:profileResult.data.avatar_position_x ?? 50, avatar_position_y:profileResult.data.avatar_position_y ?? 50, banner_position_x:profileResult.data.banner_position_x ?? 50, banner_position_y:profileResult.data.banner_position_y ?? 50 });
@@ -58,6 +60,7 @@ export default function Perfil({ profileId, aoAbrirLivro, aoAbrirPerfil }) {
       setFollowing(Boolean(followResult.data));
       setCompatibilidade(compatibilityResult); setBlocked(Boolean(blockResult.data));
       setAchievementMetrics(achievementResult);
+      setPlatformSettings(settingsResult);
     }).catch((error) => mostrarToast(error.message)).finally(() => setLoading(false));
   }, [profileId, user.id, isOwn]);
 
@@ -149,7 +152,7 @@ export default function Perfil({ profileId, aoAbrirLivro, aoAbrirPerfil }) {
       <div className={`perfil__painel${painelAtivo === 'seguidores' ? ' ativo' : ''}`}><ProfilePeopleList profileId={profileId} type="followers" aoAbrirPerfil={aoAbrirPerfil} /></div>
       <div className={`perfil__painel${painelAtivo === 'seguindo' ? ' ativo' : ''}`}><ProfilePeopleList profileId={profileId} type="following" aoAbrirPerfil={aoAbrirPerfil} /></div>
       {isOwn&&<div className={`perfil__painel${painelAtivo === 'salvos' ? ' ativo' : ''}`}><div className="feed__lista perfil__feed">{salvos.length ? salvos.map((post) => <Post key={post.id} post={post} aoAbrirLivro={aoAbrirLivro} aoRemoverSalvo={(postId) => setSalvos((atuais) => atuais.filter((item) => item.id !== postId))} />) : <EmptyState icon={<ForumIcon />} title="Nenhuma publicação salva" description="Use o marcador nas publicações para guardar resenhas e conversas para depois." />}</div></div>}
-      {isOwn&&<div className={`perfil__painel${painelAtivo === 'conquistas' ? ' ativo' : ''}`}>{achievementMetrics&&<AchievementsPanel metrics={achievementMetrics}/>}</div>}
+      {isOwn&&<div className={`perfil__painel${painelAtivo === 'conquistas' ? ' ativo' : ''}`}>{achievementMetrics&&<AchievementsPanel metrics={achievementMetrics} rankThresholds={platformSettings?.rank_thresholds} readerRank={profile.reader_rank} rankManual={profile.rank_manual}/>}</div>}
     </section>
   );
 }

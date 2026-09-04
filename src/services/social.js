@@ -355,10 +355,22 @@ export async function createBook(userId, book) {
   return data;
 }
 
+export async function getBookById(bookId) {
+  const { data, error } = await supabase.from('books').select('*').eq('id', bookId).maybeSingle();
+  ensure(error);
+  if (!data) throw new Error('Livro não encontrado ou sem acesso.');
+  return data;
+}
+
 export async function updateCatalogBook(bookId, changes) {
   const { data, error } = await supabase.from('books').update(changes).eq('id', bookId).select().single();
   ensure(error);
   return data;
+}
+
+export async function unpublishCatalogBook(bookId) {
+  const { error } = await supabase.rpc('admin_unpublish_book', { target_book_id:bookId });
+  ensure(error);
 }
 
 export async function deleteCatalogBook(bookId) {
@@ -368,9 +380,9 @@ export async function deleteCatalogBook(bookId) {
 }
 
 export async function getShelf(userId) {
-  const { data, error } = await supabase.from('user_books').select('status,progress,rating,format,source,reread_count,tags,updated_at,book:books(*)').eq('user_id', userId).order('updated_at', { ascending: false });
+  const { data, error } = await supabase.from('user_books').select('status,progress,rating,format,source,reread_count,tags,started_at,finished_at,updated_at,book:books(*)').eq('user_id', userId).order('updated_at', { ascending: false });
   ensure(error);
-  return data.map((item) => ({ ...item.book, status: item.status, progress: item.progress, rating: item.rating, format: item.format, source: item.source, reread_count: item.reread_count, tags: item.tags || [] }));
+  return data.map((item) => ({ ...item.book, status: item.status, progress: item.progress, rating: item.rating, format: item.format, source: item.source, reread_count: item.reread_count, tags: item.tags || [], started_at:item.started_at, finished_at:item.finished_at, updated_at:item.updated_at }));
 }
 
 export async function addToShelf(userId, bookId, status = 'quero-ler') {
@@ -408,7 +420,7 @@ export async function createReadingSession(userId, session) {
 
 export async function getReadingSessions(userId, days = 30) {
   const since = new Date(); since.setDate(since.getDate() - days);
-  const { data, error } = await supabase.from('reading_sessions').select('id,book_id,pages_read,minutes_read,format,note,occurred_on,book:books(title)').eq('user_id', userId).gte('occurred_on', since.toISOString().slice(0,10)).order('occurred_on', { ascending: false });
+  const { data, error } = await supabase.from('reading_sessions').select('id,book_id,pages_read,minutes_read,format,note,occurred_on,created_at,book:books(title)').eq('user_id', userId).gte('occurred_on', since.toISOString().slice(0,10)).order('occurred_on', { ascending: false });
   ensure(error); return data;
 }
 
@@ -465,7 +477,7 @@ export async function getOwnerOverview() {
 }
 
 export async function getOwnerUsers() {
-  const { data, error } = await supabase.from('profiles').select('id,display_name,username,avatar_url,is_admin,is_owner,created_at').order('created_at', { ascending:false }).limit(200);
+  const { data, error } = await supabase.from('profiles').select('id,display_name,username,avatar_url,is_admin,is_owner,admin_permissions,reader_rank,rank_manual,created_at').order('created_at', { ascending:false }).limit(200);
   ensure(error);
   return data || [];
 }
@@ -473,6 +485,42 @@ export async function getOwnerUsers() {
 export async function setOwnerAdminRole(userId, isAdmin) {
   const { error } = await supabase.rpc('owner_set_admin', { target_user_id:userId, grant_admin:isAdmin });
   ensure(error);
+}
+
+export async function setOwnerAdminPermissions(userId, isAdmin, permissions = []) {
+  const { error } = await supabase.rpc('owner_set_admin_permissions', { target_user_id:userId, grant_admin:isAdmin, granted_permissions:permissions });
+  ensure(error);
+}
+
+export async function getPlatformSettings() {
+  const { data, error } = await supabase.from('platform_settings').select('*').eq('singleton', true).maybeSingle();
+  ensure(error);
+  return data || { streak_days_displayed:30, streak_max_protections:5, streak_renewal:'monthly', rank_thresholds:{ explorer:100, debater:500, connector:1500, curator:5000, legend:10000 } };
+}
+
+export async function updateOwnerPlatformSettings(settings) {
+  const { error } = await supabase.rpc('owner_update_platform_settings', {
+    displayed_days:Number(settings.streak_days_displayed),
+    max_protections:Number(settings.streak_max_protections),
+    renewal_period:settings.streak_renewal || 'monthly',
+    new_rank_thresholds:settings.rank_thresholds,
+  });
+  ensure(error);
+}
+
+export async function updateAdminStreakSettings(settings) {
+  const { error } = await supabase.rpc('admin_update_streak_settings', {
+    displayed_days:Number(settings.streak_days_displayed),
+    max_protections:Number(settings.streak_max_protections),
+    renewal_period:settings.streak_renewal || 'monthly',
+  });
+  ensure(error);
+}
+
+export async function applyAutomaticStreakProtections() {
+  const { data, error } = await supabase.rpc('apply_automatic_streak_protections');
+  ensure(error);
+  return Number(data) || 0;
 }
 
 export async function getStreakProtections(userId, fromDate, toDate) {
@@ -749,35 +797,154 @@ export async function getProfileStats(userId) {
   ];
 }
 
+export async function recordReaderEvent(userId, bookId, eventType, value = null) {
+  const { error } = await supabase.from('reader_events').insert({ user_id:userId, book_id:bookId || null, event_type:eventType, value:value == null ? null : String(value) });
+  ensure(error);
+}
+
+export async function getUserAchievementUnlocks(userId) {
+  const { data, error } = await supabase.from('user_achievements').select('achievement_id,xp,unlock_type,unlocked_at').eq('user_id', userId).order('unlocked_at', { ascending:false });
+  ensure(error);
+  return data || [];
+}
+
+export async function syncAutomaticAchievements(achievements) {
+  const unlocked = (achievements || []).filter((item) => item.unlocked);
+  const { data, error } = await supabase.rpc('sync_user_achievements', {
+    achievement_ids:unlocked.map((item) => item.id),
+    achievement_xp:unlocked.map((item) => item.xp),
+  });
+  ensure(error);
+  return Number(data) || 0;
+}
+
+export async function syncReaderRank(totalXp) {
+  const { data, error } = await supabase.rpc('sync_reader_rank', { total_xp:Math.max(0, Number(totalXp) || 0) });
+  ensure(error);
+  return data;
+}
+
+export async function getAdminReaders() {
+  const { data, error } = await supabase.rpc('admin_list_readers');
+  ensure(error);
+  return data || [];
+}
+
+export async function getAdminClubs() {
+  const { data, error } = await supabase.rpc('admin_list_clubs');
+  ensure(error);
+  return data || [];
+}
+
+export async function updateAdminClub(clubId, values) {
+  const { error } = await supabase.rpc('admin_update_club', { target_club_id:clubId, new_name:values.name, new_description:values.description || '', new_is_private:Boolean(values.is_private) });
+  ensure(error);
+}
+
+export async function deleteAdminClub(clubId) {
+  const { error } = await supabase.rpc('admin_delete_club', { target_club_id:clubId });
+  ensure(error);
+}
+
+export async function getAdminReports() {
+  const { data, error } = await supabase.rpc('admin_list_reports');
+  ensure(error);
+  return data || [];
+}
+
+export async function updateAdminReport(reportId, status) {
+  const { error } = await supabase.rpc('admin_update_report', { target_report_id:reportId, new_status:status });
+  ensure(error);
+}
+
+export async function setAdminReaderRank(userId, rank = null) {
+  const { error } = await supabase.rpc('admin_set_reader_rank', { target_user_id:userId, target_rank:rank || null });
+  ensure(error);
+}
+
+export async function grantAdminAchievement(userId, achievement) {
+  const { error } = await supabase.rpc('admin_grant_achievement', { target_user_id:userId, target_achievement_id:achievement.id, target_xp:achievement.xp });
+  ensure(error);
+}
+
+export async function removeAdminAchievement(userId, achievementId) {
+  const { error } = await supabase.rpc('admin_remove_manual_achievement', { target_user_id:userId, target_achievement_id:achievementId });
+  ensure(error);
+}
+
 export async function getAchievementMetrics(userId) {
-  const [shelf,posts,sessions,protections,notes,clubs,returnedLoans,resumedPauses,followers]=await Promise.all([
+  const [shelf,posts,sessions,protections,notes,clubs,returnedLoans,resumedPauses,followers,events,unlocks,ownComments]=await Promise.all([
     getShelf(userId),getPostsByUser(userId),getReadingSessions(userId,3650),
     getStreakProtections(userId),
-    supabase.from('reading_notes').select('*',{count:'exact',head:true}).eq('user_id',userId),
+    supabase.from('reading_notes').select('id,kind,color,created_at').eq('user_id',userId),
     supabase.from('club_members').select('*',{count:'exact',head:true}).eq('user_id',userId),
     supabase.from('loan_requests').select('*',{count:'exact',head:true}).eq('borrower_id',userId).eq('status','returned'),
     supabase.from('reading_pauses').select('*',{count:'exact',head:true}).eq('user_id',userId).not('resumed_at','is',null),
     supabase.from('follows').select('*',{count:'exact',head:true}).eq('following_id',userId),
+    supabase.from('reader_events').select('event_type,value,occurred_at').eq('user_id',userId),
+    getUserAchievementUnlocks(userId),
+    supabase.from('comments').select('id').eq('author_id',userId),
   ]);
-  ensure(notes.error||clubs.error||returnedLoans.error||resumedPauses.error||followers.error);
+  ensure(notes.error||clubs.error||returnedLoans.error||resumedPauses.error||followers.error||events.error||ownComments.error);
   const postIds=posts.map((post)=>post.id);
-  const { count: likesReceived, error: likesError } = postIds.length ? await supabase.from('post_likes').select('*',{count:'exact',head:true}).in('post_id',postIds) : {count:0,error:null};
-  ensure(likesError);
+  const [{ data:likesRows, error:likesError }, { data:commentRows, error:commentsError }] = postIds.length ? await Promise.all([
+    supabase.from('post_likes').select('post_id,user_id').in('post_id',postIds),
+    supabase.from('comments').select('post_id,author_id,parent_id').in('post_id',postIds),
+  ]) : [{data:[],error:null},{data:[],error:null}];
+  ensure(likesError||commentsError);
+  const ownCommentIds=(ownComments.data||[]).map((item)=>item.id);
+  const { count:discussionReplies, error:repliesError }=ownCommentIds.length
+    ? await supabase.from('comments').select('*',{count:'exact',head:true}).in('parent_id',ownCommentIds).neq('author_id',userId)
+    : {count:0,error:null};
+  ensure(repliesError);
   const finished=shelf.filter((book)=>['lidos','favoritos'].includes(book.status));
+  const finishedLast30=finished.filter((book)=>book.finished_at && Date.now()-new Date(`${book.finished_at}T12:00:00`).getTime()<=30*86400000).length;
+  const likesPerPost=(likesRows||[]).reduce((map,row)=>map.set(row.post_id,(map.get(row.post_id)||0)+1),new Map());
+  const interactors=new Set([...(likesRows||[]).map((row)=>row.user_id),...(commentRows||[]).map((row)=>row.author_id)].filter((id)=>id&&id!==userId));
+  const eventRows=events.data||[];
+  const readingDays=new Set(sessions.map((item)=>item.occurred_on)).size;
+  const nightReadingDays=new Set(sessions.filter((item)=>new Date(item.created_at||`${item.occurred_on}T23:00:00`).getHours()>=22).map((item)=>item.occurred_on)).size;
+  const morningReadingDays=new Set(sessions.filter((item)=>new Date(item.created_at||`${item.occurred_on}T08:00:00`).getHours()<9).map((item)=>item.occurred_on)).size;
+  const highlights=(notes.data||[]).filter((item)=>['highlight','citation'].includes(item.kind));
   return {
     finishedBooks:finished.length,
     streak:calculateReadingStreak(sessions, new Date(), protections),
     genres:new Set(finished.map((book)=>book.genre).filter(Boolean)).size,
+    newGenres:Math.max(0,new Set(finished.map((book)=>book.genre).filter(Boolean)).size-1),
     reviews:posts.filter((post)=>post.type==='resenha').length,
     posts:posts.length,
     pages:sessions.reduce((sum,item)=>sum+(Number(item.pages_read)||0),0),
-    notes:notes.count||0,
+    notes:(notes.data||[]).length,
     rereads:shelf.reduce((sum,book)=>sum+(Number(book.reread_count)||0),0),
     clubs:clubs.count||0,
     returnedLoans:returnedLoans.count||0,
     resumedPauses:resumedPauses.count||0,
     followers:followers.count||0,
-    likesReceived:likesReceived||0,
+    likesReceived:(likesRows||[]).length,
     nightActions:posts.filter((post)=>new Date(post.createdAt).getHours()>=22).length,
+    shelfBooks:shelf.length,
+    nightReadingDays,
+    morningReadingDays,
+    marathonFinished30:finishedLast30,
+    readingDays,
+    highlights:highlights.length,
+    highlightColors:new Set(highlights.map((item)=>item.color).filter(Boolean)).size,
+    annotations:(notes.data||[]).filter((item)=>!['highlight','citation','favorite'].includes(item.kind)).length,
+    citations:(notes.data||[]).filter((item)=>item.kind==='citation').length,
+    readingModes:new Set(eventRows.filter((item)=>item.event_type==='theme').map((item)=>item.value)).size,
+    fontAdjustments:eventRows.filter((item)=>item.event_type==='font').length,
+    marginAdjustments:eventRows.filter((item)=>item.event_type==='margin').length,
+    privateBooks:shelf.filter((book)=>book.visibility==='private').length,
+    pageJumps:eventRows.filter((item)=>item.event_type==='page_jump').length,
+    pageOverviews:eventRows.filter((item)=>item.event_type==='page_overview').length,
+    maxProgress:shelf.reduce((max,book)=>Math.max(max,Number(book.progress)||0),0),
+    readingResumes:eventRows.filter((item)=>item.event_type==='resume').length,
+    discussionReplies:discussionReplies||0,
+    maxPostLikes:Math.max(0,...likesPerPost.values()),
+    uniqueInteractors:interactors.size,
+    recommendations:posts.filter((post)=>post.livro).length,
+    unlockedAchievements:unlocks.length,
+    unlockedAchievementIds:unlocks.map((item)=>item.achievement_id),
+    achievementUnlocks:unlocks,
   };
 }

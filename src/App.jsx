@@ -11,6 +11,7 @@ import Explorar from './pages/Explorar.jsx';
 import Comunidades from './pages/Comunidades.jsx';
 import Biblioteca from './pages/Biblioteca.jsx';
 import LivroDetalhe from './pages/LivroDetalhe.jsx';
+import ReadingMode from './pages/ReadingMode.jsx';
 import Notificacoes from './pages/Notificacoes.jsx';
 import Perfil from './pages/Perfil.jsx';
 import Configuracoes from './pages/Configuracoes.jsx';
@@ -67,6 +68,13 @@ function AppInterno() {
     irParaPagina('livro');
   }
 
+  function abrirLeitura(livro) {
+    setLivroSelecionado(livro);
+    setPaginaAtual('leitura');
+    window.location.hash = `/leitura/${livro.id}`;
+    window.scrollTo({ top:0, behavior:'smooth' });
+  }
+
   function alternarTema() {
     setTemaEscuro(escuro ? 'claro' : 'escuro');
   }
@@ -81,7 +89,8 @@ function AppInterno() {
     administracao: <Administracao />,
     dono: <Dono />,
     pessoas: <Pessoas aoAbrirPerfil={abrirPerfil} />,
-    livro: <LivroDetalhe livro={livroSelecionado} aoAbrirLivro={abrirLivro} aoAbrirPerfil={abrirPerfil} aoRemoverDaEstante={() => { setLivroSelecionado(null); irParaPagina('biblioteca'); }} />,
+    livro: <LivroDetalhe livro={livroSelecionado} aoAbrirLivro={abrirLivro} aoAbrirPerfil={abrirPerfil} aoComecarLeitura={abrirLeitura} aoRemoverDaEstante={() => { setLivroSelecionado(null); irParaPagina('biblioteca'); }} />,
+    leitura: <ReadingMode bookId={window.location.hash.replace('#/', '').split('/')[1] || livroSelecionado?.id} initialBook={livroSelecionado} onBookLoaded={setLivroSelecionado} onBack={() => irParaPagina('livro')} />,
     notificacoes: <Notificacoes />,
     perfil: <Perfil profileId={perfilSelecionadoId || user.id} aoAbrirLivro={abrirLivro} aoAbrirPerfil={abrirPerfil} />,
     configuracoes: <Configuracoes alternarTema={alternarTema} />,
