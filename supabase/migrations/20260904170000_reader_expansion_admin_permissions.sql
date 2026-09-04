@@ -130,7 +130,7 @@ $$;
 
 create or replace function public.sync_user_achievements(achievement_ids text[], achievement_xp integer[])
 returns integer language plpgsql security definer set search_path = public as $$
-declare item_index integer; inserted_count integer := 0;
+declare inserted_count integer := 0;
 begin
   if auth.uid() is null then raise exception 'Authentication required'; end if;
   if cardinality(coalesce(achievement_ids, '{}')) <> cardinality(coalesce(achievement_xp, '{}')) then
@@ -189,7 +189,7 @@ $$;
 revoke all on function public.admin_set_reader_rank(uuid, text) from public, anon;
 grant execute on function public.admin_set_reader_rank(uuid, text) to authenticated;
 
-create or replace function public.sync_reader_rank(total_xp integer)
+create or replace function public.sync_reader_rank()
 returns text language plpgsql security definer set search_path = public as $$
 declare thresholds jsonb; next_rank text := 'visitor'; earned_xp integer := 0;
 begin
@@ -206,8 +206,8 @@ begin
   return (select reader_rank from public.profiles where id = auth.uid());
 end;
 $$;
-revoke all on function public.sync_reader_rank(integer) from public, anon;
-grant execute on function public.sync_reader_rank(integer) to authenticated;
+revoke all on function public.sync_reader_rank() from public, anon;
+grant execute on function public.sync_reader_rank() to authenticated;
 
 create or replace function public.owner_update_platform_settings(
   displayed_days integer,
@@ -365,11 +365,11 @@ begin
   if not public.has_admin_permission('reports.view') then raise exception 'Report view permission required'; end if;
   return query select r.id, r.target_type, r.target_id, r.reason, r.details, r.status, r.created_at, p.display_name,
     case r.target_type
-      when 'profile' then coalesce((select 'Perfil: ' || display_name || ' (@' || username || ')' from public.profiles where id = r.target_id), 'Perfil removido')
-      when 'post' then coalesce((select left(content, 240) from public.posts where id = r.target_id), 'Publicação removida')
-      when 'comment' then coalesce((select left(content, 240) from public.comments where id = r.target_id), 'Comentário removido')
-      when 'message' then coalesce((select left(content, 240) from public.community_messages where id = r.target_id), 'Mensagem removida')
-      when 'book' then coalesce((select 'Livro: ' || title from public.books where id = r.target_id), 'Livro removido')
+      when 'profile' then coalesce((select 'Perfil: ' || target_profile.display_name || ' (@' || target_profile.username || ')' from public.profiles target_profile where target_profile.id = r.target_id), 'Perfil removido')
+      when 'post' then coalesce((select left(target_post.content, 240) from public.posts target_post where target_post.id = r.target_id), 'Publicação removida')
+      when 'comment' then coalesce((select left(target_comment.content, 240) from public.comments target_comment where target_comment.id = r.target_id), 'Comentário removido')
+      when 'message' then coalesce((select left(target_message.content, 240) from public.community_messages target_message where target_message.id = r.target_id), 'Mensagem removida')
+      when 'book' then coalesce((select 'Livro: ' || target_book.title from public.books target_book where target_book.id = r.target_id), 'Livro removido')
       else 'Conteúdo não identificado'
     end
   from public.reports r join public.profiles p on p.id = r.reporter_id order by r.created_at desc;

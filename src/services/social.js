@@ -818,8 +818,8 @@ export async function syncAutomaticAchievements(achievements) {
   return Number(data) || 0;
 }
 
-export async function syncReaderRank(totalXp) {
-  const { data, error } = await supabase.rpc('sync_reader_rank', { total_xp:Math.max(0, Number(totalXp) || 0) });
+export async function syncReaderRank() {
+  const { data, error } = await supabase.rpc('sync_reader_rank');
   ensure(error);
   return data;
 }
