@@ -46,6 +46,10 @@
 .link-button:hover { text-decoration: underline; text-underline-offset: 4px; }
 .login-card__erro { padding: 12px; background: var(--amarelo-100); color: var(--cinza-900); font-size: 14px; border-radius: 4px; margin-bottom: 16px; }
 .btn-primario:disabled { opacity: .55; cursor: not-allowed; }
+body.tema-escuro .login-tela__marca { background: var(--roxo-900); color: var(--cinza-900); }
+body.tema-escuro .login-estante__livro--roxo { background: var(--roxo-700); color: var(--cinza-900); }
+body.tema-escuro .login-estante__livro--papel { background: var(--lilas-50); color: var(--cinza-900); }
+body.tema-escuro .login-estante__livro--amarelo { background: #b28a57; color: #261e2f; }
 @keyframes book-settle { from { translate: 0 20px; opacity: .4; } to { translate: 0 0; opacity: 1; } }
 @media (prefers-reduced-motion: no-preference) {
   .login-tela__logo, .login-tela__convite, .login-tela__assinatura, .login-card > * { animation: social-arrive .6s ease both; }

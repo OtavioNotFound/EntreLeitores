@@ -37,8 +37,9 @@ function AppInterno() {
 
   const escuro = temaEscuro === 'escuro';
 
-  // Aplica a classe de tema escuro no <body>, equivalente ao App.iniciarTema() original
+  // A classe também fica no <html> para manter o tema aplicado antes do React hidratar.
   useEffect(() => {
+    document.documentElement.classList.toggle('tema-escuro', escuro);
     document.body.classList.toggle('tema-escuro', escuro);
   }, [escuro]);
   useEffect(() => {

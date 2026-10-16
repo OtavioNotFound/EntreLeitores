@@ -85,7 +85,8 @@
   --transicao-normal: 220ms cubic-bezier(.4,0,.2,1);
 }
 
-/* Tema escuro (alterna via body.tema-escuro) */
+/* Tema escuro: o html recebe a classe antes do React montar para evitar flash claro. */
+:root.tema-escuro,
 body.tema-escuro{
   color-scheme: dark;
   --bg-app: #1c1623;
@@ -112,6 +113,9 @@ body.tema-escuro{
   --shadow-lg: 0 18px 44px rgba(0,0,0,.42);
 }
 
+:root.tema-escuro input,
+:root.tema-escuro textarea,
+:root.tema-escuro select,
 body.tema-escuro input,
 body.tema-escuro textarea,
 body.tema-escuro select{ color-scheme: dark; }

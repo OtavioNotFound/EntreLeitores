@@ -3,8 +3,16 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="color-scheme" content="light dark" />
   <title>Entre Leitores — Sua comunidade de leitura</title>
   <link rel="icon" type="image/png" href="/img/assets/favicon.png" />
+  <script>
+    try {
+      if (localStorage.getItem('entreLeitores:tema') === '"escuro"') {
+        document.documentElement.classList.add('tema-escuro');
+      }
+    } catch {}
+  </script>
 </head>
 <body>
   <div id="root"></div>
