@@ -392,7 +392,16 @@
 }
 .btn-seguir.seguindo{ border-color: var(--cinza-300); color: var(--cinza-500); }
 
-.continuar-lendo{ display: flex; gap: var(--space-3); align-items: center; }
+.continuar-lendo{
+  display: flex;
+  gap: var(--space-3);
+  align-items: center;
+  width: 100%;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  text-align: left;
+}
 .continuar-lendo__capa{
   width: 48px;
   aspect-ratio: 2 / 3;

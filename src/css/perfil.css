@@ -7,7 +7,7 @@
   border-radius: var(--radius-md);
   background: var(--roxo-800);
   position: relative;
-  margin-bottom: 56px;
+  margin-bottom: 68px;
 }
 
 .perfil__banner--imagem{ background-size:cover; background-position:center; }
@@ -37,7 +37,7 @@
 .perfil-imagem-preview--clicavel{ cursor:crosshair; position:relative; }.perfil-imagem-preview--clicavel::after{ content:'Clique para definir o foco'; position:absolute; inset:auto 6px 6px auto; padding:3px 6px; border-radius:var(--radius-full); background:rgba(20,14,42,.68); color:#fff; font-size:.61rem; font-weight:700; opacity:0; transition:opacity var(--transicao-rapida); }.perfil-imagem-preview--clicavel:hover::after{ opacity:1; }
 .perfil-imagem-preview--avatar{ width:88px; height:88px; border-radius:50%; font-size:var(--fs-xl); }
 .perfil-imagem-preview--banner{ width:100%; height:110px; border-radius:var(--radius-sm); font-size:var(--fs-xs); }
-@media (max-width:600px){ .perfil-edicao__imagens{ grid-template-columns:1fr; }.perfil__cabecalho{ left:var(--space-3); right:var(--space-3); }.perfil__acoes{ flex-wrap:wrap; justify-content:flex-end; } }
+@media (max-width:600px){ .perfil__banner{ margin-bottom: 84px; } .perfil-edicao__imagens{ grid-template-columns:1fr; } .perfil__cabecalho{ left:var(--space-3); right:var(--space-3); } .perfil__acoes{ flex-wrap:wrap; justify-content:flex-start; width: 100%; } }
 
 .perfil__bio{
   font-size: var(--fs-sm);
