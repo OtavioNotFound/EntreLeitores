@@ -2,6 +2,10 @@
    BIBLIOTECA
    ========================================================= */
 
+#pagina-biblioteca{ display:grid; align-content:start; gap:24px; }
+#pagina-biblioteca > .pagina-cabecalho{ margin:0; }
+#pagina-biblioteca > .widget{ min-width:0; margin:0; }
+
 .pagina-cabecalho{
   display: flex;
   align-items: center;
@@ -25,10 +29,15 @@
 .biblioteca__grid{
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-  gap: var(--space-5);
+  align-items: stretch;
+  gap: clamp(14px, 2vw, 24px);
 }
 
 .livro-card{
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  height: 100%;
   background: var(--bg-card);
   border: 1px solid var(--cinza-200);
   border-radius: var(--radius-md);
@@ -59,12 +68,12 @@
 }
 .livro-card__progresso span{ display: block; height: 100%; background: var(--branco); }
 
-.livro-card__corpo{ padding: var(--space-3); }
+.livro-card__corpo{ display:grid; align-content:start; gap:4px; min-width:0; padding:var(--space-3); }
 .livro-card__titulo{
   font-size: var(--fs-sm); font-weight: 700; color: var(--cinza-900);
   display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
 }
-.livro-card__autor{ font-size: var(--fs-xs); color: var(--cinza-500); margin-top: 2px; }
+.livro-card__autor{ font-size: var(--fs-xs); color: var(--cinza-500); margin-top: 0; overflow-wrap:anywhere; }
 .livro-card__nota{ font-size: var(--fs-xs); color: var(--amarelo-500); font-weight: 700; margin-top: 6px; }
 .avaliacao-livrinhos{ display:flex; align-items:center; gap:4px; margin-top:6px; color:var(--cinza-300); }
 .avaliacao-livrinhos__item{ position:relative; display:grid; place-items:center; color:var(--cinza-300); }

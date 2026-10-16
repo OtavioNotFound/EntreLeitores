@@ -15,7 +15,8 @@ button:disabled { cursor: not-allowed; }
   outline-offset: 4px;
 }
 .app { width: 100%; min-height: 100svh; }
-.conteudo-principal { min-width: 0; padding: 24px 36px 64px; }
+.conteudo-principal { min-width: 0; padding: clamp(20px, 2.5vw, 36px) clamp(20px, 3vw, 48px) 64px; }
+.pagina { width: min(100%, 1280px); min-width: 0; margin-inline: auto; }
 .pagina > h1, .pagina > h2, .pagina-titulo, .pagina-cabecalho__titulo { font-family: var(--fonte-display); font-weight: 400; }
 .btn-primario { min-height: 42px; padding-inline: 24px; }
 body.tema-escuro .btn-primario { color: var(--bg-app); }
@@ -68,7 +69,8 @@ body.tema-escuro .avatar--placeholder { color: var(--bg-app); }
 .mobile-nav { display: none; }
 
 /* A post is part of a conversation, rather than a dashboard tile. */
-#pagina-inicio { gap: 32px; grid-template-columns: minmax(0, 1fr) var(--largura-widgets); max-width: 1200px; }
+#pagina-inicio { gap: clamp(24px, 2.5vw, 36px); grid-template-columns: minmax(0, 1fr) var(--largura-widgets); max-width: 1200px; margin-inline: auto; }
+.feed-coluna, .widgets-coluna { min-width: 0; }
 .feed-intro { display: flex; align-items: flex-end; gap: 18px; margin-bottom: 24px; }
 .feed-intro h1 { font-family: var(--fonte-display); font-size: clamp(30px, 2.8vw, 42px); font-weight: 400; letter-spacing: -.045em; line-height: 1.15; margin: 0 0 8px; }
 .feed-intro p { font-size: 14px; color: var(--cinza-500); }
@@ -102,21 +104,28 @@ body.tema-escuro .avatar--placeholder { color: var(--bg-app); }
 .feed__contexto { margin-left: auto; font-size: 12px; color: var(--cinza-500); }
 
 .feed__lista { display: flex; flex-direction: column; gap: 16px; background: transparent; }
-.post { background: var(--bg-card); border: 1px solid var(--cinza-200); border-radius: var(--radius-md); padding: 22px 24px; box-shadow: var(--shadow-sm); transition: border-color var(--transicao-rapida); }
+.post { display: flex; flex-direction: column; gap: 12px; min-width: 0; background: var(--bg-card); border: 1px solid var(--cinza-200); border-radius: var(--radius-md); padding: 22px 24px; box-shadow: var(--shadow-sm); transition: border-color var(--transicao-rapida); }
 .post:hover { border-color: var(--cinza-300); }
 body.tema-escuro .post { background: var(--bg-card); border-color: var(--cinza-200); }
+.post__cabecalho { align-items: center; min-width: 0; margin: 0; }
 .post__autor-info { display: flex; flex-direction: column; gap: 2px; }
+.post__autor-info, .post__autor-nome, .post__autor-meta { min-width: 0; overflow-wrap: anywhere; }
 .post__autor-nome { font-size: 15px; }
 .post__autor-meta { font-size: 12px; }
-.post__texto { font-size: 16px; line-height: 1.75; color: var(--cinza-900); white-space: pre-wrap; overflow-wrap: anywhere; margin-bottom: 14px; }
+.post__texto { font-size: 16px; line-height: 1.7; color: var(--cinza-900); white-space: pre-wrap; overflow-wrap: anywhere; margin: 0; }
 .post__tag { background: transparent; color: var(--cinza-500); padding-inline: 0; font-size: 12px; font-weight: 400; }
-.post__livro { background: var(--cinza-50); padding: 14px 16px; border-radius: var(--radius-sm); margin: 12px 0; }
+.post__livro { min-width: 0; background: var(--cinza-50); padding: 14px 16px; border-radius: var(--radius-sm); margin: 0; }
 .post__livro-capa { background: var(--roxo-600); width: 50px; height: 72px; border-radius: 0 3px 3px 0; }
 .post__livro-info { display: flex; flex-direction: column; gap: 4px; padding-left: 4px; }
 .post__livro-titulo { font-family: var(--fonte-display); font-size: 19px; }
-.post__acoes { border: 0; border-top: 1px solid var(--cinza-100); padding-top: 10px; margin-top: 6px; }
+.post__acoes { border: 0; border-top: 1px solid var(--cinza-100); padding-top: 10px; margin: 0; }
 .post__acao { min-height: 38px; font-size: 13px; }
-.post__imagem { border-radius: var(--radius-sm); margin: 12px 0; }
+.post__imagem { display: block; width: 100%; max-width: 100%; height: auto; max-height: min(620px, 72svh); object-fit: contain; object-position: center; border-radius: var(--radius-sm); margin: 0; background: var(--cinza-50); }
+.post__enquete { margin: 0; }
+.post__spoiler-bloqueado { margin: 0; }
+.post__livro-capa { flex: 0 0 50px; overflow: hidden; }
+.post__livro-info { min-width: 0; }
+.post__livro-titulo, .post__livro-autor { overflow-wrap: anywhere; }
 
 /* Discoveries sit in the margin, using distinct reading rhythms. */
 .widgets-coluna { gap: 24px; padding-top: 0; }
@@ -188,7 +197,7 @@ body.tema-escuro .post { background: var(--bg-card); border-color: var(--cinza-2
   .header__perfil { padding: 0; }
   .header__perfil-chevron { display: none; }
   .menu-mobile-toggle { background: transparent; flex-shrink: 0; }
-  .conteudo-principal { padding: 20px 16px 100px; }
+  .conteudo-principal { padding: 18px 14px calc(100px + env(safe-area-inset-bottom)); }
   #pagina-inicio.ativa { grid-template-columns: minmax(0, 1fr); gap: 24px; }
   .feed-intro { display: block; margin-bottom: 20px; }
   .feed-intro h1 { font-size: 32px; }
@@ -206,9 +215,12 @@ body.tema-escuro .post { background: var(--bg-card); border-color: var(--cinza-2
   .feed__filtros { overflow: visible; padding-bottom: 12px; margin-bottom: 14px; }
   .feed__filtros .filtro-pill { min-height: 40px; padding: 6px 14px; font-size: 14px; }
   .feed__lista { margin-inline: 0; gap: 14px; }
-  .post { padding: 18px 16px; }
-  .post__tag { max-width: 95px; white-space: normal; text-align: right; }
-  .post__texto { font-size: 16px; }
+  .post { gap: 10px; padding: 16px 14px; }
+  .post__cabecalho { gap: 9px; }
+  .post__tag { max-width: min(34vw, 120px); white-space: normal; text-align: right; flex-shrink: 1; }
+  .post__texto { font-size: 15px; line-height: 1.65; }
+  .post__imagem { max-height: 64svh; }
+  .post__livro { gap: 10px; padding: 12px; }
   .widgets-coluna { position: static; display: flex; flex-direction: column; padding: 0; }
   .widgets-coluna > * { flex: none; }
   .sidebar { align-items: stretch; width: 272px !important; height: 100dvh; padding-bottom: 28px; }
