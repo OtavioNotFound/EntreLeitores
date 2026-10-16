@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import Sidebar from './components/Sidebar.jsx';
 import Header from './components/Header.jsx';
+import MobileNav from './components/MobileNav.jsx';
 import { ToastProvider } from './components/Toast.jsx';
 import { useLocalStorage } from './hooks/useLocalStorage.js';
 import { AuthProvider, useAuth } from './context/AuthContext.jsx';
@@ -125,6 +126,7 @@ function AppInterno() {
       <main className="conteudo-principal">
         <PageErrorBoundary key={paginaAtual}>{paginas[paginaAtual] ?? paginas.inicio}</PageErrorBoundary>
       </main>
+      {paginaAtual !== 'leitura' && <MobileNav paginaAtual={paginaAtual} irParaPagina={irParaPagina} />}
       <GlobalMusicPlayer url={musicaUrl} onRemove={() => setMusicaUrl('')} />
     </div>
   );

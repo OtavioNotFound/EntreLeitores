@@ -50,20 +50,26 @@ export default function Login() {
   return (
     <div className="login-tela">
       <div className="login-tela__marca">
-        <div className="login-tela__decor login-tela__decor--1" />
-        <div className="login-tela__decor login-tela__decor--2" />
         <div className="login-tela__logo">
           <div className="sidebar__logo-icone"><BookIcon /></div>
           <span className="sidebar__logo-texto">Entre Leitores</span>
         </div>
-        <h1 className="login-tela__frase">Onde histórias encontram leitores.</h1>
-        <p className="login-tela__subfrase">Crie sua estante, encontre clubes e converse com pessoas que leem como você.</p>
+        <div className="login-tela__convite">
+          <h1 className="login-tela__frase">Ler é só<br />o começo.</h1>
+          <p className="login-tela__subfrase">O livro acaba. A conversa continua.<br />Encontre sua turma entre uma página e outra.</p>
+        </div>
+        <div className="login-estante" aria-hidden="true">
+          <div className="login-estante__livro login-estante__livro--roxo"><span>Entre páginas</span><small>uma descoberta</small></div>
+          <div className="login-estante__livro login-estante__livro--papel"><span>Entre<br />histórias.</span><BookIcon className="login-estante__marca" /><small>um novo olhar</small></div>
+          <div className="login-estante__livro login-estante__livro--amarelo"><small>Entre Leitores</small><span>Sempre cabe<br />mais uma<br />conversa.</span><BookIcon /></div>
+        </div>
+        <p className="login-tela__assinatura">Sua estante. Seus encontros. Seu canto.</p>
       </div>
 
       <div className="login-tela__form-coluna">
         <form className="login-card" onSubmit={aoEnviar} noValidate>
-          <h2 className="login-card__titulo">{modo === 'entrar' ? 'Entrar' : 'Criar conta'}</h2>
-          <p className="login-card__subtitulo">{modo === 'entrar' ? 'Acesse sua comunidade de leitura.' : 'Seu perfil começa vazio e será construído por você.'}</p>
+          <h2 className="login-card__titulo">{modo === 'entrar' ? 'Bom ter você aqui.' : 'Puxe uma cadeira.'}</h2>
+          <p className="login-card__subtitulo">{modo === 'entrar' ? 'Entre para continuar a conversa.' : 'Crie sua conta e encontre outros leitores.'}</p>
 
           {modo === 'cadastro' && (
             <>

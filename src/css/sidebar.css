@@ -28,7 +28,7 @@
 .sidebar__logo-icone{
   width: 34px; height: 34px;
   border-radius: var(--radius-sm);
-  background: linear-gradient(135deg, var(--roxo-500), var(--azul-500));
+  background: var(--roxo-500);
   display: flex; align-items: center; justify-content: center;
   font-size: 1.1rem;
   flex-shrink: 0;

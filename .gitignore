@@ -5,3 +5,4 @@ dist/
 
 .vercel
 supabase/.temp/
+.taste-skill/

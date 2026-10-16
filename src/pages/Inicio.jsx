@@ -5,10 +5,10 @@ import EmptyState from '../components/EmptyState.jsx';
 import { useToast } from '../components/Toast.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 import { createPost, getClubs, getFeed, getProfileSuggestions, getShelf, toggleFollow } from '../services/social.js';
-import { MenuBook as BookIcon, LocalFireDepartment as FireIcon, Forum as ForumIcon, Groups as GroupsIcon, PersonAdd as PersonAddIcon } from '@mui/icons-material';
+import { MenuBook as BookIcon, Forum as ForumIcon, Groups as GroupsIcon, PersonAdd as PersonAddIcon } from '@mui/icons-material';
 
 const filtros = [
-  { id: 'para-voce', label: 'Todos' },
+  { id: 'para-voce', label: 'Para você' },
   { id: 'seguindo', label: 'Seguindo' },
 ];
 
@@ -61,8 +61,8 @@ export default function Inicio({ aoAbrirLivro, aoAbrirPerfil, aoAbrirClubes, aoC
     <section className="pagina ativa" id="pagina-inicio">
       <div className="feed-coluna">
         <div className="feed-intro">
-          <div><span className="feed-intro__saudacao">Olá, {nome}</span><h1>O que os leitores estão comentando?</h1></div>
-          <button className="btn-texto" onClick={aoAbrirClubes}>Encontrar clubes</button>
+          <div><h1>Entre conversas.</h1><p>Olá, {nome}. Tem uma leitura para compartilhar?</p></div>
+          <button className="btn-texto feed-intro__pessoas" onClick={aoConhecerPessoas}><PersonAddIcon fontSize="small" /> Encontrar leitores</button>
         </div>
 
         {sugestoes.length > 0 && (
@@ -80,8 +80,9 @@ export default function Inicio({ aoAbrirLivro, aoAbrirPerfil, aoAbrirClubes, aoC
         )}
 
         <Compositor aoPublicar={publicarPost} />
-        <div className="feed__filtros">
-          {filtros.map((filtro) => <button key={filtro.id} className={`filtro-pill${filtroAtivo === filtro.id ? ' ativo' : ''}`} onClick={() => setFiltroAtivo(filtro.id)}>{filtro.label}</button>)}
+        <div className="feed__filtros" aria-label="Filtrar conversas">
+          {filtros.map((filtro) => <button key={filtro.id} aria-pressed={filtroAtivo === filtro.id} className={`filtro-pill${filtroAtivo === filtro.id ? ' ativo' : ''}`} onClick={() => setFiltroAtivo(filtro.id)}>{filtro.label}</button>)}
+          <span className="feed__contexto">Conversas da comunidade</span>
         </div>
 
         <div className="feed__lista">
@@ -108,9 +109,10 @@ export default function Inicio({ aoAbrirLivro, aoAbrirPerfil, aoAbrirClubes, aoC
         </div>
 
         {clubes[0] && <button className="widget-discussao" onClick={aoAbrirClubes}>
-          <span className="widget-discussao__eyebrow"><FireIcon /> CLUBE PARA CONHECER</span>
+          <span className="widget-discussao__icone"><ForumIcon /></span>
           <span className="widget-discussao__titulo">{clubes[0].name}</span>
           <span className="widget-discussao__meta">{clubes[0].member_count} {clubes[0].member_count === 1 ? 'membro' : 'membros'}</span>
+          <span className="widget-discussao__link">Conhecer o clube <span aria-hidden="true">↗</span></span>
         </button>}
 
         {leituraAtual && <div className="widget">
@@ -124,7 +126,7 @@ export default function Inicio({ aoAbrirLivro, aoAbrirPerfil, aoAbrirClubes, aoC
         <button className="widget clube-convite" onClick={aoAbrirClubes}>
           <GroupsIcon /><span><strong>{clubes.length ? `${clubes.length} clubes para conhecer` : 'Crie o primeiro clube'}</strong><small>Construa uma comunidade de leitura</small></span><ForumIcon fontSize="small" />
         </button>
-        <p className="rodape-produto">Entre Leitores © 2026 · Termos · Privacidade</p>
+        <p className="rodape-produto">Entre Leitores · Feito de boas conversas.</p>
       </aside>
     </section>
   );

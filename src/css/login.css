@@ -1,209 +1,90 @@
-/* =========================================================
-   TELA DE LOGIN
-   ========================================================= */
-
-.login-tela{
-  min-height: 100vh;
+/* An open book and a welcoming form, with the community's purple identity. */
+.login-tela {
+  min-height: 100svh;
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1.08fr 1fr;
   background: var(--bg-app);
 }
-
-/* ---- Painel de marca (lado esquerdo) ---- */
-.login-tela__marca{
+.login-tela__marca {
+  background: var(--social-lavender);
+  color: var(--social-plum);
+  display: flex;
+  flex-direction: column;
+  padding: 44px clamp(32px, 5vw, 80px) 32px;
   position: relative;
   overflow: hidden;
-  background: var(--bg-sidebar);
-  color: var(--branco);
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: var(--space-4);
-  padding: var(--space-10) var(--space-10);
 }
-
-.login-tela__decor{
-  position: absolute;
-  border-radius: 50%;
-  filter: blur(60px);
-  opacity: 0.35;
-  pointer-events: none;
+.login-tela__logo { display: flex; align-items: center; gap: 10px; }
+.login-tela__logo .sidebar__logo-icone { color: var(--social-plum); }
+.login-tela__logo .sidebar__logo-texto { font-size: 26px; }
+.login-tela__convite { margin-top: clamp(44px, 8vh, 88px); }
+.login-tela__frase { font-family: var(--fonte-display); font-size: clamp(64px, 7vw, 104px); font-weight: 400; letter-spacing: -.065em; line-height: .98; }
+.login-tela__subfrase { font-size: 16px; line-height: 1.7; margin-top: 26px; max-width: 36ch; }
+.login-tela__assinatura { font-size: 13px; margin-top: auto; padding-top: 32px; }
+.login-estante { display: flex; align-items: flex-end; justify-content: center; margin: 48px -12px 0; min-height: 250px; isolation: isolate; }
+.login-estante__livro { display: flex; flex-direction: column; justify-content: space-between; flex-shrink: 0; font-family: var(--fonte-display); border-radius: 2px 5px 5px 2px; transform-origin: bottom center; }
+.login-estante__livro small { font-family: var(--fonte-base); font-size: 13px; }
+.login-estante__livro--roxo { width: 76px; height: 226px; padding: 20px 14px; background: var(--social-plum); color: var(--social-paper); transform: rotate(-12deg); margin-right: 12px; }
+.login-estante__livro--roxo > span { writing-mode: vertical-rl; font-size: 25px; }
+.login-estante__livro--roxo small { font-size: 13px; }
+.login-estante__livro--papel { width: 178px; height: 250px; padding: 20px; background: var(--social-paper); color: var(--social-plum); transform: rotate(-5deg); font-size: 29px; line-height: 1.05; }
+.login-estante__marca { font-size: 62px !important; align-self: center; color: var(--roxo-400); }
+.login-estante__livro--amarelo { width: 174px; height: 230px; background: var(--social-gold); color: var(--social-plum); padding: 22px; font-size: 25px; line-height: 1.15; transform: rotate(9deg); margin-left: -12px; }
+.login-estante__livro--amarelo svg { font-size: 34px; }
+.login-tela__form-coluna { display: flex; align-items: center; justify-content: center; padding: 48px; }
+.login-card { width: 100%; max-width: 370px; padding: 0; border: 0; background: transparent; box-shadow: none; }
+.login-card__titulo { font-family: var(--fonte-display); font-size: 36px; letter-spacing: -.045em; line-height: 1.2; font-weight: 400; color: var(--cinza-900); }
+.login-card__subtitulo { font-size: 16px; color: var(--cinza-500); margin: 12px 0 36px; }
+.campo-grupo { display: flex; flex-direction: column; gap: 8px; margin-bottom: 22px; }
+.campo-grupo label { font-size: 14px; font-weight: 600; color: var(--cinza-700); }
+.campo-grupo input { width: 100%; min-height: 54px; border: 0; border-radius: 4px; padding: 14px 16px; background: var(--bg-card); color: var(--cinza-900); font-size: 16px; }
+.campo-grupo input::placeholder { color: var(--cinza-500); }
+.campo-grupo input:focus-visible { outline: 2px solid var(--roxo-500); outline-offset: 2px; }
+.btn-full { width: 100%; padding: 14px; font-size: 15px; margin-top: 4px; }
+.login-card__rodape { font-size: 14px; color: var(--cinza-500); margin-top: 28px; text-align: center; }
+.link-button { border: 0; background: transparent; color: var(--roxo-500); font-weight: 700; padding: 8px 2px; }
+.link-button:hover { text-decoration: underline; text-underline-offset: 4px; }
+.login-card__erro { padding: 12px; background: var(--amarelo-100); color: var(--cinza-900); font-size: 14px; border-radius: 4px; margin-bottom: 16px; }
+.btn-primario:disabled { opacity: .55; cursor: not-allowed; }
+@keyframes book-settle { from { translate: 0 20px; opacity: .4; } to { translate: 0 0; opacity: 1; } }
+@media (prefers-reduced-motion: no-preference) {
+  .login-tela__logo, .login-tela__convite, .login-tela__assinatura, .login-card > * { animation: social-arrive .6s ease both; }
+  .login-card > :nth-child(2) { animation-delay: 60ms; }
+  .login-card > :nth-child(3) { animation-delay: 100ms; }
+  .login-card > :nth-child(4) { animation-delay: 140ms; }
+  .login-estante__livro { animation: book-settle .8s ease both; }
+  .login-estante__livro:nth-child(2) { animation-delay: 100ms; }
+  .login-estante__livro:nth-child(3) { animation-delay: 180ms; }
 }
-.login-tela__decor--1{
-  width: 320px; height: 320px;
-  background: var(--roxo-500);
-  top: -80px; right: -80px;
+@media (max-width: 1100px) and (min-width: 761px) {
+  .login-tela__marca { padding-inline: 32px; }
+  .login-tela__form-coluna { padding: 32px; }
+  .login-estante { scale: .68; margin-inline: -60px; }
+  .login-tela__frase { font-size: 72px; }
+  .login-card__titulo { font-size: 30px; }
 }
-.login-tela__decor--2{
-  width: 260px; height: 260px;
-  background: var(--azul-500);
-  bottom: -60px; left: -60px;
+@media (max-width: 760px) {
+  .login-tela { grid-template-columns: minmax(0, 1fr); }
+  .login-tela__marca { padding: 26px 24px 30px; }
+  .login-tela__logo .sidebar__logo-texto { font-size: 24px; }
+  .login-tela__convite { margin-top: 28px; }
+  .login-tela__frase { font-size: 54px; line-height: 1; }
+  .login-tela__subfrase { margin-top: 18px; max-width: 30ch; font-size: 15px; }
+  .login-estante, .login-tela__assinatura { display: none; }
+  .login-tela__form-coluna { padding: 32px 24px 40px; }
+  .login-card { max-width: 480px; }
+  .login-card__titulo { font-size: 30px; }
+  .login-card__subtitulo { margin-bottom: 26px; font-size: 15px; }
+  .campo-grupo { margin-bottom: 18px; }
+  .login-card__rodape { margin-top: 20px; }
 }
-
-.login-tela__logo{
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-  margin-bottom: var(--space-6);
-  position: relative;
-  z-index: 1;
-}
-.login-tela__logo .sidebar__logo-icone{
-  width: 44px; height: 44px;
-  font-size: 1.4rem;
-}
-.login-tela__logo .sidebar__logo-texto{
-  font-size: var(--fs-xl);
-}
-
-.login-tela__frase{
-  position: relative;
-  z-index: 1;
-  font-size: var(--fs-2xl);
-  font-weight: 800;
-  line-height: 1.25;
-  max-width: 420px;
-  margin: 0;
-}
-
-.login-tela__subfrase{
-  position: relative;
-  z-index: 1;
-  font-size: var(--fs-base);
-  color: var(--cinza-300);
-  max-width: 380px;
-  margin: 0;
-}
-
-/* ---- Coluna do formulário (lado direito) ---- */
-.login-tela__form-coluna{
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: var(--space-6);
-}
-
-.login-card{
-  width: 100%;
-  max-width: 400px;
-  background: var(--bg-card);
-  border: 1px solid var(--cinza-200);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-lg);
-  padding: var(--space-8);
-}
-
-.login-card__titulo{
-  font-size: var(--fs-2xl);
-  font-weight: 800;
-  color: var(--cinza-900);
-}
-
-.login-card__subtitulo{
-  color: var(--cinza-500);
-  font-size: var(--fs-sm);
-  margin: var(--space-1) 0 var(--space-6);
-}
-
-.campo-grupo{
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  margin-bottom: var(--space-4);
-}
-
-.campo-grupo label{
-  font-size: var(--fs-sm);
-  font-weight: 700;
-  color: var(--cinza-700);
-}
-
-.campo-grupo input{
-  width: 100%;
-  min-height: 52px;
-  padding: 11px 14px;
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--cinza-200);
-  background: var(--cinza-50);
-  color: var(--cinza-900);
-  appearance: none;
-  transition: border-color var(--transicao-rapida), background var(--transicao-rapida);
-}
-
-.campo-grupo input::placeholder{ color: var(--cinza-400); }
-
-.campo-grupo input:focus{
-  outline: none;
-  border-color: var(--roxo-400);
-  background: var(--bg-card);
-}
-
-.campo-grupo input.campo-erro{
-  border-color: var(--vermelho-500);
-}
-
-.mensagem-erro{
-  color: var(--vermelho-500);
-  font-size: var(--fs-xs);
-  font-weight: 600;
-}
-
-.login-card__opcoes{
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: var(--space-6);
-  font-size: var(--fs-xs);
-}
-
-.login-card__lembrar{
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  color: var(--cinza-500);
-  font-weight: 600;
-}
-.login-card__lembrar input{ accent-color: var(--roxo-500); }
-
-.login-card__opcoes a{
-  color: var(--roxo-500);
-  font-weight: 700;
-}
-.login-card__opcoes a:hover{ text-decoration: underline; }
-
-.btn-full{
-  width: 100%;
-  padding: 12px;
-  font-size: var(--fs-base);
-}
-
-.login-card__rodape{
-  margin-top: var(--space-6);
-  text-align: center;
-  font-size: var(--fs-sm);
-  color: var(--cinza-500);
-}
-.link-button{ border: 0; background: transparent; padding: 0; color: var(--roxo-500); font-weight: 700; }
-.login-card__erro{ padding: var(--space-3); border-radius: var(--radius-sm); background: rgba(239,68,68,.1); color: var(--vermelho-500); font-size: var(--fs-xs); line-height: 1.45; }
-.btn-primario:disabled{ opacity: .55; cursor: not-allowed; }
-.login-card__rodape a{
-  color: var(--roxo-500);
-  font-weight: 700;
-}
-.login-card__rodape a:hover{ text-decoration: underline; }
-
-/* ---- Responsivo ---- */
-@media (max-width: 900px){
-  .login-tela{ grid-template-columns: 1fr; }
-  .login-tela__marca{
-    padding: var(--space-8) var(--space-6);
-    min-height: 260px;
-    justify-content: flex-end;
-  }
-  .login-tela__frase{ font-size: var(--fs-xl); }
-}
-
-@media (max-width: 480px){
-  .login-card{ padding: var(--space-6); box-shadow: none; border: none; }
-  .login-tela__form-coluna{ padding: var(--space-4); }
+@media (max-width: 760px) and (max-height: 740px) {
+  .login-tela__marca { padding: 20px 24px; }
+  .login-tela__convite { margin-top: 18px; }
+  .login-tela__frase { font-size: 38px; }
+  .login-tela__frase br { display: none; }
+  .login-tela__subfrase { margin-top: 12px; font-size: 14px; max-width: none; }
+  .login-tela__form-coluna { padding-top: 24px; }
+  .login-card__subtitulo { margin-bottom: 20px; }
+  .campo-grupo input { min-height: 48px; }
 }

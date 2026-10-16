@@ -196,7 +196,7 @@
 .post__livro-capa{
   width: 44px; height: 62px;
   border-radius: 4px;
-  background: linear-gradient(135deg, var(--roxo-300), var(--roxo-500));
+  background: var(--roxo-500);
   flex-shrink: 0;
 }
 

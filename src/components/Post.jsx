@@ -143,7 +143,7 @@ export default function Post({ post, aoAbrirLivro, aoAbrirPerfil, aoRemoverSalvo
         <button aria-label={curtido ? 'Remover curtida' : 'Curtir'} className={`post__acao${curtido ? ' curtido' : ''}`} onClick={alternarCurtida}>
           <span className="icone">{curtido ? <FavoriteIcon /> : <FavoriteBorderIcon />}</span><span>{formatarNumero(totalCurtidas)}</span>
         </button>
-        <button className="post__acao" onClick={abrirComentarios}><span className="icone"><ChatIcon /></span><span>{totalComentarios}</span></button>
+        <button className="post__acao" aria-label={`${comentariosAbertos ? 'Fechar' : 'Abrir'} comentários (${totalComentarios})`} aria-expanded={comentariosAbertos} onClick={abrirComentarios}><span className="icone"><ChatIcon /></span><span>{totalComentarios}</span></button>
         <button aria-label={salvo ? 'Remover dos salvos' : 'Salvar'} className={`post__acao post__acao-salvar${salvo ? ' salvo' : ''}`} onClick={alternarSalvar}>
           <span className="icone">{salvo ? <BookmarkIcon /> : <BookmarkBorderIcon />}</span>
         </button>

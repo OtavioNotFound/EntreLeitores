@@ -3,6 +3,7 @@ import { useClickOutside } from '../hooks/useClickOutside.js';
 import {
   Menu as MenuIcon,
   Search as SearchIcon,
+  NotificationsNone as NotificationsIcon,
   LightMode as LightIcon,
   DarkMode as DarkIcon,
   AutoStoriesOutlined as StreakIcon,
@@ -36,6 +37,7 @@ export default function Header({ paginaAtual, irParaPagina, abrirSidebarMobile, 
         <input aria-label={pesquisandoClubes ? 'Pesquisar clubes' : 'Buscar livros'} type="search" placeholder={pesquisandoClubes ? 'Pesquisar clubes por nome, cidade ou descrição...' : 'Buscar livros por título ou autor...'} value={busca} onChange={(e) => setBusca(e.target.value)} onKeyDown={aoBuscar} />
       </div>
       <div className="header__acoes">
+        <button className="header__icone-btn" aria-label="Notificações" title="Notificações" onClick={() => irParaPagina('notificacoes')}><NotificationsIcon fontSize="small" /></button>
         <button className="header__icone-btn header__ofensiva-btn" aria-label="Ofensiva de livros" title="Ver minha Ofensiva de Leitura" onClick={() => irParaPagina('ofensiva')}>
           <StreakIcon fontSize="small" /><i aria-hidden="true" />
         </button>
@@ -43,7 +45,7 @@ export default function Header({ paginaAtual, irParaPagina, abrirSidebarMobile, 
           {temaEscuro ? <LightIcon fontSize="small" /> : <DarkIcon fontSize="small" />}
         </button>
         <div className="header__dropdown-wrap" ref={refPerfil}>
-          <button className="header__perfil" onClick={() => setDropdownAberto(dropdownAberto === 'perfil' ? null : 'perfil')}>
+          <button className="header__perfil" aria-label={`Menu de ${nome}`} aria-expanded={dropdownAberto === 'perfil'} onClick={() => setDropdownAberto(dropdownAberto === 'perfil' ? null : 'perfil')}>
             {profile?.avatar_url ? <img className="avatar" src={profile.avatar_url} alt={nome} /> : <span className="avatar avatar--placeholder">{inicial}</span>}
             <span className="header__perfil-texto"><span className="header__perfil-nome">{nome}</span><br /><span className="header__perfil-user">@{profile?.username || 'perfil'}</span></span>
             <span className="header__perfil-chevron">▾</span>

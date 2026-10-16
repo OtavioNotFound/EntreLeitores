@@ -12,6 +12,7 @@ import './css/perfil.css';
 import './css/login.css';
 import './css/community.css';
 import './css/responsivo.css';
+import './css/social.css';
 
 window.addEventListener('vite:preloadError', (event) => {
   event.preventDefault();

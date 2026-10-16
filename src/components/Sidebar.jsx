@@ -1,11 +1,18 @@
 import { useEffect, useState } from 'react';
 import { itensMenu } from '../data/navigation.js';
 import { getAchievementMetrics, getMyClubs } from '../services/social.js';
-import { Menu as MenuIcon, MenuBook as BookIcon } from '@mui/icons-material';
+import { Menu as MenuIcon, MenuBook as BookIcon, Close as CloseIcon } from '@mui/icons-material';
 
 export default function Sidebar({ paginaAtual, irParaPagina, recolhida, alternarRecolhida, aberta, fecharMobile, userId, isAdmin = false, isOwner = false }) {
   const [clubes, setClubes] = useState([]);
   const [ofensiva, setOfensiva] = useState(0);
+
+  useEffect(() => {
+    if (!aberta) return;
+    const fecharComEscape = (event) => { if (event.key === 'Escape') fecharMobile(); };
+    window.addEventListener('keydown', fecharComEscape);
+    return () => window.removeEventListener('keydown', fecharComEscape);
+  }, [aberta, fecharMobile]);
 
   useEffect(() => {
     getMyClubs(userId).then(setClubes).catch((error) => console.error('Falha ao carregar clubes:', error.message));
@@ -23,27 +30,28 @@ export default function Sidebar({ paginaAtual, irParaPagina, recolhida, alternar
           <div className="sidebar__logo-icone"><BookIcon /></div>
           <span className="sidebar__logo-texto">Entre Leitores</span>
           <button className="sidebar__hamburguer" onClick={alternarRecolhida} aria-label={recolhida ? 'Expandir menu' : 'Recolher menu'} title={recolhida ? 'Expandir menu' : 'Recolher menu'}><MenuIcon /></button>
+          <button className="sidebar__fechar" onClick={fecharMobile} aria-label="Fechar menu"><CloseIcon fontSize="small" /></button>
         </div>
-        <span className="sidebar__label">MENU</span>
-        <nav className="sidebar__menu">
+        <nav className="sidebar__menu" aria-label="Navegação principal">
           {itensMenu.filter((item) => (!item.adminOnly || isAdmin || isOwner) && (!item.ownerOnly || isOwner)).map((item) => {
             const Icone = item.icone;
             return (
-              <button key={item.pagina} className={`sidebar__item${paginaAtual === item.pagina ? ' ativo' : ''}${item.pagina === 'ofensiva' ? ' sidebar__item--ofensiva' : ''}`} onClick={() => irParaPagina(item.pagina)} aria-label={item.pagina === 'ofensiva' ? `Ofensiva de livros: ${ofensiva} dias` : undefined}>
+              <button key={item.pagina} title={item.label} aria-current={paginaAtual === item.pagina ? 'page' : undefined} className={`sidebar__item${paginaAtual === item.pagina ? ' ativo' : ''}${item.pagina === 'ofensiva' ? ' sidebar__item--ofensiva' : ''}`} onClick={() => irParaPagina(item.pagina)} aria-label={item.pagina === 'ofensiva' ? `Ofensiva de livros: ${ofensiva} dias` : item.label}>
                 <span className="sidebar__icone"><Icone /></span>
                 <span className="item-texto">{item.label}{item.pagina === 'ofensiva' && <small>{ofensiva} {ofensiva === 1 ? 'dia seguido' : 'dias seguidos'}</small>}</span>
               </button>
             );
           })}
         </nav>
-        <span className="sidebar__label">SEUS CLUBES</span>
+        <span className="sidebar__label">Seus círculos de leitura</span>
         <div className="sidebar__canais">
           {clubes.length ? clubes.map((clube) => (
             <button className="sidebar__canal" key={clube.id} onClick={() => irParaPagina('comunidades')}>
               <span className="sidebar__canal-ponto" />{clube.name}
             </button>
-          )) : <span className="sidebar__vazio item-texto">Você ainda não entrou em clubes.</span>}
+          )) : <button className="sidebar__descobrir item-texto" onClick={() => irParaPagina('comunidades')}>Encontre seu próximo clube <span aria-hidden="true">↗</span></button>}
         </div>
+        <p className="sidebar__nota item-texto">Um livro aproxima.<br />Uma conversa conecta.</p>
       </aside>
     </>
   );
