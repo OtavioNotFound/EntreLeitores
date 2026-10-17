@@ -3,6 +3,7 @@ import {
   ArrowBackRounded as BackIcon,
   ForumOutlined as ForumIcon,
   Groups as GroupsIcon,
+  MenuBook as BookIcon,
   QuestionAnswerOutlined as QuestionIcon,
   ImageOutlined as ImageIcon,
   DeleteOutlined as DeleteIcon,
@@ -11,7 +12,7 @@ import CommunityChat from '../components/CommunityChat.jsx';
 import DiscussionKit from '../components/DiscussionKit.jsx';
 import EmptyState from '../components/EmptyState.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
-import { createClub, deleteClub, getBooks, getClubReading, getClubs, setClubReading, toggleClubMembership } from '../services/social.js';
+import { createClub, deleteClub, getBooks, getClubReading, getClubs, setClubReading, toggleClubMembership, updateClubReadingProgress } from '../services/social.js';
 import { useToast } from '../components/Toast.jsx';
 import { calculateDailyPace } from '../lib/readerIntelligence.js';
 
@@ -21,13 +22,91 @@ function CapaClube({ clube }) {
   return <img src={clube.cover_url} alt={`Capa do clube ${clube.name}`} onError={() => setFalhou(true)} />;
 }
 
-function LeituraAdaptativa({ clube, userId }) {
+function LeituraAdaptativa({ clube, userId, aoAbrirLivro }) {
   const mostrarToast = useToast();
-  const [reading, setReading] = useState(null); const [books, setBooks] = useState([]); const [bookId, setBookId] = useState(''); const [date, setDate] = useState('');
-  useEffect(() => { getClubReading(clube.id).then(setReading).catch(() => {}); if (clube.owner_id === userId) getBooks().then(setBooks).catch(() => {}); }, [clube.id, clube.owner_id, userId]);
-  async function definir(e) { e.preventDefault(); try { setReading(await setClubReading(userId, clube.id, bookId, date)); mostrarToast('Leitura coletiva definida.'); } catch (error) { mostrarToast(error.message); } }
+  const [reading, setReading] = useState(null);
+  const [books, setBooks] = useState([]);
+  const [bookId, setBookId] = useState('');
+  const [date, setDate] = useState('');
+  const [progress, setProgress] = useState(0);
+  const [savingProgress, setSavingProgress] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const responsavel = clube.owner_id === userId;
+
+  useEffect(() => {
+    let vigente = true;
+    setLoading(true);
+    setReading(null);
+    setProgress(0);
+    getClubReading(clube.id).then((activeReading) => {
+      if (!vigente) return;
+      setReading(activeReading);
+      setProgress(activeReading?.current_progress || 0);
+    }).catch((error) => {
+      if (vigente) mostrarToast(error.message);
+    }).finally(() => {
+      if (vigente) setLoading(false);
+    });
+    if (responsavel) getBooks().then((data) => { if (vigente) setBooks(data); }).catch((error) => { if (vigente) mostrarToast(error.message); });
+    return () => { vigente = false; };
+  }, [clube.id, responsavel, mostrarToast]);
+
+  async function definir(evento) {
+    evento.preventDefault();
+    try {
+      const novaLeitura = await setClubReading(userId, clube.id, bookId, date);
+      setReading(novaLeitura);
+      setProgress(novaLeitura.current_progress || 0);
+      setBookId('');
+      setDate('');
+      mostrarToast('Leitura coletiva definida.');
+    } catch (error) { mostrarToast(error.message); }
+  }
+
+  async function salvarProgresso(evento) {
+    evento.preventDefault();
+    if (!reading) return;
+    setSavingProgress(true);
+    try {
+      const atualizado = await updateClubReadingProgress(clube.id, reading.id, progress);
+      setProgress(atualizado);
+      setReading({ ...reading, current_progress: atualizado });
+      mostrarToast('Progresso coletivo atualizado.');
+    } catch (error) { mostrarToast(error.message); }
+    finally { setSavingProgress(false); }
+  }
+
   const pace = reading ? calculateDailyPace(reading.book?.page_count, reading.target_end_at) : null;
-  return <section className="leitura-adaptativa widget"><div><strong>Ritmo adaptativo do clube</strong>{reading ? <p><b>{reading.book?.title}</b>{pace ? ` · cerca de ${pace.pagesPerDay} páginas por dia até ${new Date(reading.target_end_at).toLocaleDateString('pt-BR')}` : ' · avance no seu próprio ritmo'}</p> : <p>Nenhuma leitura coletiva ativa.</p>}</div>{clube.owner_id === userId && <form onSubmit={definir}><select required value={bookId} onChange={(e) => setBookId(e.target.value)}><option value="">Escolha o livro</option>{books.map((book) => <option key={book.id} value={book.id}>{book.title}</option>)}</select><input type="date" value={date} onChange={(e) => setDate(e.target.value)} /><button className="btn-secundario">Definir leitura</button></form>}</section>;
+  return (
+    <section className="clube-leitura-atual widget" aria-labelledby="leitura-atual-titulo">
+      <div className="clube-leitura-atual__titulo"><span>LEITURA ATUAL</span><h2 id="leitura-atual-titulo">Uma história em comum</h2></div>
+      {loading ? <div className="clube-leitura-atual__vazio">Carregando leitura coletiva…</div> : reading ? <div className="clube-leitura-atual__livro">
+        <div className="clube-leitura-atual__capa">{reading.book?.cover_url ? <img src={reading.book.cover_url} alt={`Capa de ${reading.book.title}`} /> : <BookIcon />}</div>
+        <div className="clube-leitura-atual__conteudo">
+          <button type="button" className="clube-leitura-atual__livro-link" onClick={() => reading.book && aoAbrirLivro?.(reading.book)} disabled={!reading.book}>
+            <strong>{reading.book?.title || 'Livro da leitura coletiva'}</strong>
+            {reading.book?.author && <span>{reading.book.author}</span>}
+          </button>
+          {pace && <p className="clube-leitura-atual__ritmo">Cerca de {pace.pagesPerDay} páginas por dia{reading.target_end_at ? ` até ${new Date(`${reading.target_end_at}T00:00:00`).toLocaleDateString('pt-BR')}` : ''}</p>}
+          <div className="clube-leitura-atual__progresso">
+            <div className="clube-leitura-atual__trilha" role="progressbar" aria-label="Progresso coletivo da leitura" aria-valuemin="0" aria-valuemax="100" aria-valuenow={progress}><span style={{ width: `${progress}%` }} /></div>
+            <strong>{progress}%</strong>
+          </div>
+          {responsavel && <form className="clube-leitura-atual__form-progresso" onSubmit={salvarProgresso}>
+            <label htmlFor="progresso-coletivo">Andamento coletivo</label>
+            <input id="progresso-coletivo" type="range" min="0" max="100" value={progress} onChange={(event) => setProgress(Number(event.target.value))} />
+            <button className="btn-secundario" disabled={savingProgress}>{savingProgress ? 'Salvando…' : 'Atualizar andamento'}</button>
+          </form>}
+        </div>
+      </div> : <p className="clube-leitura-atual__vazio">Nenhuma leitura em andamento.</p>}
+      {responsavel && <form className="leitura-adaptativa__form" onSubmit={definir}>
+        <label>Escolher leitura coletiva<select required value={bookId} onChange={(event) => setBookId(event.target.value)}><option value="">Selecione um livro da comunidade</option>{books.map((book) => <option key={book.id} value={book.id}>{book.title} — {book.author}</option>)}</select></label>
+        <label>Data de término<input type="date" value={date} onChange={(event) => setDate(event.target.value)} /></label>
+        <button className="btn-secundario" disabled={!bookId}>{reading ? 'Trocar livro' : 'Definir leitura'}</button>
+      </form>}
+      <p className="clube-leitura-atual__nota">O andamento é atualizado pela pessoa responsável e representa o clube, não o progresso individual dos participantes.</p>
+    </section>
+  );
 }
 
 export default function Comunidades({ buscaInicial = '' }) {
@@ -71,6 +150,7 @@ export default function Comunidades({ buscaInicial = '' }) {
       const atualizado = { ...clube, joined, member_count: Math.max(0, clube.member_count + (joined ? 1 : -1)) };
       setClubes((atuais) => atuais.map((item) => item.id === clube.id ? atualizado : item));
       if (!joined && clubeAberto?.id === clube.id) setClubeAberto(null);
+      if (joined && clubeAberto?.id === clube.id) setClubeAberto(atualizado);
       if (joined) mostrarToast('Você entrou no clube. A conversa foi liberada.');
     } catch (error) { mostrarToast(error.message); }
   }
@@ -91,10 +171,26 @@ export default function Comunidades({ buscaInicial = '' }) {
       <section className="pagina ativa" id="pagina-comunidades">
         <div className="pagina-cabecalho pagina-cabecalho--sala">
           <button className="btn-voltar" onClick={() => setClubeAberto(null)}><BackIcon /> Voltar aos clubes</button>
-          <div className="sala-clube__cabecalho-acoes"><span className="sala-clube__membros">{clubeAberto.member_count} {clubeAberto.member_count === 1 ? 'membro' : 'membros'}</span>{clubeAberto.owner_id === user.id && <button className="btn-texto-perigo" onClick={() => excluirClube(clubeAberto)}><DeleteIcon fontSize="small" /> Excluir clube</button>}</div>
+          {clubeAberto.owner_id === user.id && <button className="btn-texto-perigo" onClick={() => excluirClube(clubeAberto)}><DeleteIcon fontSize="small" /> Excluir clube</button>}
         </div>
-        <nav className="comunidade-abas" aria-label="Áreas do clube"><button className={abaSala==='conversa'?'ativo':''} onClick={()=>setAbaSala('conversa')}><ForumIcon fontSize="small"/> Conversa</button><button className={abaSala==='perguntas'?'ativo':''} onClick={()=>setAbaSala('perguntas')}><QuestionIcon fontSize="small"/> Perguntas</button></nav>
-        {abaSala==='perguntas'?<><LeituraAdaptativa clube={clubeAberto} userId={user.id} /><DiscussionKit club={clubeAberto} /></>:<CommunityChat club={clubeAberto} />}
+        <section className="clube-detalhe" aria-labelledby="clube-detalhe-nome">
+          <div className="clube-detalhe__banner">{clubeAberto.cover_url && !capaInvalida ? <img src={clubeAberto.cover_url} alt={`Capa do clube ${clubeAberto.name}`} onError={() => setCapaInvalida(true)} /> : <GroupsIcon />}</div>
+          <div className="clube-detalhe__corpo">
+            <div className="clube-detalhe__avatar" aria-hidden="true">{clubeAberto.cover_url && !capaInvalida ? <img src={clubeAberto.cover_url} alt="" /> : <span>{clubeAberto.name.trim().charAt(0).toUpperCase()}</span>}</div>
+            <div className="clube-detalhe__identidade">
+              <div className="clube-detalhe__topo"><div><h1 id="clube-detalhe-nome">{clubeAberto.name}</h1><span className="clube-detalhe__membros">{clubeAberto.member_count} {clubeAberto.member_count === 1 ? 'membro' : 'membros'}</span></div>
+                {clubeAberto.owner_id === user.id ? <span className="clube-detalhe__responsavel">Seu clube</span> : clubeAberto.joined ? <button className="btn-secundario" onClick={() => alternar(clubeAberto)}>Sair do clube</button> : <button className="btn-primario" onClick={() => alternar(clubeAberto)}>Participar</button>}
+              </div>
+              <div className="clube-detalhe__etiquetas">{clubeAberto.is_private && <span>Clube privado</span>}{clubeAberto.city && <span>{clubeAberto.city}</span>}{clubeAberto.meeting_place && <span>{clubeAberto.meeting_place}</span>}</div>
+              {clubeAberto.description && <p className="clube-detalhe__descricao">{clubeAberto.description}</p>}
+            </div>
+          </div>
+        </section>
+        <LeituraAdaptativa clube={clubeAberto} userId={user.id} aoAbrirLivro={aoAbrirLivro} />
+        {clubeAberto.joined || clubeAberto.owner_id === user.id ? <>
+          <nav className="comunidade-abas" aria-label="Áreas do clube"><button className={abaSala==='conversa'?'ativo':''} onClick={()=>setAbaSala('conversa')}><ForumIcon fontSize="small"/> Conversa</button><button className={abaSala==='perguntas'?'ativo':''} onClick={()=>setAbaSala('perguntas')}><QuestionIcon fontSize="small"/> Perguntas</button></nav>
+          {abaSala==='perguntas'?<DiscussionKit club={clubeAberto} />:<CommunityChat club={clubeAberto} />}
+        </> : <p className="clube-detalhe__acesso">Participe do clube para conversar e acompanhar as perguntas da leitura.</p>}
       </section>
     );
   }
@@ -120,7 +216,6 @@ export default function Comunidades({ buscaInicial = '' }) {
       </form>}
 
       {loading ? <div className="skeleton-card" /> : clubes.filter((clube)=>!busca.trim()||`${clube.name} ${clube.description||''} ${clube.city||''}`.toLocaleLowerCase('pt-BR').includes(busca.trim().toLocaleLowerCase('pt-BR'))).length ? <div className="clubes-grid">{clubes.filter((clube)=>!busca.trim()||`${clube.name} ${clube.description||''} ${clube.city||''}`.toLocaleLowerCase('pt-BR').includes(busca.trim().toLocaleLowerCase('pt-BR'))).map((clube) => {
-        const podeConversar = clube.joined || clube.owner_id === user.id;
         return (
           <article className="clube-card" key={clube.id}>
             <div className="clube-card__capa"><CapaClube clube={clube} /></div>
@@ -130,8 +225,7 @@ export default function Comunidades({ buscaInicial = '' }) {
               {(clube.city || clube.meeting_place) && <small className="clube-card__info">{[clube.city, clube.meeting_place].filter(Boolean).join(' · ')}</small>}
               <span className="clube-card__membros">{clube.member_count} {clube.member_count === 1 ? 'membro' : 'membros'}</span>
               <div className="clube-card__acoes">
-                {podeConversar ? <button className="btn-primario" onClick={() => { setAbaSala('conversa'); setClubeAberto(clube); }}><ForumIcon fontSize="small" /> Abrir clube</button> : <button className="btn-primario" onClick={() => alternar(clube)}>Entrar no clube</button>}
-                {clube.joined && clube.owner_id !== user.id && <button className="btn-texto-perigo" onClick={() => alternar(clube)}>Sair</button>}
+                <button className="btn-primario" onClick={() => { setAbaSala('conversa'); setCapaInvalida(false); setClubeAberto(clube); }}>{clube.joined || clube.owner_id === user.id ? <><ForumIcon fontSize="small" /> Abrir clube</> : 'Ver clube'}</button>
                 {clube.owner_id === user.id && <button className="btn-texto-perigo" onClick={() => excluirClube(clube)}><DeleteIcon fontSize="small" /> Excluir</button>}
               </div>
             </div>

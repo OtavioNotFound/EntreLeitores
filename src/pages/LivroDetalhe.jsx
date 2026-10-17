@@ -25,6 +25,7 @@ export default function LivroDetalhe({ livro, aoAbrirLivro, aoAbrirPerfil, aoRem
   const title = livro?.title || livro?.titulo;
   const author = livro?.author || livro?.autor;
   const cover = livro?.cover_url || livro?.capa;
+  const anoPublicacao = livro?.published_at ? new Date(`${livro.published_at}T00:00:00`).getFullYear() : null;
 
   useEffect(() => {
     if (!livro?.id) { setLoading(false); return; }
@@ -72,6 +73,8 @@ export default function LivroDetalhe({ livro, aoAbrirLivro, aoAbrirPerfil, aoRem
             {livro.page_count && <div className="livro-detalhe__meta-item"><div className="livro-detalhe__meta-valor">{livro.page_count}</div><div className="livro-detalhe__meta-label">Páginas</div></div>}
             {livro.genre && <div className="livro-detalhe__meta-item"><div className="livro-detalhe__meta-valor">{livro.genre}</div><div className="livro-detalhe__meta-label">Gênero</div></div>}
             {livro.publisher && <div className="livro-detalhe__meta-item"><div className="livro-detalhe__meta-valor">{livro.publisher}</div><div className="livro-detalhe__meta-label">Editora</div></div>}
+            {anoPublicacao && <div className="livro-detalhe__meta-item"><div className="livro-detalhe__meta-valor">{anoPublicacao}</div><div className="livro-detalhe__meta-label">Publicação</div></div>}
+            {livro.isbn && <div className="livro-detalhe__meta-item"><div className="livro-detalhe__meta-valor">{livro.isbn}</div><div className="livro-detalhe__meta-label">ISBN</div></div>}
           </div>
           <div className="livro-detalhe__acoes"><button className="btn-primario" onClick={() => adicionar('quero-ler')}>+ Quero ler</button><button className="btn-secundario" onClick={() => adicionar('lendo')}>Começar leitura</button>{livro.status&&<button className="btn-texto-perigo" onClick={excluirDaEstante}>Excluir da estante</button>}</div>
           {(livro.status==='lidos'||livro.progress===100)&&<button className="btn-texto" onClick={reler}>↻ Iniciar releitura preservando histórico</button>}

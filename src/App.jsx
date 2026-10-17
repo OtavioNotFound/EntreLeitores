@@ -32,6 +32,7 @@ function AppInterno() {
   const [livroSelecionado, setLivroSelecionado] = useLocalStorage('livroSelecionado', null);
   const [perfilSelecionadoId, setPerfilSelecionadoId] = useState(null);
   const [buscaGlobal, setBuscaGlobal] = useState('');
+  const [buscaGlobalAtiva, setBuscaGlobalAtiva] = useState(false);
   const [buscaClubes, setBuscaClubes] = useState('');
   const [musicaUrl, setMusicaUrl] = useLocalStorage('trilhaLeituraUrl', '');
 
@@ -51,6 +52,10 @@ function AppInterno() {
   if (!user) return <Login />;
 
   function irParaPagina(nomePagina) {
+    if (nomePagina !== 'explorar') {
+      setBuscaGlobal('');
+      setBuscaGlobalAtiva(false);
+    }
     if (nomePagina === 'perfil') setPerfilSelecionadoId(user.id);
     setPaginaAtual(nomePagina);
     window.location.hash = `/${nomePagina}`;
@@ -83,8 +88,8 @@ function AppInterno() {
 
   const paginas = {
     inicio: <Inicio aoAbrirLivro={abrirLivro} aoAbrirPerfil={abrirPerfil} aoAbrirClubes={() => irParaPagina('comunidades')} aoConhecerPessoas={() => irParaPagina('pessoas')} />,
-    explorar: <Explorar aoAbrirLivro={abrirLivro} buscaInicial={buscaGlobal} />,
-    comunidades: <Comunidades buscaInicial={buscaClubes} />,
+    explorar: <Explorar aoAbrirLivro={abrirLivro} buscaGlobal={buscaGlobal} buscaGlobalAtiva={buscaGlobalAtiva} aoLimparBuscaGlobal={() => { setBuscaGlobal(''); setBuscaGlobalAtiva(false); }} />,
+    comunidades: <Comunidades buscaInicial={buscaClubes} aoAbrirLivro={abrirLivro} />,
     biblioteca: <Biblioteca aoAbrirLivro={abrirLivro} musicaUrl={musicaUrl} setMusicaUrl={setMusicaUrl} />,
     conquistas: <Conquistas />,
     ofensiva: <Ofensiva />,
@@ -121,7 +126,7 @@ function AppInterno() {
         aoSair={signOut}
         profile={profile}
         userId={user.id}
-        aoBuscar={(termo) => { if (paginaAtual === 'comunidades') setBuscaClubes(termo); else { setBuscaGlobal(termo); irParaPagina('explorar'); } }}
+        aoBuscar={(termo) => { if (paginaAtual === 'comunidades') setBuscaClubes(termo); else { setBuscaGlobal(termo); setBuscaGlobalAtiva(true); irParaPagina('explorar'); } }}
       />
 
       <main className="conteudo-principal">

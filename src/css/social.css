@@ -115,7 +115,7 @@ body.tema-escuro .post { background: var(--bg-card); border-color: var(--cinza-2
 .post__texto { font-size: 16px; line-height: 1.7; color: var(--cinza-900); white-space: pre-wrap; overflow-wrap: anywhere; margin: 0; }
 .post__tag { background: transparent; color: var(--cinza-500); padding-inline: 0; font-size: 12px; font-weight: 400; }
 .post__livro { min-width: 0; background: var(--cinza-50); padding: 14px 16px; border-radius: var(--radius-sm); margin: 0; }
-.post__livro-capa { background: var(--roxo-600); width: 50px; height: 72px; border-radius: 0 3px 3px 0; }
+.post__livro-capa { background: var(--cinza-100); width: 50px; height: 72px; border-radius: 0 3px 3px 0; }
 .post__livro-info { display: flex; flex-direction: column; gap: 4px; padding-left: 4px; }
 .post__livro-titulo { font-family: var(--fonte-display); font-size: 19px; }
 .post__acoes { border: 0; border-top: 1px solid var(--cinza-100); padding-top: 10px; margin: 0; }
@@ -147,7 +147,7 @@ body.tema-escuro .post { background: var(--bg-card); border-color: var(--cinza-2
 .widget-discussao__meta { font-size: 13px; opacity: 1; color: var(--social-lavender); }
 .widget-discussao__link { display: flex; justify-content: space-between; width: 100%; font-size: 14px; margin-top: 20px; color: var(--social-gold); }
 .continuar-lendo { display: flex; gap: 12px; align-items: center; width: 100%; border: 0; background: transparent; padding: 0; text-align: left; }
-.continuar-lendo__capa { border-radius: 0 3px 3px 0; background: var(--roxo-600); box-shadow: none; overflow: hidden; }
+.continuar-lendo__capa { border-radius: 0 3px 3px 0; background: var(--cinza-100); box-shadow: none; overflow: hidden; }
 .continuar-lendo__info strong { font-family: var(--fonte-display); font-size: 17px; }
 .progresso__barra--azul { background: var(--roxo-500); }
 .clube-convite { width: 100%; border: 0; background: var(--lilas-100); padding: 18px; border-radius: var(--radius-md); text-align: left; display: flex; align-items: center; gap: var(--space-3); }
@@ -160,7 +160,7 @@ body.tema-escuro .post { background: var(--bg-card); border-color: var(--cinza-2
 .pessoa-card, .clube-card, .livro-card, .perfil__card, .conquista-card { box-shadow: var(--shadow-sm); border: 1px solid var(--cinza-200); }
 .perfil__banner { background: var(--social-plum); }
 .livro-card__capa, .livro-detalhe__capa { box-shadow: none; overflow: hidden; }
-.livro-detalhe__capa img { width: 100%; height: 100%; object-fit: cover; border-radius: inherit; }
+.livro-detalhe__capa img { width: 100%; height: 100%; object-fit: contain; border-radius: inherit; }
 .biblioteca__abas { flex-wrap: wrap; }
 .skeleton-card { background: var(--cinza-100); animation: social-loading 1.4s ease-in-out infinite alternate; }
 @keyframes social-loading { from { opacity: .55; } to { opacity: 1; } }

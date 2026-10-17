@@ -304,7 +304,7 @@ export async function sendDirectMessage(userId, recipientId, content) {
 
 export async function getClubs(userId) {
   const [{ data, error }, { data: memberships, error: memberError }] = await Promise.all([
-    supabase.from('clubs').select('id,name,slug,description,cover_url,city,meeting_place,owner_id,club_members(count)').order('created_at', { ascending: false }),
+    supabase.from('clubs').select('id,name,slug,description,cover_url,city,meeting_place,is_private,owner_id,club_members(count)').order('created_at', { ascending: false }),
     supabase.from('club_members').select('club_id').eq('user_id', userId),
   ]);
   ensure(error || memberError);
@@ -762,6 +762,16 @@ export async function recommendByIntent(intent) {
 
 export async function getClubReading(clubId) {
   const { data, error } = await supabase.from('club_readings').select('*,book:books(*)').eq('club_id', clubId).eq('active', true).maybeSingle(); ensure(error); return data;
+}
+
+export async function updateClubReadingProgress(clubId, readingId, progress) {
+  const safeProgress = Math.max(0, Math.min(100, Math.round(Number(progress) || 0)));
+  const { data, error } = await supabase.from('club_readings').update({ current_progress: safeProgress })
+    .eq('id', readingId).eq('club_id', clubId).eq('active', true)
+    .select('id,current_progress').maybeSingle();
+  ensure(error);
+  if (!data) throw new Error('Só a pessoa responsável pelo clube pode atualizar o progresso coletivo.');
+  return data.current_progress;
 }
 
 export async function setClubReading(userId, clubId, bookId, targetEndAt) {
